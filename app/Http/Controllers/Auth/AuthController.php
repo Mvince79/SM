@@ -36,6 +36,8 @@ class AuthController extends Controller
             'password.required' => 'Vui lòng nhập mật khẩu.',
             'password.confirmed' => 'Xác nhận mật khẩu không khớp.',
             'password.min' => 'Mật khẩu phải có ít nhất 8 ký tự.',
+            'password.mixed' => 'Mật khẩu phải có cả chữ hoa và chữ thường.',
+            'password.numbers' => 'Mật khẩu phải chứa ít nhất một chữ số.',
         ]);
 
         $user = User::create([

@@ -17,6 +17,7 @@ class GoogleController extends Controller
         return Socialite::driver('google')->redirect();
     }
 
+
     /**
      * Xử lý callback từ Google.
      */
