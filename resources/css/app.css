@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -6,6 +6,415 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans:
+        "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+
+    /* Brand tokens */
+    --color-brand: #1558c0;
+    --color-brand-dark: #1248a8;
+    --color-brand-light: #dce9fd;
+    --color-brand-bg: #f0f5ff;
+    --color-brand-border: #cddcfa;
+
+    --color-app-bg: #f2f0eb;
+    --color-surface: #ffffff;
+    --color-border: #e0ddd5;
+    --color-border-soft: #e2dfd6;
+
+    --color-danger: #c0402a;
+    --color-danger-bg: #fff0ee;
+    --color-success-text: #1a6b3c;
+    --color-success-bg: #f0faf4;
+    --color-warning-text: #8a6000;
+    --color-warning-bg: #fffaed;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Base
+───────────────────────────────────────────────────────────── */
+@layer base {
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+    }
+
+    body {
+        @apply font-sans bg-[#f2f0eb] text-[#111] min-h-screen;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Components — App Shell
+───────────────────────────────────────────────────────────── */
+@layer components {
+    /* Layout */
+    .main {
+        @apply max-w-[560px] mx-auto px-4 pt-5 pb-10;
+    }
+
+    /* ── Topnav ── */
+    .topnav {
+        @apply bg-white border-b border-[#e0ddd5] px-5
+               h-14 flex items-center justify-between
+               sticky top-0 z-10;
+        border-bottom-width: 0.5px;
+    }
+
+    .nav-brand {
+        @apply flex items-center gap-2;
+    }
+
+    .nav-brand-mark {
+        @apply w-[30px] h-[30px] bg-[#1558c0] rounded-lg
+               flex items-center justify-center flex-shrink-0;
+    }
+    .nav-brand-mark svg {
+        @apply w-4 h-4 stroke-white fill-none;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .nav-brand-name {
+        @apply text-[13px] font-bold text-[#0f0f0f] leading-tight;
+        letter-spacing: -0.01em;
+    }
+    .nav-brand-sub {
+        @apply text-[10px] text-[#888] font-normal;
+    }
+
+    .nav-right {
+        @apply flex items-center gap-2.5;
+    }
+
+    .nav-avatar {
+        @apply w-8 h-8 rounded-full bg-[#dce9fd]
+               flex items-center justify-center
+               text-xs font-bold text-[#1558c0]
+               cursor-pointer overflow-hidden;
+        border: 1.5px solid #c8dafc;
+    }
+    .nav-avatar img {
+        @apply w-full h-full object-cover;
+    }
+
+    .nav-logout {
+        @apply text-xs text-[#888] font-medium
+               px-2.5 py-1.5 rounded-lg
+               bg-white cursor-pointer
+               transition-colors duration-150
+               hover:bg-[#f8f7f4] font-sans;
+        border: 0.5px solid #e2dfd6;
+    }
+
+    /* ── Greeting Banner ── */
+    .greeting {
+        @apply bg-[#1558c0] rounded-2xl p-5 mb-5 text-white;
+    }
+    .greeting-top {
+        @apply text-xs mb-0.5;
+        opacity: 0.75;
+    }
+    .greeting-name {
+        @apply text-xl font-bold mb-3.5;
+        letter-spacing: -0.02em;
+    }
+    .greeting-stats {
+        @apply grid grid-cols-2 gap-2.5;
+    }
+    .stat-box {
+        @apply rounded-[10px] px-3 py-2.5;
+        background: rgba(255, 255, 255, 0.12);
+    }
+    .stat-num {
+        @apply text-[22px] font-bold;
+        letter-spacing: -0.02em;
+    }
+    .stat-label {
+        @apply text-[11px] mt-px;
+        opacity: 0.75;
+    }
+
+    /* ── Quick Actions ── */
+    .actions {
+        @apply grid grid-cols-2 gap-2.5 mb-6;
+    }
+    .action-btn {
+        @apply bg-white rounded-[13px] p-4
+               no-underline text-inherit
+               flex flex-col gap-2 cursor-pointer
+               transition-colors duration-150
+               hover:bg-[#f8f7f4];
+        border: 0.5px solid #e0ddd5;
+    }
+    .action-btn-icon {
+        @apply w-9 h-9 rounded-[9px] flex items-center justify-center;
+    }
+    .action-btn-icon svg {
+        @apply w-[18px] h-[18px];
+    }
+    .action-btn-icon--danger {
+        @apply bg-[#fff0ee];
+    }
+    .action-btn-icon--success {
+        @apply bg-[#f0faf4];
+    }
+
+    .action-btn-label {
+        @apply text-[13px] font-semibold text-[#111];
+    }
+    .action-btn-sub {
+        @apply text-[11px] text-[#999] -mt-1;
+    }
+
+    /* ── Info Banner ── */
+    .info-banner {
+        @apply bg-[#f0f5ff] rounded-[13px] px-4 py-3.5
+               flex gap-3 items-start mb-6;
+        border: 0.5px solid #cddcfa;
+    }
+    .info-banner svg {
+        @apply w-[18px] h-[18px] flex-shrink-0 mt-px fill-none;
+        stroke: #1558c0;
+        stroke-width: 2;
+        stroke-linecap: round;
+    }
+    .info-banner p {
+        @apply text-xs text-[#2a4a8c] leading-relaxed;
+    }
+    .info-banner strong {
+        @apply font-semibold;
+    }
+
+    /* ── Section ── */
+    .section {
+        @apply mb-6;
+    }
+    .section-header {
+        @apply flex items-center justify-between mb-3;
+    }
+    .section-title {
+        @apply text-[13px] font-bold text-[#111];
+        letter-spacing: -0.01em;
+    }
+    .section-link {
+        @apply text-xs text-[#1558c0] no-underline font-medium;
+    }
+
+    /* ── Empty State ── */
+    .empty-state {
+        @apply text-center py-8 px-5 text-[#bbb];
+    }
+    .empty-state p {
+        @apply text-[13px] mt-2;
+    }
+    .empty-state__hint {
+        @apply text-xs mt-1 text-[#bbb];
+    }
+
+    /* ── Tags / Badges ── */
+    .tag {
+        @apply text-[10px] font-semibold px-[7px] py-[3px] rounded-[5px] inline-block;
+    }
+    .tag--urgent {
+        @apply bg-[#fff0ee] text-[#b03030];
+    }
+    .tag--searching {
+        @apply bg-[#fffaed] text-[#8a6000];
+    }
+    .tag--found {
+        @apply bg-[#f0faf4] text-[#1a6b3c];
+    }
+
+    /* ── Case Card (Sprint 1) ── */
+    .case-card {
+        @apply bg-white rounded-[13px] p-3.5
+               flex gap-3 mb-2
+               no-underline text-inherit
+               transition-colors duration-150
+               hover:bg-[#fafaf8];
+        border: 0.5px solid #e0ddd5;
+    }
+    .case-photo {
+        @apply w-[52px] h-[52px] rounded-[10px] bg-[#f0f5ff]
+               flex-shrink-0 flex items-center justify-center
+               overflow-hidden text-2xl;
+    }
+    .case-photo img {
+        @apply w-full h-full object-cover;
+    }
+    .case-info {
+        @apply flex-1 min-w-0;
+    }
+    .case-name {
+        @apply text-sm font-semibold text-[#0f0f0f] mb-[3px];
+    }
+    .case-meta {
+        @apply text-[11px] text-[#888] mb-1.5 truncate;
+    }
+    .case-tags {
+        @apply flex gap-[5px] flex-wrap;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Components — Auth Layout
+───────────────────────────────────────────────────────────── */
+@layer components {
+    .auth-body {
+        @apply min-h-screen flex flex-col items-center justify-center
+               px-4 py-6 bg-[#f2f0eb];
+    }
+    .auth-container {
+        @apply w-full max-w-[420px];
+    }
+
+    /* Brand header */
+    .brand {
+        @apply flex items-center gap-2.5 mb-7 justify-center;
+    }
+    .brand-mark {
+        @apply w-9 h-9 bg-[#1558c0] rounded-[10px]
+               flex items-center justify-center;
+    }
+    .brand-mark svg {
+        @apply w-5 h-5 fill-none stroke-white;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+    .brand-name {
+        @apply text-[15px] font-bold text-[#111] leading-none;
+        letter-spacing: -0.01em;
+    }
+    .brand-tagline {
+        @apply text-[11px] text-[#888] font-normal mt-0.5;
+    }
+
+    /* Card */
+    .auth-card {
+        @apply bg-white rounded-[18px] px-7 pt-8 pb-7;
+        border: 0.5px solid #e0ddd5;
+    }
+    .card-title {
+        @apply text-[22px] font-bold text-[#0f0f0f] mb-1;
+        letter-spacing: -0.02em;
+    }
+    .card-subtitle {
+        @apply text-[13px] text-[#888] mb-6 font-normal;
+    }
+
+    /* Form */
+    .field {
+        @apply mb-3.5;
+    }
+    .field-label {
+        @apply block text-xs font-semibold text-[#444] mb-1.5 tracking-wide;
+    }
+    .field-label .req {
+        @apply text-[#d03535] ml-0.5;
+    }
+
+    .field-input {
+        @apply block w-full bg-[#f8f7f4] text-[#111] text-sm
+               rounded-[11px] px-3.5 py-[11px]
+               outline-none transition-all duration-150
+               placeholder:text-[#bbb] font-sans;
+        border: 1px solid #e2dfd6;
+    }
+    .field-input:focus {
+        @apply bg-white border-[#1558c0];
+        box-shadow: 0 0 0 3px rgba(21, 88, 192, 0.08);
+    }
+    .field-input.error {
+        @apply border-[#d03535] bg-[#fff8f8];
+    }
+
+    .field-error {
+        @apply text-[11px] text-[#d03535] mt-[5px] font-medium;
+    }
+
+    /* Buttons */
+    .btn-primary {
+        @apply block w-full bg-[#1558c0] text-white text-sm font-semibold
+               rounded-[11px] py-[13px] cursor-pointer
+               transition-all duration-150
+               hover:bg-[#1248a8] active:scale-[0.99]
+               disabled:opacity-45 disabled:cursor-not-allowed
+               font-sans tracking-wide border-none;
+    }
+
+    .btn-google {
+        @apply flex items-center justify-center gap-2
+               w-full bg-white text-[#222] text-[13px] font-medium
+               rounded-[11px] py-[11px]
+               transition-colors duration-150
+               hover:bg-[#f8f7f4] no-underline font-sans;
+        border: 1px solid #e2dfd6;
+    }
+    .btn-google svg {
+        @apply w-[18px] h-[18px] flex-shrink-0;
+    }
+
+    /* Divider */
+    .divider {
+        @apply flex items-center gap-2.5 my-[18px];
+    }
+    .divider-line {
+        @apply flex-1 bg-[#e8e5dd];
+        height: 0.5px;
+    }
+    .divider-text {
+        @apply text-[11px] text-[#aaa] font-medium;
+    }
+
+    /* Flash */
+    .flash {
+        @apply rounded-[10px] px-3.5 py-3 mb-4
+               text-[13px] flex items-start gap-2 leading-snug;
+    }
+    .flash.success {
+        @apply bg-[#f0faf4] text-[#1a6b3c];
+        border: 1px solid #b6e8cc;
+    }
+    .flash.error {
+        @apply bg-[#fff5f5] text-[#b03030];
+        border: 1px solid #fcc;
+    }
+    .flash-dot {
+        @apply w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1;
+    }
+    .flash.success .flash-dot {
+        @apply bg-[#2d9c5e];
+    }
+    .flash.error .flash-dot {
+        @apply bg-[#d03535];
+    }
+
+    /* Footer / links */
+    .auth-footer {
+        @apply text-center mt-5 text-[13px] text-[#888];
+    }
+    .auth-footer a {
+        @apply text-[#1558c0] font-semibold no-underline hover:underline;
+    }
+
+    .forgot-link {
+        @apply text-xs text-[#1558c0] no-underline font-medium hover:underline;
+    }
+
+    /* Checkbox */
+    .checkbox-row {
+        @apply flex items-center gap-2 mb-[18px];
+    }
+    .checkbox-row input[type="checkbox"] {
+        @apply w-4 h-4 rounded cursor-pointer;
+        accent-color: #1558c0;
+    }
+    .checkbox-row label {
+        @apply text-[13px] text-[#555] cursor-pointer select-none;
+    }
 }
