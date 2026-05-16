@@ -9,6 +9,7 @@ use App\Models\MissingChild;
 use App\Services\MissingChildSearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * MissingChildApiController
@@ -123,11 +124,7 @@ class MissingChildApiController extends Controller
      */
     protected function incrementViewCount(int $missingId): void
     {
-        // TODO: Implement Redis counter batch update (Sprint 1 T-16)
-        // $counter = Cache::increment("views:{$missingId}");
-        // if ($counter % 10 === 0) {
-        //     MissingChild::find($missingId)->increment('view_count', 10);
-        // }
+        Cache::increment("views:{$missingId}");
     }
 
     /**
