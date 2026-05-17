@@ -11,7 +11,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(\App\Services\OtpService::class);
+        $this->app->singleton(\App\Services\RateLimiterService::class);
+        $this->app->singleton(\App\Services\GoogleAuthService::class);
     }
 
     /**

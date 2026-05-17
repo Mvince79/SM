@@ -15,8 +15,8 @@
             </label>
             <input id="email" name="email" type="email" autocomplete="email" value="{{ old('email') }}"
                 placeholder="example@gmail.com" autofocus class="block w-full rounded-xl border px-4 py-2.5 text-sm transition
-                          focus:outline-none focus:ring-2 focus:ring-[#1a56db] focus:border-transparent
-                          {{ $errors->has('email') ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50' }}">
+                              focus:outline-none focus:ring-2 focus:ring-[#1a56db] focus:border-transparent
+                              {{ $errors->has('email') ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50' }}">
             @error('email')
                 <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
             @enderror
@@ -29,14 +29,14 @@
                     Mật khẩu <span class="text-red-500">*</span>
                 </label>
                 {{-- Sprint 1: đổi thành route('password.request') khi làm reset password --}}
-                <a href="#" class="text-xs text-[#1a56db] hover:underline font-medium">
+                <a href="{{ route('password.request') }}" class="text-xs text-[#1a56db] hover:underline font-medium">
                     Quên mật khẩu?
                 </a>
             </div>
             <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••"
                 class="block w-full rounded-xl border px-4 py-2.5 text-sm transition
-                          focus:outline-none focus:ring-2 focus:ring-[#1a56db] focus:border-transparent
-                          {{ $errors->has('password') ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50' }}">
+                              focus:outline-none focus:ring-2 focus:ring-[#1a56db] focus:border-transparent
+                              {{ $errors->has('password') ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50' }}">
             @error('password')
                 <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
             @enderror
@@ -53,9 +53,9 @@
 
         {{-- Submit --}}
         <button type="submit" class="w-full py-2.5 rounded-xl text-sm font-semibold text-white
-                       bg-[#1a56db] hover:bg-[#1648c0] active:scale-[0.99]
-                       transition-all shadow-sm focus:outline-none focus:ring-2
-                       focus:ring-offset-2 focus:ring-[#1a56db]">
+                           bg-[#1a56db] hover:bg-[#1648c0] active:scale-[0.99]
+                           transition-all shadow-sm focus:outline-none focus:ring-2
+                           focus:ring-offset-2 focus:ring-[#1a56db]">
             Đăng nhập
         </button>
     </form>
@@ -69,8 +69,8 @@
 
     {{-- Google --}}
     <a href="{{ route('auth.google') }}" class="flex items-center justify-center gap-2.5 w-full py-2.5 px-4
-              rounded-xl border border-gray-200 bg-white text-sm font-medium
-              text-gray-700 hover:bg-gray-50 transition shadow-sm no-underline">
+                  rounded-xl border border-gray-200 bg-white text-sm font-medium
+                  text-gray-700 hover:bg-gray-50 transition shadow-sm no-underline">
         <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
             <path fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

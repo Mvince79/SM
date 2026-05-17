@@ -34,3 +34,13 @@ Route::middleware('guest')->prefix('auth')->name('auth.')->group(function () {
 Route::post('/auth/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('auth.logout');
+
+// ── Quên mật khẩu ────────────────────────────────────────────────────────────
+Route::get('/forgot-password', [AuthController::class, 'showForgotForm'])
+    ->name('password.request');
+Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])
+    ->name('password.email');
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])
+    ->name('password.reset');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+    ->name('password.update');

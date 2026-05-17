@@ -30,9 +30,9 @@
             </label>
             <input id="otp" name="otp" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
                 placeholder="_ _ _ _ _ _" autofocus class="block w-full rounded-xl border px-4 py-3 text-2xl font-bold tracking-[0.5em]
-                       text-center shadow-sm transition
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                       {{ $errors->has('otp') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
+                           text-center shadow-sm transition
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                           {{ $errors->has('otp') ? 'border-red-400 bg-red-50' : 'border-gray-300' }}">
             @error('otp')
                 <p class="mt-1.5 text-xs text-red-600 text-center">{{ $message }}</p>
             @enderror
@@ -40,9 +40,9 @@
 
         {{-- Submit --}}
         <button type="submit" class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl
-                   text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700
-                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-                   transition shadow-sm">
+                       text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700
+                       focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                       transition shadow-sm">
             Xác thực
         </button>
     </form>
