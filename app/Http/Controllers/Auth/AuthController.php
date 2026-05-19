@@ -38,6 +38,7 @@ class AuthController extends Controller
         $user = User::create([
             'full_name' => $request->full_name,
             'email' => $request->email,
+            'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'status' => 'PENDING',
             'role' => 'USER',
@@ -45,7 +46,10 @@ class AuthController extends Controller
 
         $this->otpService->send($user);
 
-        session(['otp_user_id' => $user->id]);
+        session([
+            'otp_user_id' => $user->id,
+            'otp_target' => $user->email,
+        ]);
 
         return redirect()->route('auth.otp.form')
             ->with('success', 'Tài khoản đã được tạo! Vui lòng kiểm tra email để lấy mã OTP.');
@@ -134,17 +138,23 @@ class AuthController extends Controller
                 ->with('error', "Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau {$seconds} giây.");
         }
 
-        $user = User::where('email', $request->email)->first();
+        $loginField = $request->email;
+        $user = User::where('email', $loginField)
+            ->orWhere('phone', $loginField)
+            ->first();
 
         if (!$user || !Hash::check($request->password, $user->password ?? '')) {
             $this->rateLimiter->hitLoginAttempt($request->email, $request->ip());
             return back()
                 ->withInput($request->only('email'))
-                ->withErrors(['email' => 'Email hoặc mật khẩu không đúng.']);
+                ->withErrors(['email' => 'Số điện thoại/Email hoặc mật khẩu không đúng.']);
         }
 
         if ($user->status === 'PENDING') {
-            session(['otp_user_id' => $user->id]);
+            session([
+                'otp_user_id' => $user->id,
+                'otp_target' => $user->email,
+            ]);
             $this->otpService->send($user);
             return redirect()->route('auth.otp.form')
                 ->with('error', 'Tài khoản chưa được xác thực. Mã OTP mới đã được gửi đến email của bạn.');

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Báo tin khẩn cấp — TìmTrẻ.vn</title>
+  
+  <!-- Tailwind CSS & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- Custom CSS for specialized animations -->
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Be Vietnam Pro', 'sans-serif'] },
+          colors: {
+            primary: { DEFAULT: '#FF3B30', dark: '#E02B20', light: '#FFF0EF' },
+            brand: { DEFAULT: '#0052FF', dark: '#003ECC', light: '#F0F4FF' },
+            success: { DEFAULT: '#12B76A', dark: '#027A48', light: '#ECFDF3' },
+            slate: {
+              50: '#FAFAFB',
+              100: '#F1F5F9',
+              200: '#E2E8F0',
+              300: '#CBD5E1',
+              400: '#94A3B8',
+              500: '#64748B',
+              600: '#475569',
+              700: '#334155',
+              800: '#1E293B',
+              900: '#0F172A'
+            }
+          },
+          boxShadow: {
+            'premium': '0 12px 30px -10px rgba(15, 23, 42, 0.04), 0 4px 12px -4px rgba(15, 23, 42, 0.02)',
+            'premium-hover': '0 20px 40px -12px rgba(15, 23, 42, 0.08), 0 8px 16px -6px rgba(15, 23, 42, 0.03)',
+            'glow-sos': '0 0 20px 2px rgba(255, 59, 48, 0.25)',
+            'glow-brand': '0 0 20px 2px rgba(0, 82, 255, 0.15)'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-sans bg-slate-50 text-slate-800 antialiased">
+
+<!-- TOPNAV -->
+<nav class="bg-white border-b border-slate-100 sticky top-0 z-50 shadow-sm transition-all duration-300">
+  <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
+    <a href="../index.html" class="flex items-center gap-2.5 group">
+      <div class="w-9 h-9 bg-gradient-to-tr from-primary to-primary-dark rounded-xl flex items-center justify-center text-white font-bold shadow-md shadow-primary/20 transform group-hover:scale-105 transition-all duration-300">
+        <span class="text-white font-extrabold text-base">T</span>
+      </div>
+      <span class="font-extrabold text-lg tracking-tight text-slate-900">TìmTrẻ<span class="text-primary">.vn</span></span>
+    </a>
+    
+    <div class="hidden md:flex items-center gap-8">
+      <a href="../index.html" class="text-sm font-medium text-slate-600 hover:text-primary py-1 transition-colors">Trang chủ</a>
+      <a href="danh-sach.html" class="text-sm font-medium text-slate-600 hover:text-primary py-1 transition-colors">Hồ sơ mất tích</a>
+      <a href="ban-do.html" class="text-sm font-medium text-slate-600 hover:text-primary py-1 transition-colors">Bản đồ tìm kiếm</a>
+      <a href="thong-ke.html" class="text-sm font-medium text-slate-600 hover:text-primary py-1 transition-colors">Thống kê</a>
+    </div>
+    
+    <div class="hidden md:flex items-center gap-3">
+      <a href="dang-nhap.html" class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors">Đăng nhập</a>
+      <a href="dang-tin.html" class="bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-primary-dark shadow-lg shadow-primary/10 hover:shadow-primary/25 hover:-translate-y-0.5 transition-all duration-300">+ Báo tin tìm con</a>
+    </div>
+    
+    <button onclick="toggleMenu()" class="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+  
+  <div id="mobile-menu" class="md:hidden hidden border-t border-slate-100 bg-white px-4 py-5 space-y-4 shadow-xl">
+    <a href="../index.html" class="block text-base font-semibold text-slate-700 hover:text-primary">Trang chủ</a>
+    <a href="danh-sach.html" class="block text-base font-semibold text-slate-700 hover:text-primary">Hồ sơ mất tích</a>
+    <a href="ban-do.html" class="block text-base font-semibold text-slate-700 hover:text-primary">Bản đồ tìm kiếm</a>
+    <a href="thong-ke.html" class="block text-base font-semibold text-slate-700 hover:text-primary">Thống kê</a>
+    <hr class="border-slate-100"/>
+    <div class="grid grid-cols-2 gap-3">
+      <a href="dang-nhap.html" class="text-center font-bold text-slate-700 hover:bg-slate-50 py-3 rounded-xl border border-slate-200 transition-all">Đăng nhập</a>
+      <a href="dang-tin.html" class="text-center font-bold bg-primary text-white py-3 rounded-xl hover:bg-primary-dark transition-all">+ Báo tin</a>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN WIZARD CONTAINER -->
+<main class="max-w-3xl mx-auto px-4 py-12">
+  <div class="bg-white border border-slate-200/85 rounded-3xl p-6 sm:p-10 shadow-premium space-y-8">
+    
+    <!-- Title & Reassuring text -->
+    <div class="text-center space-y-2.5">
+      <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">📢 Báo tin khẩn cấp — Giúp con về nhà</h1>
+      <p class="text-slate-500 text-xs sm:text-sm max-w-md mx-auto font-medium">Bố mẹ vui lòng bình tĩnh và điền đầy đủ các thông tin. Chúng tôi sẽ bảo mật và kiểm chứng nhanh chóng nhất trong 30 phút.</p>
+    </div>
+    
+    <!-- STEP PROGRESS BAR (Silicon Valley design) -->
+    <div class="relative flex items-center justify-between max-w-md mx-auto px-4 pt-2">
+      <!-- Background progress track line -->
+      <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-100 -translate-y-1/2 z-0"></div>
+      <!-- Active highlight line -->
+      <div id="step-line" class="absolute top-1/2 left-0 h-0.5 bg-primary -translate-y-1/2 z-0 transition-all duration-500" style="width: 0%;"></div>
+      
+      <!-- Step 1 Dot -->
+      <div class="relative z-10 flex flex-col items-center gap-1.5">
+        <div id="step1-dot" class="w-8 h-8 rounded-full bg-primary text-white font-extrabold text-xs flex items-center justify-center shadow-md shadow-primary/20 transition-colors duration-500">1</div>
+        <span class="text-[10px] font-black text-primary uppercase tracking-wide">Thông tin bé</span>
+      </div>
+
+      <!-- Step 2 Dot -->
+      <div class="relative z-10 flex flex-col items-center gap-1.5">
+        <div id="step2-dot" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 font-extrabold text-xs flex items-center justify-center transition-colors duration-500">2</div>
+        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wide">Đặc điểm & Ảnh</span>
+      </div>
+
+      <!-- Step 3 Dot -->
+      <div class="relative z-10 flex flex-col items-center gap-1.5">
+        <div id="step3-dot" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 font-extrabold text-xs flex items-center justify-center transition-colors duration-500">3</div>
+        <span class="text-[10px] font-black text-slate-400 uppercase tracking-wide">Liên hệ</span>
+      </div>
+    </div>
+    
+    <!-- THE FORM WIZARD -->
+    <form id="dangtin-form" class="pt-4 space-y-6">
+      
+      <!-- STAGE 1: METADATA -->
+      <div id="stage-1" class="space-y-5">
+        <h3 class="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2">Bước 1: Thông tin cơ bản của trẻ</h3>
+        
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Họ và tên của con *</label>
+            <input type="text" placeholder="Ví dụ: Nguyễn Văn An" required class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Tuổi (Hoặc năm sinh) *</label>
+            <input type="number" placeholder="Ví dụ: 8" required class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Giới tính *</label>
+            <select class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-bold text-slate-600">
+              <option>Nam</option>
+              <option>Nữ</option>
+            </select>
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Khu vực lạc mất *</label>
+            <input type="text" placeholder="Ví dụ: Chợ Bình Tây, Quận 6, TP.HCM" required class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Thời gian bị lạc *</label>
+            <input type="datetime-local" required class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-bold text-slate-600" />
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Tình trạng khẩn cấp *</label>
+            <select class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-bold text-slate-600">
+              <option>🆘 Tìm gấp khẩn cấp (Dưới 72 giờ qua)</option>
+              <option>🔍 Đang tiếp tục tìm kiếm</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGE 2: UPLOAD & DETAILED CHARACTERISTICS -->
+      <div id="stage-2" class="space-y-5 hidden">
+        <h3 class="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2">Bước 2: Đặc điểm nhận dạng & Tải ảnh</h3>
+        
+        <!-- Picture drag-and-drop zone -->
+        <div class="space-y-2">
+          <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Ảnh đại diện chân dung rõ mặt của con *</label>
+          <div class="border-2 border-dashed border-slate-200 hover:border-primary bg-slate-50 hover:bg-white rounded-3xl p-8 text-center transition-all duration-300 cursor-pointer relative" onclick="document.getElementById('file-input').click()">
+            <div class="space-y-2.5">
+              <div class="w-14 h-14 bg-primary/10 text-primary text-2xl flex items-center justify-center rounded-2xl mx-auto shadow-sm">📷</div>
+              <div>
+                <span class="text-xs font-black text-primary hover:underline">Ấn để chọn ảnh</span>
+                <span class="text-xs text-slate-400 font-medium"> hoặc kéo thả tập tin vào đây</span>
+              </div>
+              <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Hỗ trợ JPG, PNG · Khuyên dùng ảnh chụp trong 3 tháng qua</p>
+            </div>
+            <input type="file" id="file-input" class="hidden" onchange="previewImage(event)" />
+          </div>
+          
+          <!-- Image preview element -->
+          <div id="image-preview-box" class="hidden items-center gap-3 bg-slate-50 border border-slate-200 p-3.5 rounded-2xl max-w-sm">
+            <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 flex-shrink-0">
+              <img id="image-preview" src="#" class="w-full h-full object-cover" alt="" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <div id="image-name" class="font-bold text-xs text-slate-800 truncate">portrait.jpg</div>
+              <div class="text-[10px] text-slate-400 font-semibold mt-0.5">Sẵn sàng để tải lên</div>
+            </div>
+            <button type="button" onclick="removePreview()" class="text-slate-400 hover:text-primary transition-colors text-lg font-black px-1.5">×</button>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Chiều cao, Cân nặng (Ước lượng)</label>
+            <input type="text" placeholder="Ví dụ: Cao 1m20, Nặng 22kg" class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Trang phục khi bị lạc mất</label>
+            <input type="text" placeholder="Ví dụ: Áo thun xanh lá sọc trắng, quần đen" class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Mô tả đặc điểm nhận dạng chi tiết hoặc hoàn cảnh bị lạc *</label>
+          <textarea rows="4" required placeholder="Ghi cụ thể các chi tiết khác (Ví dụ: Bé nói giọng miền Nam, có vết sẹo nhỏ ở chân mày phải, nhút nhát khi gặp người lạ, hoàn cảnh bị lạc lúc đông người...)" class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium resize-none placeholder-slate-400"></textarea>
+        </div>
+      </div>
+
+      <!-- STAGE 3: CONTACT & SUBMIT -->
+      <div id="stage-3" class="space-y-5 hidden">
+        <h3 class="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2">Bước 3: Thông tin liên hệ của gia đình</h3>
+        
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Họ tên người báo tin (Cha/Mẹ/Người giám hộ) *</label>
+            <input type="text" placeholder="Ví dụ: Nguyễn Văn Bình" required class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Mối quan hệ với trẻ *</label>
+            <select class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-bold text-slate-600">
+              <option>Cha</option>
+              <option>Mẹ</option>
+              <option>Ông/Bà</option>
+              <option>Người giám hộ hợp pháp</option>
+              <option>Người phát hiện trẻ đi lạc</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Số điện thoại liên lạc chính xác *</label>
+            <input type="tel" placeholder="Ví dụ: 0905 123 456" required class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Địa chỉ liên hệ hiện tại</label>
+            <input type="text" placeholder="Ví dụ: 123 Lê Lợi, Đà Nẵng" class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+          </div>
+        </div>
+        
+        <div class="bg-primary/5 border border-primary/20 p-4.5 rounded-2xl space-y-3">
+          <label class="flex items-start gap-2.5 cursor-pointer">
+            <input type="checkbox" required class="mt-1 accent-primary" />
+            <span class="text-[11px] text-slate-600 leading-relaxed font-bold">
+              Tôi hoàn toàn cam kết các thông tin khai báo trên đây là hoàn toàn đúng sự thật và chịu mọi trách nhiệm trước pháp luật pháp lý Việt Nam về tính xác thực của thông tin. Tôi đồng ý để ban quản trị TìmTrẻ.vn liên hệ xác minh.
+            </span>
+          </label>
+        </div>
+      </div>
+      
+      <!-- BUTTON TRIGGERS -->
+      <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+        <button type="button" id="prev-btn" onclick="stageChange(-1)" class="hidden text-slate-500 hover:text-slate-800 text-sm font-bold py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
+          Quay lại
+        </button>
+        <span class="text-xs text-slate-400 font-bold" id="step-indicator">Bước 1 trên 3</span>
+        
+        <button type="button" id="next-btn" onclick="stageChange(1)" class="bg-primary text-white font-extrabold text-sm px-8 py-3 rounded-xl hover:bg-primary-dark transition-all shadow-md shadow-primary/10 hover:shadow-primary/20 ml-auto">
+          Tiếp theo
+        </button>
+      </div>
+      
+    </form>
+    
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-slate-900 text-slate-400 py-8 px-4 text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-12">
+  © 2026 TìmTrẻ.vn — <a href="../index.html" class="hover:text-white">Trang chủ</a> · Đường dây nóng: <strong class="text-white">1800 1234</strong>
+</footer>
+
+<script>
+  let currentStage = 1;
+  const totalStages = 3;
+  
+  function toggleMenu() {
+    document.getElementById('mobile-menu').classList.toggle('hidden');
+  }
+
+  function previewImage(event) {
+    const reader = new FileReader();
+    reader.onload = function(){
+      const output = document.getElementById('image-preview');
+      output.src = reader.result;
+      document.getElementById('image-preview-box').classList.remove('hidden');
+      document.getElementById('image-preview-box').classList.add('flex');
+      
+      const file = event.target.files[0];
+      if (file) {
+        document.getElementById('image-name').textContent = file.name;
+      }
+    };
+    reader.readAsDataURL(event.target.files[0]);
+  }
+
+  function removePreview() {
+    document.getElementById('image-preview').src = '#';
+    document.getElementById('image-preview-box').classList.add('hidden');
+    document.getElementById('image-preview-box').classList.remove('flex');
+    document.getElementById('file-input').value = "";
+  }
+
+  function stageChange(val) {
+    if (val === 1) {
+      // If Stage 1, check inputs basic required
+      if (currentStage === 1) {
+        const inputs = document.getElementById('stage-1').querySelectorAll('input[required]');
+        let valid = true;
+        inputs.forEach(input => {
+          if (!input.value) {
+            input.reportValidity();
+            valid = false;
+          }
+        });
+        if (!valid) return;
+      }
+      
+      // If Stage 2
+      if (currentStage === 2) {
+        const reqs = document.getElementById('stage-2').querySelectorAll('textarea[required]');
+        let valid = true;
+        reqs.forEach(req => {
+          if (!req.value) {
+            req.reportValidity();
+            valid = false;
+          }
+        });
+        if (!valid) return;
+      }
+    }
+    
+    currentStage += val;
+    
+    if (currentStage > totalStages) {
+      currentStage = totalStages;
+      // Handle actual form submission submit
+      alert('🎉 ĐĂNG TIN THÀNH CÔNG!\nBáo tin khẩn cấp của bạn đã được tiếp nhận.\nChúng tôi sẽ duyệt và thông báo qua số điện thoại của bạn sau tối đa 30 phút.');
+      window.location.href = '../index.html';
+      return;
+    }
+    
+    // Toggle Stage divs visibility
+    for (let i = 1; i <= totalStages; i++) {
+      const stageDiv = document.getElementById(`stage-${i}`);
+      if (i === currentStage) {
+        stageDiv.classList.remove('hidden');
+      } else {
+        stageDiv.classList.add('hidden');
+      }
+    }
+    
+    // Update step dots and progress lines
+    const linePercent = ((currentStage - 1) / (totalStages - 1)) * 100;
+    document.getElementById('step-line').style.width = `${linePercent}%`;
+    
+    for (let i = 1; i <= totalStages; i++) {
+      const dot = document.getElementById(`step${i}-dot`);
+      const span = dot.nextElementSibling;
+      if (i < currentStage) {
+        dot.className = "w-8 h-8 rounded-full bg-success text-white font-extrabold text-xs flex items-center justify-center shadow-md shadow-success/20 transition-colors duration-500";
+        span.className = "text-[10px] font-black text-success uppercase tracking-wide";
+        dot.innerHTML = "✓";
+      } else if (i === currentStage) {
+        dot.className = "w-8 h-8 rounded-full bg-primary text-white font-extrabold text-xs flex items-center justify-center shadow-md shadow-primary/20 transition-colors duration-500";
+        span.className = "text-[10px] font-black text-primary uppercase tracking-wide";
+        dot.innerHTML = i;
+      } else {
+        dot.className = "w-8 h-8 rounded-full bg-slate-100 text-slate-400 font-extrabold text-xs flex items-center justify-center transition-colors duration-500";
+        span.className = "text-[10px] font-black text-slate-400 uppercase tracking-wide";
+        dot.innerHTML = i;
+      }
+    }
+    
+    // Configure buttons states
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const indicator = document.getElementById('step-indicator');
+    
+    indicator.textContent = `Bước ${currentStage} trên ${totalStages}`;
+    
+    if (currentStage === 1) {
+      prevBtn.classList.add('hidden');
+    } else {
+      prevBtn.classList.remove('hidden');
+    }
+    
+    if (currentStage === totalStages) {
+      nextBtn.textContent = "Gửi báo tin khẩn";
+      nextBtn.className = "bg-success text-white font-extrabold text-sm px-8 py-3 rounded-xl hover:bg-success-dark transition-all shadow-md shadow-success/10 hover:shadow-success/20 ml-auto";
+    } else {
+      nextBtn.textContent = "Tiếp theo";
+      nextBtn.className = "bg-primary text-white font-extrabold text-sm px-8 py-3 rounded-xl hover:bg-primary-dark transition-all shadow-md shadow-primary/10 hover:shadow-primary/20 ml-auto";
+    }
+  }
+</script>
+</body>
+</html>

@@ -4,11 +4,6 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\GoogleController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Auth Routes — PB-03 (Email + OTP) + PB-04 (Google OAuth)
-|--------------------------------------------------------------------------
-*/
 
 Route::middleware('guest')->prefix('auth')->name('auth.')->group(function () {
 

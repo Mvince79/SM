@@ -1,0 +1,158 @@
+/* ===== TÌMTRẺ.VN PREMIUM UTILITIES & ANIMATIONS ===== */
+
+/* Custom premium color tokens (also available in Tailwind configuration) */
+:root {
+  --primary: #FF3B30;        /* Coral Crimson — Khẩn cấp & nhân văn */
+  --primary-dark: #E02B20;
+  --primary-light: #FFF0EF;
+  --brand: #0052FF;          /* Royal Trust Blue — Uy tín, bảo mật */
+  --brand-light: #F0F4FF;
+  --success: #12B76A;        /* Emerald — Bé đã về nhà an toàn */
+  --success-light: #ECFDF3;
+  --slate-900: #0F172A;      /* Velvet Slate — Tiêu đề & chữ chính */
+  --slate-600: #475569;      /* Slate body — Văn bản mô tả */
+  --slate-50: #FAFAFB;       /* Soft slate background */
+}
+
+/* Custom premium scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #E2E8F0;
+  border-radius: 9999px;
+  transition: background 0.3s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #CBD5E1;
+}
+
+/* Base resets & transitions */
+.transition-premium {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Pulsing rings for GPS Map Marker & SOS elements */
+@keyframes sos-pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+.pulse-dot {
+  position: relative;
+}
+.pulse-dot::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: rgba(255, 59, 48, 0.4);
+  animation: sos-pulse-ring 1.8s ease-out infinite;
+}
+
+/* Green pulse for Found elements */
+.pulse-found {
+  position: relative;
+}
+.pulse-found::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: rgba(18, 183, 106, 0.4);
+  animation: sos-pulse-ring 1.8s ease-out infinite;
+}
+
+/* AI face match scanning laser sweep */
+@keyframes ai-scan-line {
+  0% { top: 0%; opacity: 0.1; }
+  50% { opacity: 1; }
+  100% { top: 100%; opacity: 0.1; }
+}
+.ai-scanner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 94%, rgba(0, 82, 255, 0.4) 95%, rgba(0, 82, 255, 0.8) 100%);
+  pointer-events: none;
+  animation: ai-scan-line 3s linear infinite;
+  z-index: 10;
+}
+
+/* High-fidelity glassmorphism classes */
+.glass-premium {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-dark {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Leaflet Custom Overrides for Modern Look */
+.leaflet-container {
+  font-family: 'Be Vietnam Pro', sans-serif !important;
+  background: var(--slate-50) !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(12px);
+  border-radius: 20px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  padding: 4px;
+}
+
+.leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.leaflet-popup-close-button {
+  top: 10px !important;
+  right: 10px !important;
+  color: #94A3B8 !important;
+  font-size: 16px !important;
+  transition: color 0.2s ease;
+}
+.leaflet-popup-close-button:hover {
+  color: #475569 !important;
+}
+
+.leaflet-bar {
+  border: none !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+.leaflet-bar a {
+  background: white !important;
+  border-bottom: 1px solid #F1F5F9 !important;
+  color: #475569 !important;
+  transition: all 0.2s ease;
+}
+.leaflet-bar a:hover {
+  background: #F8FAFC !important;
+  color: var(--primary) !important;
+}
+
+/* Premium Skeleton Shimmer */
+@keyframes shimmer-sweep {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.6s infinite;
+  border-radius: 12px;
+}

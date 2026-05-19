@@ -27,9 +27,17 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->brandName('TìmTrẻ.vn Admin')
+            ->brandLogo(null) 
+            ->favicon(null)
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::hex('#FF3B30'),
+                'danger' => Color::hex('#FF3B30'),
+                'success' => Color::hex('#12B76A'),
+                'info' => Color::hex('#0052FF'),
+                'warning' => Color::hex('#F59E0B'),
             ])
+            ->darkMode(false)
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\Filament\Admin\Pages')
             ->pages([

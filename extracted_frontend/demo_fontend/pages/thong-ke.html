@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thống kê số liệu — TìmTrẻ.vn</title>
+  
+  <!-- Tailwind CSS & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- Chart.js Library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Custom CSS for specialized animations -->
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Be Vietnam Pro', 'sans-serif'] },
+          colors: {
+            primary: { DEFAULT: '#FF3B30', dark: '#E02B20', light: '#FFF0EF' },
+            brand: { DEFAULT: '#0052FF', dark: '#003ECC', light: '#F0F4FF' },
+            success: { DEFAULT: '#12B76A', dark: '#027A48', light: '#ECFDF3' },
+            slate: {
+              50: '#FAFAFB',
+              100: '#F1F5F9',
+              200: '#E2E8F0',
+              300: '#CBD5E1',
+              400: '#94A3B8',
+              500: '#64748B',
+              600: '#475569',
+              700: '#334155',
+              800: '#1E293B',
+              900: '#0F172A'
+            }
+          },
+          boxShadow: {
+            'premium': '0 12px 30px -10px rgba(15, 23, 42, 0.04), 0 4px 12px -4px rgba(15, 23, 42, 0.02)',
+            'premium-hover': '0 20px 40px -12px rgba(15, 23, 42, 0.08), 0 8px 16px -6px rgba(15, 23, 42, 0.03)',
+            'glow-sos': '0 0 20px 2px rgba(255, 59, 48, 0.25)',
+            'glow-brand': '0 0 20px 2px rgba(0, 82, 255, 0.15)'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-sans bg-slate-50 text-slate-800 antialiased">
+
+<!-- TOPNAV -->
+<nav class="bg-white border-b border-slate-100 sticky top-0 z-50 shadow-sm transition-all duration-300">
+  <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
+    <a href="../index.html" class="flex items-center gap-2.5 group">
+      <div class="w-9 h-9 bg-gradient-to-tr from-primary to-primary-dark rounded-xl flex items-center justify-center text-white font-bold shadow-md shadow-primary/20 transform group-hover:scale-105 transition-all duration-300">
+        <span class="text-white font-extrabold text-base">T</span>
+      </div>
+      <span class="font-extrabold text-lg tracking-tight text-slate-900">TìmTrẻ<span class="text-primary">.vn</span></span>
+    </a>
+    
+    <div class="hidden md:flex items-center gap-8">
+      <a href="../index.html" class="text-sm font-medium text-slate-600 hover:text-primary py-1 transition-colors">Trang chủ</a>
+      <a href="danh-sach.html" class="text-sm font-medium text-slate-600 hover:text-primary py-1 transition-colors">Hồ sơ mất tích</a>
+      <a href="ban-do.html" class="text-sm font-medium text-slate-600 hover:text-primary py-1 transition-colors">Bản đồ tìm kiếm</a>
+      <a href="thong-ke.html" class="text-sm font-bold text-primary relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:rounded-full">Thống kê</a>
+    </div>
+    
+    <div class="hidden md:flex items-center gap-3">
+      <a href="dang-nhap.html" class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors">Đăng nhập</a>
+      <a href="dang-tin.html" class="bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-primary-dark shadow-lg shadow-primary/10 hover:shadow-primary/25 hover:-translate-y-0.5 transition-all duration-300">+ Báo tin tìm con</a>
+    </div>
+    
+    <button onclick="toggleMenu()" class="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </div>
+  
+  <div id="mobile-menu" class="md:hidden hidden border-t border-slate-100 bg-white px-4 py-5 space-y-4 shadow-xl">
+    <a href="../index.html" class="block text-base font-semibold text-slate-700 hover:text-primary">Trang chủ</a>
+    <a href="danh-sach.html" class="block text-base font-semibold text-slate-700 hover:text-primary">Hồ sơ mất tích</a>
+    <a href="ban-do.html" class="block text-base font-semibold text-slate-700 hover:text-primary">Bản đồ tìm kiếm</a>
+    <a href="thong-ke.html" class="block text-base font-bold text-primary">Thống kê</a>
+    <hr class="border-slate-100"/>
+    <div class="grid grid-cols-2 gap-3">
+      <a href="dang-nhap.html" class="text-center font-bold text-slate-700 hover:bg-slate-50 py-3 rounded-xl border border-slate-200 transition-all">Đăng nhập</a>
+      <a href="dang-tin.html" class="text-center font-bold bg-primary text-white py-3 rounded-xl hover:bg-primary-dark transition-all">+ Báo tin</a>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="bg-white border-b border-slate-100 py-8 px-4">
+  <div class="max-w-7xl mx-auto space-y-2">
+    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Thống kê số liệu công khai</h1>
+    <p class="text-slate-500 text-sm font-semibold">Minh bạch thông tin hoạt động hỗ trợ cộng đồng tìm kiếm trẻ lạc tại Việt Nam</p>
+  </div>
+</div>
+
+<!-- MAIN ANALYTICS DASHBOARD -->
+<main class="max-w-7xl mx-auto px-4 py-10 space-y-8">
+  
+  <!-- KPI Stripe-like CARDS GRID -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    
+    <!-- KPI 1 -->
+    <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium space-y-2">
+      <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Tổng ca tiếp nhận</div>
+      <div class="text-3xl font-black text-slate-900 tracking-tight">1.602</div>
+      <div class="text-[10px] font-bold text-slate-400">
+        <span class="text-success-dark font-extrabold">↑ +12%</span> so với tháng trước
+      </div>
+    </div>
+
+    <!-- KPI 2 -->
+    <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium space-y-2">
+      <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Ca đã tìm thấy</div>
+      <div class="text-3xl font-black text-success tracking-tight">1.247</div>
+      <div class="text-[10px] font-bold text-slate-400">
+        Đã bàn giao về gia đình an toàn
+      </div>
+    </div>
+
+    <!-- KPI 3 -->
+    <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium space-y-2">
+      <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Ca đang tìm gấp</div>
+      <div class="text-3xl font-black text-primary tracking-tight">355</div>
+      <div class="text-[10px] font-bold text-slate-400 font-bold">
+        🔴 72 giờ qua: 5 trẻ mới lạc
+      </div>
+    </div>
+
+    <!-- KPI 4 -->
+    <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium space-y-2">
+      <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Thời gian đoàn tụ</div>
+      <div class="text-3xl font-black text-brand tracking-tight">48 giờ</div>
+      <div class="text-[10px] font-bold text-slate-400">
+        Tính từ lúc phát báo động
+      </div>
+    </div>
+    
+  </div>
+  
+  <!-- CHARTS AREA -->
+  <div class="grid lg:grid-cols-12 gap-6">
+    
+    <!-- Left: Line chart trends (8 cols) -->
+    <div class="lg:col-span-8 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-slate-800 text-sm uppercase tracking-wider">Xu hướng tìm kiếm thành công theo tháng</h3>
+        <span class="bg-brand/10 text-brand text-[9px] font-black uppercase px-2.5 py-1 rounded-full">Dữ liệu 2026</span>
+      </div>
+      
+      <!-- Chart canvas -->
+      <div class="h-80 relative w-full">
+        <canvas id="lineChart" class="w-full h-full"></canvas>
+      </div>
+    </div>
+    
+    <!-- Right: Donut classifications (4 cols) -->
+    <div class="lg:col-span-4 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-extrabold text-slate-800 text-sm uppercase tracking-wider">Tỷ lệ theo khu vực chính</h3>
+      </div>
+      
+      <!-- Chart canvas -->
+      <div class="h-64 relative flex items-center justify-center">
+        <canvas id="donutChart"></canvas>
+      </div>
+      
+      <div class="grid grid-cols-3 gap-2 text-center text-[10px] pt-2">
+        <div>
+          <span class="font-black text-primary">● TP.HCM</span>
+          <div class="font-extrabold text-slate-650 mt-0.5">45%</div>
+        </div>
+        <div>
+          <span class="font-black text-brand">● Hà Nội</span>
+          <div class="font-extrabold text-slate-650 mt-0.5">30%</div>
+        </div>
+        <div>
+          <span class="font-black text-slate-400">● Tỉnh khác</span>
+          <div class="font-extrabold text-slate-650 mt-0.5">25%</div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-slate-900 text-slate-400 py-8 px-4 text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+  © 2026 TìmTrẻ.vn — <a href="../index.html" class="hover:text-white">Trang chủ</a> · Đường dây nóng: 1800 1234
+</footer>
+
+<script>
+  function toggleMenu() {
+    document.getElementById('mobile-menu').classList.toggle('hidden');
+  }
+
+  // Set chart.js default font family to match theme
+  Chart.defaults.font.family = "'Be Vietnam Pro', sans-serif";
+  Chart.defaults.font.weight = '600';
+  Chart.defaults.color = '#94A3B8';
+
+  // Line Chart Implementation
+  const ctxLine = document.getElementById('lineChart').getContext('2d');
+  new Chart(ctxLine, {
+    type: 'line',
+    data: {
+      labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+      datasets: [{
+        label: 'Ca đã đoàn tụ an toàn',
+        data: [120, 150, 180, 220, 260, 312],
+        borderColor: '#12B76A', // Emerald success color
+        backgroundColor: 'rgba(18, 183, 106, 0.05)',
+        fill: true,
+        tension: 0.35,
+        borderWidth: 3,
+        pointBackgroundColor: '#12B76A',
+        pointRadius: 4
+      }, {
+        label: 'Ca tiếp nhận mới',
+        data: [140, 180, 210, 245, 290, 345],
+        borderColor: '#FF3B30', // Primary Coral red
+        backgroundColor: 'transparent',
+        tension: 0.35,
+        borderWidth: 2,
+        borderDash: [5, 5],
+        pointBackgroundColor: '#FF3B30',
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: { boxWidth: 12, padding: 20, color: '#475569' }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: '#F1F5F9' } }
+      }
+    }
+  });
+
+  // Donut Chart Implementation
+  const ctxDonut = document.getElementById('donutChart').getContext('2d');
+  new Chart(ctxDonut, {
+    type: 'doughnut',
+    data: {
+      labels: ['TP.HCM', 'Hà Nội', 'Tỉnh thành khác'],
+      datasets: [{
+        data: [45, 30, 25],
+        backgroundColor: ['#FF3B30', '#0052FF', '#94A3B8'], // Coral Red, Royal Blue, Slate Grey
+        borderWidth: 3,
+        borderColor: '#ffffff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      cutout: '70%'
+    }
+  });
+</script>
+</body>
+</html>

@@ -2,11 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
+
 
 // ── Auth (register, login, OTP, Google OAuth, logout) ──────────────────────
 require __DIR__ . '/auth.php';
@@ -24,5 +20,12 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
         return view('profile.index');
     })->name('profile.index');
 
-    // Các route Sprint 1+ sẽ thêm vào đây...
+    
 });
+
+
+Route::get('/ho-so', fn() => abort(404))->name('cases.index');
+Route::get('/ho-so/tao', fn() => abort(404))->name('cases.create');
+Route::get('/ban-do', fn() => abort(404))->name('map.index');
+Route::get('/thong-ke', fn() => abort(404))->name('stats.index');
+Route::get('/ho-so-ca-nhan', fn() => abort(404))->name('profile.index');

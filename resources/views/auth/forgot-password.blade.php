@@ -1,38 +1,47 @@
 @extends('auth.layouts.auth')
 
 @section('title', 'Quên mật khẩu')
-@section('subtitle', 'Nhập email để nhận link đặt lại mật khẩu')
 
 @section('content')
 
-    <form method="POST" action="{{ route('password.email') }}" novalidate>
+    {{-- Title block --}}
+    <div class="text-center space-y-2">
+        <h2 class="auth-title">Quên mật khẩu?</h2>
+        <p class="auth-subtitle">Nhập email để nhận hướng dẫn đặt lại mật khẩu</p>
+    </div>
+
+    @if(session('status'))
+        <div class="flash-success">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ session('status') }}</span>
+        </div>
+    @endif
+
+    {{-- Form --}}
+    <form method="POST" action="{{ route('password.email') }}" class="space-y-4" novalidate>
         @csrf
 
-        <div class="mb-5">
-            <label for="email" class="block text-sm font-semibold text-gray-700 mb-1.5">
-                Email <span class="text-red-500">*</span>
-            </label>
-            <input id="email" name="email" type="email" autocomplete="email" value="{{ old('email') }}"
-                placeholder="example@gmail.com" autofocus class="block w-full rounded-xl border px-4 py-2.5 text-sm transition
-                           focus:outline-none focus:ring-2 focus:ring-[#1a56db] focus:border-transparent
-                           {{ $errors->has('email') ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50' }}">
+        <div class="form-field">
+            <label class="form-label">Địa chỉ email</label>
+            <input name="email" type="email" required autocomplete="email" value="{{ old('email') }}"
+                placeholder="Ví dụ: binhnguyen@gmail.com"
+                class="form-input {{ $errors->has('email') ? 'form-input-error' : '' }}" autofocus>
             @error('email')
-                <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
+                <p class="form-error">{{ $message }}</p>
             @enderror
         </div>
 
-        <button type="submit" class="w-full py-2.5 rounded-xl text-sm font-semibold text-white
-                       bg-[#1a56db] hover:bg-[#1648c0] active:scale-[0.99]
-                       transition-all shadow-sm focus:outline-none focus:ring-2
-                       focus:ring-offset-2 focus:ring-[#1a56db]">
-            Gửi link đặt lại mật khẩu
+        <button type="submit" class="btn-primary">
+            Gửi hướng dẫn đặt lại mật khẩu
         </button>
     </form>
 
-    <p class="mt-6 text-center text-sm text-gray-500">
-        <a href="{{ route('auth.login') }}" class="font-semibold text-[#1a56db] hover:underline">
-            ← Quay lại đăng nhập
-        </a>
+    {{-- Back to login --}}
+    <p class="auth-footer-link">
+        Nhớ lại rồi? <a href="{{ route('auth.login') }}">Quay lại đăng nhập</a>
     </p>
 
 @endsection

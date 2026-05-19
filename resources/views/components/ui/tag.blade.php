@@ -1,18 +1,24 @@
-@props(['type' => 'searching'])
+{{--
+┌──────────────────────────────────────────────────────────┐
+│ <x-ui.tag> │
+    │ Props: │
+    │ $variant — 'urgent' | 'found' | 'brand' | 'default' │
+    └──────────────────────────────────────────────────────────┘
+    --}}
+
+    @props([
+        'variant' => 'default',
+    ])
 
 @php
-    $class = match ($type) {
-        'urgent' => 'tag tag--urgent',
-        'found' => 'tag tag--found',
-        default => 'tag tag--searching',
-    };
-    $label = match ($type) {
-        'urgent' => 'Khẩn cấp',
-        'found' => 'Đã tìm thấy',
-        default => 'Đang tìm',
+    $classes = match ($variant) {
+        'urgent' => 'badge badge-urgent',
+        'found' => 'badge badge-found',
+        'brand' => 'badge badge-brand',
+        default => 'badge badge-default',
     };
 @endphp
-
-<span {{ $attributes->merge(['class' => $class]) }}>
-    {{ $slot->isEmpty() ? $label : $slot }}
+    
+    <span {{ $attributes->merge(['class' => $classes]) }}>
+    {{ $slot }}
 </span>

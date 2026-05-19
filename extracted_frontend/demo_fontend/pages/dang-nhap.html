@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đăng nhập tài khoản — TìmTrẻ.vn</title>
+  
+  <!-- Tailwind CSS & Google Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- Custom CSS for specialized animations -->
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Be Vietnam Pro', 'sans-serif'] },
+          colors: {
+            primary: { DEFAULT: '#FF3B30', dark: '#E02B20', light: '#FFF0EF' },
+            brand: { DEFAULT: '#0052FF', dark: '#003ECC', light: '#F0F4FF' },
+            success: { DEFAULT: '#12B76A', dark: '#027A48', light: '#ECFDF3' },
+            slate: {
+              50: '#FAFAFB',
+              100: '#F1F5F9',
+              200: '#E2E8F0',
+              300: '#CBD5E1',
+              400: '#94A3B8',
+              500: '#64748B',
+              600: '#475569',
+              700: '#334155',
+              800: '#1E293B',
+              900: '#0F172A'
+            }
+          },
+          boxShadow: {
+            'premium': '0 12px 30px -10px rgba(15, 23, 42, 0.04), 0 4px 12px -4px rgba(15, 23, 42, 0.02)',
+            'premium-hover': '0 20px 40px -12px rgba(15, 23, 42, 0.08), 0 8px 16px -6px rgba(15, 23, 42, 0.03)',
+            'glow-sos': '0 0 20px 2px rgba(255, 59, 48, 0.25)',
+            'glow-brand': '0 0 20px 2px rgba(0, 82, 255, 0.15)'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-sans bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+<!-- TOPNAV -->
+<nav class="bg-white border-b border-slate-100 flex-shrink-0 z-50 shadow-sm">
+  <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
+    <a href="../index.html" class="flex items-center gap-2.5 group">
+      <div class="w-8.5 h-8.5 bg-gradient-to-tr from-primary to-primary-dark rounded-lg flex items-center justify-center text-white font-bold shadow-md shadow-primary/20 transform group-hover:scale-105 transition-all">
+        <span class="text-white font-black text-sm">T</span>
+      </div>
+      <span class="font-black text-base tracking-tight text-slate-900">TìmTrẻ<span class="text-primary">.vn</span></span>
+    </a>
+    
+    <a href="../index.html" class="text-xs font-bold text-slate-500 hover:text-primary transition-colors flex items-center gap-1">
+      ← Về trang chủ
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN LOGIN CARD -->
+<main class="flex-1 flex items-center justify-center p-4">
+  <div class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-10 shadow-premium max-w-md w-full space-y-6">
+    
+    <!-- Title -->
+    <div class="text-center space-y-2">
+      <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Đăng nhập tài khoản</h2>
+      <p class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Kết nối tình nguyện viên TìmTrẻ.vn</p>
+    </div>
+    
+    <!-- Form -->
+    <form class="space-y-4" onsubmit="event.preventDefault(); alert('🎉 ĐĂNG NHẬP THÀNH CÔNG!\nChào mừng Nguyễn Bình quay lại.'); window.location.href='ho-so.html'">
+      <div class="space-y-1.5">
+        <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Số điện thoại / Email</label>
+        <input type="text" required placeholder="Ví dụ: 0905 123 456" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+      </div>
+
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Mật khẩu</label>
+          <a href="#" class="text-[10px] font-extrabold text-primary hover:underline uppercase tracking-wider">Quên mật khẩu?</a>
+        </div>
+        <input type="password" required placeholder="••••••••" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+      </div>
+      
+      <!-- Primary login button -->
+      <button class="w-full bg-primary text-white font-extrabold text-xs py-3.5 rounded-xl hover:bg-primary-dark transition-all shadow-md shadow-primary/10 uppercase tracking-widest pt-4">
+        Đăng nhập
+      </button>
+    </form>
+    
+    <!-- Divider -->
+    <div class="relative flex py-2 items-center">
+      <div class="flex-grow border-t border-slate-100"></div>
+      <span class="flex-shrink mx-4 text-[10px] font-extrabold text-slate-300 uppercase tracking-widest">Hoặc đăng nhập nhanh</span>
+      <div class="flex-grow border-t border-slate-100"></div>
+    </div>
+    
+    <!-- OAuth Shortcuts -->
+    <div class="grid grid-cols-2 gap-3">
+      <button onclick="alert('Đang kết nối API Google')" class="flex items-center justify-center gap-2 border border-slate-200 py-3 rounded-xl hover:bg-slate-50 transition-colors shadow-sm text-xs font-bold text-slate-700">
+        Google
+      </button>
+      <button onclick="alert('Đang kết nối API Facebook')" class="flex items-center justify-center gap-2 border border-slate-200 py-3 rounded-xl hover:bg-slate-50 transition-colors shadow-sm text-xs font-bold text-[#1877F2]">
+        Facebook
+      </button>
+    </div>
+    
+    <!-- Switch to register link -->
+    <p class="text-center text-xs font-semibold text-slate-400">
+      Chưa có tài khoản? <a href="dang-ky.html" class="text-primary font-black hover:underline">Đăng ký ngay</a>
+    </p>
+    
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-slate-900 text-slate-400 py-6 px-4 text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+  © 2026 TìmTrẻ.vn · Đường dây nóng: 1800 1234
+</footer>
+
+</body>
+</html>

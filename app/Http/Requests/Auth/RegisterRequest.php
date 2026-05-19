@@ -17,6 +17,7 @@ class RegisterRequest extends FormRequest
         return [
             'full_name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email:rfc,dns', 'max:191', 'unique:users,email'],
+            'phone' => ['required', 'string', 'max:15'],
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ];
     }
@@ -29,6 +30,8 @@ class RegisterRequest extends FormRequest
             'email.required' => 'Vui lòng nhập email.',
             'email.email' => 'Email không hợp lệ.',
             'email.unique' => 'Email này đã được đăng ký.',
+            'phone.required' => 'Vui lòng nhập số điện thoại.',
+            'phone.max' => 'Số điện thoại tối đa 15 ký tự.',
             'password.required' => 'Vui lòng nhập mật khẩu.',
             'password.confirmed' => 'Xác nhận mật khẩu không khớp.',
             'password.min' => 'Mật khẩu phải có ít nhất 8 ký tự.',
