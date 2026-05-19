@@ -8,8 +8,8 @@
         
         {{-- Animated Icon --}}
         <div class="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center animate-bounce">
-            <svg class="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            <svg class="w-10 h-10 text-primary" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A1.5 1.5 0 0019.5 21l.75-.75a1.5 1.5 0 000-2.25l-5.83-5.83M11.42 15.17l2.83-2.83m-2.83 2.83l-5.83-5.83M11.42 15.17l-5.83 5.83A1.5 1.5 0 013 21l-.75-.75a1.5 1.5 0 010-2.25l5.83-5.83M14.25 12.34l5.83-5.83A1.5 1.5 0 0021 4.5l-.75-.75a1.5 1.5 0 00-2.25 0l-5.83 5.83m0 0l-2.83 2.83m0-2.83l-5.83-5.83A1.5 1.5 0 003 3.75l-.75.75a1.5 1.5 0 000 2.25l5.83 5.83" />
             </svg>
         </div>
 

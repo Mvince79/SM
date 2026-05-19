@@ -44,8 +44,11 @@
         <div class="hidden md:flex items-center gap-4">
             @auth
                 @if(Auth::user()->isAdmin())
-                    <a href="/admin" class="text-sm font-bold text-brand hover:text-brand-dark transition-colors mr-2 flex items-center gap-1">
-                        🛡️ Quản trị
+                    <a href="/admin" class="text-sm font-bold text-brand hover:text-brand-dark transition-colors mr-2 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-brand" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                        </svg>
+                        Quản trị
                     </a>
                 @endif
                 <a href="{{ route('profile.index') }}"
@@ -99,8 +102,11 @@
             @auth
                 @if(Auth::user()->isAdmin())
                     <a href="/admin"
-                        class="col-span-2 text-center font-bold bg-brand text-white py-3 rounded-xl hover:bg-brand-dark transition-all flex items-center justify-center gap-1">
-                        🛡️ Bảng điều khiển Quản trị
+                        class="col-span-2 text-center font-bold bg-brand text-white py-3 rounded-xl hover:bg-brand-dark transition-all flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                        </svg>
+                        Bảng điều khiển Quản trị
                     </a>
                 @endif
                 <a href="{{ route('profile.index') }}"
