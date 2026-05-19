@@ -11,5 +11,18 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ProvincesSeeder::class,
         ]);
+
+        // Seed default Admin Account
+        \App\Models\User::firstOrCreate(
+            ['email' => 'admin@timkiemtreem.vn'],
+            [
+                'full_name' => 'Hệ thống Admin',
+                'phone' => '0905123456',
+                'password' => \Illuminate\Support\Facades\Hash::make('Admin@123456'),
+                'role' => 'ADMIN',
+                'status' => 'ACTIVE',
+                'email_verified_at' => now(),
+            ]
+        );
     }
 }

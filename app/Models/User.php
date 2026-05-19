@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable, SoftDeletes;
 
@@ -71,6 +73,11 @@ class User extends Authenticatable
         return in_array($this->role, ['ADMIN', 'MODERATOR']);
     }
 
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->isAdmin();
+    }
+
     public function isBanned(): bool
     {
         return $this->status === 'BANNED';
@@ -98,6 +105,11 @@ class User extends Authenticatable
         // UI Avatar fallback — tạo từ initials
         $name = urlencode($this->full_name ?? 'User');
         return "https://ui-avatars.com/api/?name={$name}&background=2563eb&color=fff&size=128&bold=true";
+    }
+
+    public function getNameAttribute(): ?string
+    {
+        return $this->full_name;
     }
 
     // ─── Relationships ────────────────────────────────────────────────────────

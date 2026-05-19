@@ -43,9 +43,14 @@
         {{-- ── Desktop CTA ── --}}
         <div class="hidden md:flex items-center gap-4">
             @auth
+                @if(Auth::user()->isAdmin())
+                    <a href="/admin" class="text-sm font-bold text-brand hover:text-brand-dark transition-colors mr-2 flex items-center gap-1">
+                        🛡️ Quản trị
+                    </a>
+                @endif
                 <a href="{{ route('profile.index') }}"
                     class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors">
-                    {{ Auth::user()->name }}
+                    {{ Auth::user()->full_name }}
                 </a>
                 <form method="POST" action="{{ route('auth.logout') }}" class="inline">
                     @csrf
@@ -92,6 +97,12 @@
 
         <div class="grid grid-cols-2 gap-3">
             @auth
+                @if(Auth::user()->isAdmin())
+                    <a href="/admin"
+                        class="col-span-2 text-center font-bold bg-brand text-white py-3 rounded-xl hover:bg-brand-dark transition-all flex items-center justify-center gap-1">
+                        🛡️ Bảng điều khiển Quản trị
+                    </a>
+                @endif
                 <a href="{{ route('profile.index') }}"
                     class="text-center font-bold text-slate-700 hover:bg-slate-50 py-3 rounded-xl border border-slate-200 transition-all">
                     Hồ sơ

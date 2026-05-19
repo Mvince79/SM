@@ -22,7 +22,7 @@ class UserFactory extends Factory
             'phone' => fake()->phoneNumber(),
             'otp_code' => null,
             'otp_expires_at' => null,
-            'role' => 'user',
+            'role' => 'USER',
             'status' => 'ACTIVE',
             'remember_token' => Str::random(10),
         ];
