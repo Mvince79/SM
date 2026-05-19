@@ -54,6 +54,7 @@ cd SM
 
 ```bash
 composer install
+npm install
 ```
 
 ### Bước 3: Tạo file môi trường
@@ -99,9 +100,13 @@ Kết quả mong đợi:
 - ✅ 15 bảng được tạo
 - ✅ 34 tỉnh thành được seed vào bảng `provinces`
 
-### Bước 7: Khởi động server
+### Bước 7: Biên dịch assets & Khởi động server
 
 ```bash
+# Biên dịch assets (hoặc chạy 'npm run dev' trong lúc phát triển)
+npm run build
+
+# Khởi động máy chủ ảo
 php artisan serve
 ```
 
