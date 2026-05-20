@@ -10,8 +10,8 @@
     // $active = request()->routeIs(...func_get_args()) ? 'active' : '';
     $navLinks = [
         ['route' => 'home', 'label' => 'Trang chủ', 'href' => route('home')],
-        ['route' => 'cases.index', 'label' => 'Hồ sơ mất tích', 'href' => '#'],
-        ['route' => 'map.index', 'label' => 'Bản đồ tìm kiếm', 'href' => '#'],
+        ['route' => 'missing.index', 'label' => 'Hồ sơ mất tích', 'href' => route('missing.index')],
+        ['route' => 'map.index', 'label' => 'Bản đồ tìm kiếm', 'href' => route('map.index')],
         ['route' => 'stats.index', 'label' => 'Thống kê', 'href' => '#'],
     ];
 @endphp

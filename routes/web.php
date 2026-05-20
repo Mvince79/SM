@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Client\MapController;
+use App\Http\Controllers\Client\MissingController;
+use App\Http\Controllers\Client\StatsController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -12,15 +15,25 @@ Route::get('/', function () {
     return view('home');
 })->name('home');
 
+Route::prefix('missing')->name('missing.')->group(function () {
+    Route::get('/', [MissingController::class, 'index'])->name('index');
+    Route::get('/detail', [MissingController::class, 'detail'])->name('detail');
+});
+
+Route::prefix('map')->name('map.')->group(function () {
+    Route::get('/', [MapController::class, 'index'])->name('index');
+});
+
+Route::prefix('stats')->name('stats.')->group(function () {
+    Route::get('/', [StatsController::class, 'index'])->name('index');
+});
+
 // ── Routes cần đăng nhập + email đã xác thực + không bị BAN ────────────────
 Route::middleware(['auth', 'email.verified'])->group(function () {
-
     // Profile (Sprint 1 — PB-18)
     Route::get('/profile', function () {
         return view('profile.index');
     })->name('profile.index');
-
-    
 });
 
 
