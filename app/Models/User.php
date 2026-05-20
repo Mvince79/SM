@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 
@@ -99,6 +100,21 @@ class User extends Authenticatable implements FilamentUser
     public function getAvatarUrlAttribute($value): string
     {
         if ($value) {
+            // If value is a full URL, try to extract path to compute cache-bust param
+            $path = $value;
+            if (str_starts_with($value, 'http')) {
+                $parsed = parse_url($value, PHP_URL_PATH) ?: $value;
+                $path = $parsed;
+            }
+
+            if (str_contains($path, '/storage/')) {
+                $relative = ltrim(str_replace('/storage/', '', $path), '/');
+                if (Storage::disk('public')->exists($relative)) {
+                    $ts = Storage::disk('public')->lastModified($relative);
+                    return Storage::disk('public')->url($relative) . '?v=' . $ts;
+                }
+            }
+
             return $value;
         }
 

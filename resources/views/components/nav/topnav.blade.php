@@ -51,16 +51,26 @@
                         Quản trị
                     </a>
                 @endif
-                <a href="{{ route('profile.index') }}"
-                    class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors">
-                    {{ Auth::user()->full_name }}
-                </a>
-                <form method="POST" action="{{ route('auth.logout') }}" class="inline">
-                    @csrf
-                    <button type="submit" class="text-sm font-semibold text-slate-400 hover:text-primary transition-colors">
-                        Đăng xuất
+                <div class="relative">
+                    <button type="button" onclick="document.getElementById('user-menu').classList.toggle('hidden')"
+                        class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors">
+                        <img src="{{ Auth::user()->avatar_url }}" alt="avatar" class="w-8 h-8 rounded-full object-cover border" />
+                        <span class="text-sm font-semibold text-slate-700">{{ Auth::user()->full_name }}</span>
+                        <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
                     </button>
-                </form>
+
+                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50">
+                        <a href="{{ route('profile.index') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Hồ sơ cá nhân</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Cài đặt</a>
+                        <div class="border-t"></div>
+                        <form method="POST" action="{{ route('auth.logout') }}">
+                            @csrf
+                            <button type="submit" class="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50">Đăng xuất</button>
+                        </form>
+                    </div>
+                </div>
             @else
                 <a href="{{ route('auth.login') }}"
                     class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors">

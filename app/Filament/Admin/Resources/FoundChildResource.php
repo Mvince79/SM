@@ -1,0 +1,117 @@
+<?php
+
+namespace App\Filament\Admin\Resources;
+
+use App\Filament\Admin\Resources\FoundChildResource\Pages;
+use App\Models\FoundChild;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\BadgeColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use UnitEnum;
+use BackedEnum;
+
+class FoundChildResource extends Resource
+{
+    protected static ?string $model = FoundChild::class;
+
+    protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static UnitEnum|string|null $navigationGroup = 'Nội dung';
+
+    public static function getModelLabel(): string
+    {
+        return 'hồ sơ trẻ tìm được';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'hồ sơ trẻ tìm được';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Hồ sơ trẻ tìm được';
+    }
+
+    public static function form(Schema $schema): Schema
+    {
+        return $schema->components([
+            Select::make('province_id')->label('Tỉnh/Thành')->relationship('province', 'name')->required(),
+            DatePicker::make('found_date')->label('Ngày phát hiện')->required(),
+            TextInput::make('found_time')->label('Giờ phát hiện')->placeholder('HH:MM'),
+            TextInput::make('age_estimate')->label('Tuổi ước tính'),
+            Select::make('gender_estimate')->label('Giới tính ước tính')->options(['MALE'=>'Nam','FEMALE'=>'Nữ','UNKNOWN'=>'Không rõ']),
+            Textarea::make('condition_desc')->label('Mô tả tình trạng'),
+            Textarea::make('clothes_desc')->label('Mô tả quần áo'),
+            Textarea::make('special_marks')->label('Dấu hiệu đặc biệt'),
+            TextInput::make('current_location')->label('Vị trí hiện tại'),
+            TextInput::make('handover_agency')->label('Cơ quan/Nơi bàn giao'),
+            Select::make('status')
+                ->label('Trạng thái')
+                ->options([
+                    'PENDING' => 'Đang chờ',
+                    'APPROVED' => 'Đã duyệt',
+                    'MATCHED' => 'Đã khớp',
+                    'FOUND' => 'Đã tìm thấy',
+                    'REJECTED' => 'Bị từ chối',
+                    'ACTIVE' => 'Đang hoạt động',
+                    'RESOLVED' => 'Đã xử lý',
+                    'CLOSED' => 'Đã đóng',
+                ])
+                ->required()
+                ->default('PENDING'),
+        ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('id')->label('Mã')->sortable(),
+                TextColumn::make('found_date')->label('Ngày phát hiện')->date()->sortable(),
+                TextColumn::make('province.name')->label('Tỉnh/Thành')->sortable(),
+                TextColumn::make('user.full_name')->label('Người báo'),
+                TextColumn::make('status')
+                    ->label('Trạng thái')
+                    ->formatStateUsing(function ($state) {
+                        $map = [
+                            'PENDING' => ['label' => 'Đang chờ', 'class' => 'bg-yellow-100 text-yellow-800'],
+                            'APPROVED' => ['label' => 'Đã duyệt', 'class' => 'bg-green-100 text-green-800'],
+                            'MATCHED' => ['label' => 'Đã khớp', 'class' => 'bg-green-100 text-green-800'],
+                            'FOUND' => ['label' => 'Đã tìm thấy', 'class' => 'bg-blue-100 text-blue-800'],
+                            'REJECTED' => ['label' => 'Bị từ chối', 'class' => 'bg-red-100 text-red-800'],
+                            'ACTIVE' => ['label' => 'Đang hoạt động', 'class' => 'bg-blue-100 text-blue-800'],
+                            'RESOLVED' => ['label' => 'Đã xử lý', 'class' => 'bg-indigo-100 text-indigo-800'],
+                            'CLOSED' => ['label' => 'Đã đóng', 'class' => 'bg-gray-100 text-gray-800'],
+                        ];
+                        $s = $map[$state] ?? ['label' => (string) $state, 'class' => 'bg-gray-100 text-gray-800'];
+                        return sprintf('<span class="px-2 py-1 rounded text-xs %s">%s</span>', $s['class'], $s['label']);
+                    })
+                    ->html()
+                    ->sortable(),
+            ])
+            ->actions([
+                EditAction::make(),
+                DeleteAction::make(),
+            ])
+            ->bulkActions([
+                \Filament\Actions\DeleteBulkAction::make(),
+            ]);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListFoundChildren::route('/'),
+            'create' => Pages\CreateFoundChild::route('/create'),
+            'edit' => Pages\EditFoundChild::route('/{record}/edit'),
+        ];
+    }
+}

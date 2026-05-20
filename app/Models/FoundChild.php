@@ -39,6 +39,7 @@ class FoundChild extends Model
     {
         return [
             'found_date' => 'date',
+            'found_time' => 'datetime:H:i',
             'approved_at' => 'datetime',
             'ai_processed_at' => 'datetime',
             'lat' => 'decimal:7',
@@ -67,6 +68,7 @@ class FoundChild extends Model
 
     public function comments()
     {
-        return $this->morphMany(Comment::class, 'commentable');
+        // return $this->morphMany(Comment::class, 'commentable');
+        return $this->belongsTo(Province::class);
     }
 }

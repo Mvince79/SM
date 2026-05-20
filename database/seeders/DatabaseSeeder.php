@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ProvincesSeeder::class,
+            FoundChildSeeder::class,
         ]);
 
         // Seed default Admin Account

@@ -18,7 +18,7 @@ class ProvincesSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('provinces')->insert([
+        DB::table('provinces')->upsert([
             // ========== BẮC ==========
             [
                 'id' => 1,
@@ -362,6 +362,6 @@ class ProvincesSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-        ]);
+        ], ['id'], ['name', 'code', 'short_code', 'region', 'is_active', 'updated_at']);
     }
 }

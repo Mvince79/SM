@@ -34,6 +34,21 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
     Route::get('/profile', function () {
         return view('profile.index');
     })->name('profile.index');
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.index');
+    Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+
+    // Found Children CRUD
+    Route::resource('found-children', \App\Http\Controllers\FoundChildController::class)->names([
+        'index' => 'found-children.index',
+        'create' => 'found-children.create',
+        'store' => 'found-children.store',
+        'show' => 'found-children.show',
+        'edit' => 'found-children.edit',
+        'update' => 'found-children.update',
+        'destroy' => 'found-children.destroy',
+    ]);
+
+    
 });
 
 
