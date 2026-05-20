@@ -21,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register Policy
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\MissingChild::class, \App\Policies\MissingChildPolicy::class);
+
+        // Register Observer
+        \App\Models\MissingChild::observe(\App\Observers\MissingChildObserver::class);
     }
 }
