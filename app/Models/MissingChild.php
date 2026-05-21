@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class MissingChild extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     protected $table = 'missing_children';
 
@@ -19,9 +19,6 @@ class MissingChild extends Model
         'dob',
         'age_estimate',
         'gender',
-        'skin_tone',
-        'height_cm',
-        'weight_kg',
         'province_id',
         'district',
         'ward',
@@ -34,51 +31,31 @@ class MissingChild extends Model
         'clothes_color',
         'special_marks',
         'circumstances',
-        'reward_info',
         'contact_name',
         'contact_phone',
         'contact_relation',
         'status',
         'approved_at',
         'approved_by',
-        'rejection_reason',
         'found_at',
-        'auto_expire_notified_at',
         'qr_code_path',
         'view_count',
         'share_count',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'dob' => 'date',
-            'missing_date' => 'date',
-            'approved_at' => 'datetime',
-            'found_at' => 'datetime',
-            'auto_expire_notified_at' => 'datetime',
-            'lat' => 'decimal:7',
-            'lng' => 'decimal:7',
-            'weight_kg' => 'decimal:2',
-            'height_cm' => 'integer',
-            'view_count' => 'integer',
-            'share_count' => 'integer',
-            'province_id' => 'integer',
-            'user_id' => 'integer',
-            'approved_by' => 'integer',
-        ];
-    }
+    protected $casts = [
+        'dob' => 'date',
+        'missing_date' => 'date',
+        'approved_at' => 'datetime',
+        'found_at' => 'datetime',
+        'lat' => 'decimal:7',
+        'lng' => 'decimal:7',
+    ];
 
-    // ─── Relationships ────────────────────────────────────────────────────────
-
-    public function user()
+    // Relationships
+    public function clues()
     {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function province()
-    {
-        return $this->belongsTo(Province::class, 'province_id');
+        return $this->hasMany(Clue::class, 'missing_id')->orderBy('created_at', 'desc');
     }
 
     public function photos()
@@ -88,21 +65,59 @@ class MissingChild extends Model
 
     public function primaryPhoto()
     {
-        return $this->morphOne(Photo::class, 'model')->where('is_primary', 1);
+        return $this->morphOne(Photo::class, 'model')
+            ->where('is_primary', 1)
+            ->orderBy('sort_order');
     }
 
-    public function clues()
+    public function province()
     {
-        return $this->hasMany(Clue::class, 'missing_id');
+        return $this->belongsTo(Province::class);
     }
 
-    public function comments()
+    public function user()
     {
-        return $this->morphMany(Comment::class, 'commentable');
+        return $this->belongsTo(User::class);
     }
 
-    public function approvedBy()
+    // Scope
+    public function scopeApproved($query)
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $query->where('status', 'APPROVED');
+    }
+
+    public function scopeFound($query)
+    {
+        return $query->where('status', 'FOUND');
+    }
+
+    // Helpers
+    /**
+     * Tính tuổi từ dob hoặc trả về age_estimate
+     */
+    public function getAgeAttribute(): ?int
+    {
+        if ($this->dob) {
+            return $this->dob->age;
+        }
+        return $this->age_estimate;
+    }
+
+    /**
+     * URL ảnh thumbnail để hiển thị (không vỡ)
+     * Ưu tiên: path_thumb → path_blurred → placeholder
+     */
+    public function getThumbUrlAttribute(): string
+    {
+        $photo = $this->primaryPhoto;
+        if ($photo) {
+            $path = $photo->path_thumb ?? $photo->path_blurred ?? $photo->path_original;
+            if ($path && Storage::disk('public')->exists($path)) {
+                return asset('storage/' . $path);
+            }
+        }
+        // Fallback: DiceBear avatar (không vỡ ảnh)
+        $seed = urlencode($this->full_name);
+        return "https://api.dicebear.com/7.x/thumbs/svg?seed={$seed}&backgroundColor=ffdfbf";
     }
 }

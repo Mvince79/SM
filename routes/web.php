@@ -6,8 +6,6 @@ use App\Http\Controllers\Client\StatsController;
 use App\Http\Controllers\Client\HomeController;
 use Illuminate\Support\Facades\Route;
 
-
-
 // ── Auth (register, login, OTP, Google OAuth, logout) ──────────────────────
 require __DIR__ . '/auth.php';
 

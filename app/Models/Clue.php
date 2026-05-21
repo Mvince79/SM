@@ -2,13 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Clue extends Model
 {
-    use HasFactory;
-
     protected $table = 'clues';
 
     protected $fillable = [
@@ -27,21 +24,14 @@ class Clue extends Model
         'is_anonymous',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'lat' => 'decimal:7',
-            'lng' => 'decimal:7',
-            'gps_shared_at' => 'datetime',
-            'occurred_at' => 'datetime',
-            'location_accuracy_m' => 'integer',
-            'is_verified' => 'integer',
-            'is_anonymous' => 'integer',
-            'missing_id' => 'integer',
-            'user_id' => 'integer',
-            'verified_by' => 'integer',
-        ];
-    }
+    protected $casts = [
+        'occurred_at' => 'datetime',
+        'gps_shared_at' => 'datetime',
+        'is_verified' => 'boolean',
+        'is_anonymous' => 'boolean',
+        'lat' => 'decimal:7',
+        'lng' => 'decimal:7',
+    ];
 
     public function missingChild()
     {
@@ -50,11 +40,34 @@ class Clue extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class);
     }
 
     public function verifiedBy()
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    /** Hiển thị tên người gửi (ẩn danh hoặc tên thật) */
+    public function getDisplayNameAttribute(): string
+    {
+        if ($this->is_anonymous || !$this->user) {
+            return 'Ẩn danh';
+        }
+        return $this->user->name;
+    }
+
+    /** Initials để hiện avatar chữ */
+    public function getInitialsAttribute(): string
+    {
+        $name = $this->display_name;
+        if ($name === 'Ẩn danh')
+            return 'AN';
+        $words = explode(' ', $name);
+        $initials = '';
+        foreach (array_slice($words, 0, 2) as $word) {
+            $initials .= mb_strtoupper(mb_substr($word, 0, 1));
+        }
+        return $initials ?: 'AN';
     }
 }
