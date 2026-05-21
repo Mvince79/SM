@@ -46,6 +46,10 @@
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "dev": [
+            "Composer\\Config::disableProcessTimeout",
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fca5a5\" --names=\"server,queue,vite\" \"php artisan serve\" \"php artisan queue:work\" \"npm run dev\""
         ]
     },
     "extra": {
