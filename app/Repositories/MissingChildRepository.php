@@ -7,14 +7,14 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class MissingChildRepository
 {
-    public function searchPublic(array $filters, int $perPage = 12): LengthAwarePaginator
+    public function searchPublic(array $filters, int $perPage = 15, string $sort = 'latest'): LengthAwarePaginator
     {
         $q = $filters['q'] ?? '';
         $province = $filters['province'] ?? '';
         $gender = $filters['gender'] ?? '';
         $age = $filters['age'] ?? '';
 
-        return MissingChild::whereIn('status', ['APPROVED', 'FOUND'])
+        $query = MissingChild::whereIn('status', ['APPROVED', 'FOUND'])
             ->with(['primaryPhoto', 'province'])
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($q2) use ($q) {
@@ -35,10 +35,15 @@ class MissingChildRepository
                     '15+' => $query->where('age_estimate', '>', 15),
                     default => null,
                 };
-            })
-            ->latest('approved_at')
-            ->paginate($perPage)
-            ->withQueryString();
+            });
+
+        match ($sort) {
+            'urgent' => $query->orderByRaw("FIELD(status, 'APPROVED', 'FOUND')")->latest('approved_at'),
+            'oldest' => $query->oldest('approved_at'),
+            default => $query->latest('approved_at'),
+        };
+
+        return $query->paginate($perPage)->withQueryString();
     }
 
     public function findPublicById(int $id): MissingChild
