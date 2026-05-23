@@ -100,27 +100,17 @@ class User extends Authenticatable implements FilamentUser
     public function getAvatarUrlAttribute($value): string
     {
         if ($value) {
-            // If value is a full URL, try to extract path to compute cache-bust param
-            $path = $value;
+            // URL đầy đủ (Google OAuth, UI Avatars)
             if (str_starts_with($value, 'http')) {
-                $parsed = parse_url($value, PHP_URL_PATH) ?: $value;
-                $path = $parsed;
+                return $value;
             }
-
-            if (str_contains($path, '/storage/')) {
-                $relative = ltrim(str_replace('/storage/', '', $path), '/');
-                if (Storage::disk('public')->exists($relative)) {
-                    $ts = Storage::disk('public')->lastModified($relative);
-                    return Storage::disk('public')->url($relative) . '?v=' . $ts;
-                }
-            }
-
-            return $value;
+            // Path local → trả về URL storage
+            return asset('storage/' . $value);
         }
 
-        // UI Avatar fallback — tạo từ initials
+        // Fallback: UI Avatar từ tên
         $name = urlencode($this->full_name ?? 'User');
-        return "https://ui-avatars.com/api/?name={$name}&background=2563eb&color=fff&size=128&bold=true";
+        return "https://ui-avatars.com/api/?name={$name}&background=FF3B30&color=fff&size=128&bold=true";
     }
 
     public function getNameAttribute(): ?string

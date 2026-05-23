@@ -9,38 +9,44 @@ use Illuminate\Support\Facades\Log;
 class MissingChildObserver
 {
     /**
-     * Handle the MissingChild "created" event.
+     * Handle the MissingChild "creating" event.
+     * Chạy TRƯỚC khi INSERT → tránh race condition sinh code trùng.
      */
-    public function created(MissingChild $missingChild): void
+    public function creating(MissingChild $missingChild): void
     {
-        DB::transaction(function () use ($missingChild) {
+        $missingChild->case_code = $this->generateCaseCode();
+    }
+
+    /**
+     * Sinh case_code duy nhất, thread-safe nhờ lockForUpdate bên trong transaction.
+     */
+    private function generateCaseCode(): string
+    {
+        return DB::transaction(function () {
             $year = now()->year;
             $prefix = "MC-{$year}-";
 
-            // Lock the table for writing and get the highest current case code for this year
+            // lockForUpdate giờ có tác dụng vì record chưa tồn tại trong DB,
+            // nên 2 request chạy song song sẽ lần lượt nhau, không đọc cùng maxCode.
             $maxCode = DB::table('missing_children')
                 ->where('case_code', 'like', "{$prefix}%")
                 ->lockForUpdate()
                 ->max('case_code');
 
-            if ($maxCode) {
-                $sequence = (int) substr($maxCode, -5) + 1;
-            } else {
-                $sequence = 1;
-            }
+            $sequence = $maxCode
+                ? (int) substr($maxCode, -5) + 1
+                : 1;
 
-            $caseCode = $prefix . str_pad($sequence, 5, '0', STR_PAD_LEFT);
-
-            // Update directly to avoid recursion
-            DB::table('missing_children')
-                ->where('id', $missingChild->id)
-                ->update(['case_code' => $caseCode]);
-
-            // Sync the model attribute for current process
-            $missingChild->case_code = $caseCode;
+            return $prefix . str_pad($sequence, 5, '0', STR_PAD_LEFT);
         });
+    }
 
-        // Log activity
+    /**
+     * Handle the MissingChild "created" event.
+     * Chỉ còn log, không cần tạo case_code ở đây nữa.
+     */
+    public function created(MissingChild $missingChild): void
+    {
         try {
             activity()
                 ->performedOn($missingChild)
@@ -59,7 +65,6 @@ class MissingChildObserver
      */
     public function updated(MissingChild $missingChild): void
     {
-        // Log activity
         try {
             activity()
                 ->performedOn($missingChild)

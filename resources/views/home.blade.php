@@ -55,11 +55,11 @@
                     tức thời để hỗ trợ gia đình tìm lại con em nhanh nhất có thể.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 pt-3">
-                    <a href="{{ route('cases.create') }}"
+                    <a href="{{ route('missing.create') }}"
                         class="inline-flex items-center justify-center gap-2 bg-primary text-white font-extrabold px-8 py-4 rounded-2xl hover:bg-primary-dark transition-premium text-base shadow-lg shadow-primary/30 hover:-translate-y-0.5">
                         📢 Báo tin khẩn cấp tìm con
                     </a>
-                    <a href="{{ route('cases.index') }}"
+                    <a href="{{ route('missing.index') }}"
                         class="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-md text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/20 transition-premium text-base border border-white/20">
                         🔍 Tìm kiếm thông tin bé lạc
                     </a>
@@ -169,7 +169,7 @@
                     class="bg-white text-primary font-black px-8 py-4 rounded-2xl hover:bg-slate-50 shadow-xl transition-premium text-base">
                     🤝 Tham gia làm tình nguyện viên
                 </a>
-                <a href="{{ route('cases.index') }}"
+                <a href="{{ route('missing.index') }}"
                     class="border-2 border-white/80 text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 transition-premium text-base">
                     Duyệt hồ sơ trẻ thất lạc
                 </a>

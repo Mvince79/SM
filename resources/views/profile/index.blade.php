@@ -1,92 +1,235 @@
 @extends('layouts.app')
-
-@section('title', 'Hồ sơ cá nhân')
+@section('title', $user->full_name . ' - Hồ sơ cá nhân')
 
 @section('content')
-<main class="min-h-screen pt-24 pb-16 bg-slate-50 px-4">
-    <div class="max-w-5xl w-full bg-white rounded-3xl shadow-xl shadow-slate-100 p-8 border border-slate-100 mx-auto">
-        <div class="flex items-center justify-between mb-6">
-            <div class="space-y-1 text-left">
-                <h1 class="text-2xl font-black text-slate-800">Hồ sơ cá nhân</h1>
-                <p class="text-slate-500 font-medium">Cập nhật thông tin liên hệ và cấu hình nhận thông báo.</p>
+
+<main class="max-w-5xl mx-auto px-4 py-10 space-y-8">
+    {{-- ── Cover Header ── --}}
+    <div class="bg-white border border-slate-200/80 rounded-3xl overflow-hidden shadow-premium relative"
+         x-data="{ editOpen: false }">
+
+        {{-- Cover gradient --}}
+        <div class="h-32 sm:h-44 bg-gradient-to-r from-brand/80 to-indigo-600 relative">
+            <div class="absolute inset-0 bg-black/10"></div>
+        </div>
+
+        {{-- Profile summary --}}
+        <div class="px-6 sm:px-8 pb-6 relative">
+            <div class="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 -mt-12 sm:-mt-16 border-b border-slate-100 pb-6">
+
+                <div class="flex flex-col sm:flex-row items-center sm:items-end gap-4 text-center sm:text-left">
+                    {{-- Avatar --}}
+                    <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white overflow-hidden bg-slate-100 shadow-md flex-shrink-0 relative z-20">
+                        <img src="{{ $user->avatar_url }}"
+                             alt="{{ $user->full_name }}"
+                             class="w-full h-full object-cover"/>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <div class="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
+                            <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                                {{ $user->full_name }}
+                            </h2>
+                            @if($user->isVerified())
+                                <span class="bg-success-light text-success border border-success/35 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
+                                    Đã xác minh ✓
+                                </span>
+                            @endif
+                        </div>
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">
+                            Thành viên từ: <span class="text-slate-600">{{ $user->created_at->format('m/Y') }}</span>
+                        </p>
+                    </div>
+                </div>
+
+                {{-- Nút chỉnh sửa — mở modal Alpine --}}
+                <button @click="editOpen = true"
+                        class="bg-slate-100 text-slate-700 text-xs font-extrabold px-5 py-3 rounded-2xl hover:bg-slate-200 transition-colors border border-slate-200 shadow-sm uppercase tracking-wider">
+                    ⚙️ Chỉnh sửa thông tin
+                </button>
+            </div>
+
+            {{-- Stats --}}
+            <div class="grid grid-cols-3 gap-4 pt-6 max-w-lg text-center sm:text-left">
+                <div>
+                    <div class="text-2xl sm:text-3xl font-black text-primary tracking-tight">
+                        {{ $user->missingChildren->where('status', 'APPROVED')->count() }}
+                    </div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Tin đang đăng</div>
+                </div>
+                <div>
+                    <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                        {{ $user->missingChildren->where('status', 'FOUND')->count() }}
+                    </div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Ca đã đoàn tụ</div>
+                </div>
+                <div>
+                    <div class="text-2xl sm:text-3xl font-black text-brand tracking-tight">
+                        {{ $user->clues->count() }}
+                    </div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Manh mối nhận được</div>
+                </div>
             </div>
         </div>
 
-        @if(session('success'))
-            <div class="bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl p-3">{{ session('success') }}</div>
-        @endif
-        @if(session('error'))
-            <div class="bg-rose-50 border border-rose-100 text-rose-700 rounded-xl p-3">{{ session('error') }}</div>
-        @endif
+        {{-- ── Edit Modal (Alpine x-show, không reload trang) ── --}}
+        <div x-show="editOpen"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+             style="display: none;">
+            <div @click.away="editOpen = false"
+                 class="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl">
 
-        <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="w-full">
-            @csrf
-            @method('PUT')
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 rounded-xl p-6">
-                <div class="flex flex-col items-center justify-center gap-4 p-4">
-                    <img src="{{ $user->avatar_url }}" alt="avatar" class="w-32 h-32 rounded-full object-cover border" />
-                    <div class="text-center">
-                        <h3 class="font-bold text-slate-800">{{ $user->full_name }}</h3>
-                        <p class="text-sm text-slate-500">{{ $user->email }}</p>
-                    </div>
-                    <div class="w-full mt-2">
-                        <label class="block text-sm font-medium text-slate-700">Ảnh đại diện</label>
-                        <div class="mt-2">
-                            <label for="avatarInput" class="group cursor-pointer block w-full rounded-lg border-2 border-dashed border-slate-200 bg-white hover:border-primary/70 focus-within:ring-2 focus-within:ring-primary/30 p-4 flex flex-col items-center justify-center text-center">
-                                <div id="avatarPreviewWrapper" class="flex flex-col items-center gap-2">
-                                    <img id="avatarPreview" src="{{ $user->avatar_url }}" alt="avatar" class="w-24 h-24 rounded-full object-cover border mx-auto" />
-                                    <div class="text-sm text-slate-600 group-hover:text-primary">Nhấn để thay đổi ảnh (jpg, png, webp)</div>
-                                </div>
-                                <input id="avatarInput" type="file" name="avatar" accept="image/*" class="sr-only" />
-                            </label>
-                            @error('avatar') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 class="font-black text-slate-900 text-base">Chỉnh sửa thông tin cá nhân</h3>
+                    <button @click="editOpen = false"
+                            class="text-slate-400 hover:text-primary transition-colors text-xl font-black px-1">×</button>
                 </div>
 
-                <div class="p-4">
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700">Họ và tên</label>
-                            <input name="full_name" value="{{ old('full_name', $user->full_name) }}" class="w-full mt-1 px-3 h-12 border rounded-lg" />
-                            @error('full_name') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
+                {{-- Livewire form nằm trong modal --}}
+                @livewire('profile.edit-profile-form', [
+                    'user'      => $user,
+                    'provinces' => $provinces
+                ])
 
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700">Số điện thoại</label>
-                            <input name="phone" value="{{ old('phone', $user->phone) }}" class="w-full mt-1 px-3 h-12 border rounded-lg" />
-                            @error('phone') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-4 mt-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700">Tỉnh/Thành</label>
-                            <select name="province_id" class="w-full mt-1 px-3 h-12 border rounded-lg">
-                                <option value="">-- Chọn --</option>
-                                @foreach($provinces as $p)
-                                    <option value="{{ $p->id }}" {{ (old('province_id', $user->province_id) == $p->id) ? 'selected' : '' }}>{{ $p->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('province_id') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700">Bán kính nhận thông báo (km)</label>
-                            <input name="notify_radius_km" value="{{ old('notify_radius_km', $user->notify_radius_km) }}" type="number" min="0" class="w-full mt-1 px-3 h-12 border rounded-lg" />
-                            @error('notify_radius_km') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div class="mt-6 flex justify-end gap-3">
-                        <a href="{{ route('home') }}" class="text-sm text-slate-600 px-4 py-2 rounded-lg border">Hủy</a>
-                        <button type="submit" class="bg-primary text-white font-bold py-2 px-6 rounded-2xl hover:bg-primary-dark hover:shadow-lg transition-all">Lưu thay đổi</button>
-                    </div>
-                </div>
             </div>
-        </form>
+        </div>
+
+    </div>
+
+    {{-- ── Tab System ── --}}
+    <div class="space-y-6" x-data="{ tab: 'posts' }">
+
+        {{-- Tab buttons --}}
+        <div class="border-b border-slate-200 flex gap-6 text-sm font-bold">
+            <button @click="tab = 'posts'"
+                    :class="tab === 'posts' ? 'py-3 text-primary border-b-2 border-primary relative z-10' : 'py-3 text-slate-400 hover:text-slate-700 transition-colors'">
+                Tin đã đăng ({{ $user->missingChildren->count() }})
+            </button>
+            <button @click="tab = 'clues'"
+                    :class="tab === 'clues' ? 'py-3 text-primary border-b-2 border-primary relative z-10' : 'py-3 text-slate-400 hover:text-slate-700 transition-colors'">
+                Manh mối đã gửi ({{ $user->clues->count() }})
+            </button>
+            <button @click="tab = 'settings'"
+                    :class="tab === 'settings' ? 'py-3 text-primary border-b-2 border-primary relative z-10' : 'py-3 text-slate-400 hover:text-slate-700 transition-colors'">
+                Cài đặt tài khoản
+            </button>
+        </div>
+
+        {{-- Tab: Tin đã đăng --}}
+        <div x-show="tab === 'posts'" x-transition class="space-y-4">
+            @forelse($user->missingChildren()->latest()->get() as $case)
+                <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium flex flex-col sm:flex-row gap-5 items-center justify-between">
+                    <div class="flex gap-4 items-center w-full sm:w-auto">
+                        <div class="w-16 h-16 rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 flex-shrink-0">
+                            <img src="{{ $case->thumb_url }}"
+                                 alt="{{ $case->full_name }}"
+                                 class="w-full h-full object-cover"/>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="font-extrabold text-slate-900 text-sm">{{ $case->full_name }}</h3>
+                                <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full
+                                    {{ $case->status === 'APPROVED' ? 'bg-primary/10 text-primary'
+                                        : ($case->status === 'FOUND'    ? 'bg-success/10 text-success'
+                                        : ($case->status === 'PENDING'  ? 'bg-amber-100 text-amber-600'
+                                        : 'bg-slate-100 text-slate-500')) }}">
+                                    {{ ['PENDING'=>'Chờ duyệt','APPROVED'=>'Đang tìm gấp','FOUND'=>'Đã tìm thấy','REJECTED'=>'Bị từ chối','CLOSED'=>'Đã đóng'][$case->status] ?? $case->status }}
+                                </span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wide">
+                                📍 {{ $case->district ?? $case->province?->name }}
+                                · Mất tích: {{ $case->missing_date?->format('d/m/Y') }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto justify-end">
+                        <a href="{{ route('missing.detail', $case->id) }}"
+                           class="border border-slate-200 text-slate-700 text-xs font-extrabold py-2.5 px-4 rounded-xl hover:bg-slate-50 transition-colors">
+                            Chi tiết tin
+                        </a>
+                    </div>
+                </div>
+            @empty
+                <div class="text-center py-14 space-y-4">
+                    <div class="text-4xl">📭</div>
+                    <h3 class="font-extrabold text-slate-700 text-base">Bạn chưa có tin đăng nào</h3>
+                    <a href="{{ route('missing.create') }}"
+                       class="inline-block bg-primary text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-primary-dark transition-colors">
+                        + Đăng tin tìm con ngay
+                    </a>
+                </div>
+            @endforelse
+        </div>
+
+        {{-- Tab: Manh mối --}}
+        <div x-show="tab === 'clues'" x-transition>
+            @if($user->clues->isEmpty())
+                <div class="text-center py-14 space-y-4">
+                    <div class="text-4xl">🔍</div>
+                    <h3 class="font-extrabold text-slate-700 text-base">Bạn chưa gửi manh mối nào</h3>
+                    <p class="text-xs text-slate-400 max-w-xs mx-auto font-semibold">
+                        Các manh mối bạn đóng góp sẽ hiển thị tại đây để bạn tiện theo dõi trạng thái kiểm chứng.
+                    </p>
+                </div>
+            @else
+                <div class="space-y-4">
+                    @foreach($user->clues()->latest()->get() as $clue)
+                        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-premium">
+                            <p class="text-sm font-semibold text-slate-700">{{ $clue->content }}</p>
+                            <p class="text-[10px] text-slate-400 font-bold mt-2">{{ $clue->created_at->diffForHumans() }}</p>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+        {{-- Tab: Cài đặt tài khoản --}}
+        <div x-show="tab === 'settings'" x-transition
+             class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-premium">
+            <h3 class="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2">
+                Cấu hình bảo mật thông tin
+            </h3>
+            <div class="space-y-4 text-xs font-bold">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" checked class="accent-primary w-4 h-4"/>
+                    <div>
+                        <div class="text-slate-800">Nhận thông báo khi có manh mối mới</div>
+                        <div class="text-[10px] text-slate-400 font-normal mt-0.5">
+                            Hệ thống gửi tin nhắn khi có người báo tọa độ bé
+                        </div>
+                    </div>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" checked class="accent-primary w-4 h-4"/>
+                    <div>
+                        <div class="text-slate-800">Ẩn thông tin số điện thoại cá nhân</div>
+                        <div class="text-[10px] text-slate-400 font-normal mt-0.5">
+                            Bảo vệ bạn khỏi các cuộc gọi spam hoặc tống tiền giả mạo
+                        </div>
+                    </div>
+                </label>
+            </div>
+            {{-- Tỉnh nhận thông báo --}}
+            <div class="pt-4 border-t border-slate-100 space-y-1.5">
+                <label class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                    Tỉnh/Thành nhận thông báo hồ sơ mới
+                </label>
+                <p class="text-[10px] text-slate-400">
+                    Hiện tại: <strong class="text-slate-700">{{ $user->province?->name ?? 'Chưa chọn' }}</strong>
+                    — để thay đổi, dùng nút "Chỉnh sửa thông tin" ở trên.
+                </p>
+            </div>
+        </div>
+
     </div>
 </main>
+
 @endsection
 
 @push('scripts')

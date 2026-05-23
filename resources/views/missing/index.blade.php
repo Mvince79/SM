@@ -22,7 +22,7 @@
     @livewire('missing.cases-grid')
 
     {{-- FAB mobile: nút Đăng tin nổi --}}
-    <a href="{{ route('cases.create') }}"
+    <a href="{{ route('missing.create') }}"
        class="fixed bottom-6 right-6 z-50 flex items-center gap-2
               bg-primary text-white font-extrabold text-sm
               px-5 py-3.5 rounded-2xl shadow-lg shadow-primary/30

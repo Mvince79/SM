@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Client\MapController;
 use App\Http\Controllers\Client\MissingController;
+use App\Http\Controllers\Client\ProfileController;
 use App\Http\Controllers\Client\StatsController;
 use App\Http\Controllers\Client\HomeController;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +29,10 @@ Route::prefix('stats')->name('stats.')->group(function () {
 
 // ── Routes cần đăng nhập + email đã xác thực + không bị BAN ────────────────
 Route::middleware(['auth', 'email.verified'])->group(function () {
+    Route::prefix('/profile')->name('profile.')->group(function () {
+        Route::get('/', [ProfileController::class, 'index'])->name('index');
+    });
+
     Route::prefix('missing')->name('missing.')->group(function () {
         Route::get('/create', [MissingController::class, 'create'])->name('create');
         Route::post('/store', [MissingController::class, 'store'])->name('store');
