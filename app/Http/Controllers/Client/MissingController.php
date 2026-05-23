@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Missing\SearchMissingRequest;
+use App\Http\Requests\Missing\StoreMissingChildRequest;
 use App\Services\MissingChildService;
 
 class MissingController extends Controller
@@ -25,5 +26,14 @@ class MissingController extends Controller
         $data = $this->missingChildService->getDetailForPublic($id);
 
         return view('missing.detail', $data);
+    }
+
+    public function create()
+    {
+        return view('missing.create');
+    }
+
+    public function store(StoreMissingChildRequest $request)
+    {
     }
 }

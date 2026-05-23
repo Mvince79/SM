@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\MissingChild;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 
 class MissingChildRepository
 {
@@ -48,8 +49,19 @@ class MissingChildRepository
 
     public function findPublicById(int $id): MissingChild
     {
-        return MissingChild::whereIn('status', ['APPROVED', 'FOUND'])
-            ->with(['photos', 'province', 'clues.user'])
-            ->findOrFail($id);
+        $query = MissingChild::with(['photos', 'primaryPhoto', 'province', 'clues.user']);
+
+        // Owner có thể xem hồ sơ của mình dù chưa được duyệt (PENDING/REJECTED)
+        $authId = Auth::user()->id ?? null;
+        if ($authId) {
+            $query->where(function ($q) use ($authId) {
+                $q->whereIn('status', ['APPROVED', 'FOUND'])
+                    ->orWhere('user_id', $authId);
+            });
+        } else {
+            $query->whereIn('status', ['APPROVED', 'FOUND']);
+        }
+
+        return $query->findOrFail($id);
     }
 }

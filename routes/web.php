@@ -15,7 +15,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::prefix('missing')->name('missing.')->group(function () {
     Route::get('/', [MissingController::class, 'index'])->name('index');
-    Route::get('/{id}', [MissingController::class, 'detail'])->name('detail');
+    Route::get('/detail/{id}', [MissingController::class, 'detail'])->name('detail');
 });
 
 Route::prefix('map')->name('map.')->group(function () {
@@ -28,6 +28,10 @@ Route::prefix('stats')->name('stats.')->group(function () {
 
 // ── Routes cần đăng nhập + email đã xác thực + không bị BAN ────────────────
 Route::middleware(['auth', 'email.verified'])->group(function () {
+    Route::prefix('missing')->name('missing.')->group(function () {
+        Route::get('/create', [MissingController::class, 'create'])->name('create');
+        Route::post('/store', [MissingController::class, 'store'])->name('store');
+    });
     // Profile (Sprint 1 — PB-18)
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.index');
     Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');

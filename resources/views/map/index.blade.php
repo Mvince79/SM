@@ -153,22 +153,23 @@
                     iconSize: [14, 14],
                     iconAnchor: [7, 7]
                 });
+                const detailUrl = `{{ route('missing.detail', ':id') }}`.replace(':id', kid.id);
 
                 const popupHtml = `
-      <div class="flex gap-3 items-center min-w-[220px]">
-        <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 flex-shrink-0">
-          <img src="${kid.img}" class="w-full h-full object-cover" />
-        </div>
-        <div class="min-w-0">
-          <div class="font-extrabold text-xs text-slate-900">${kid.name}</div>
-          <div class="text-[10px] text-slate-400 font-bold mt-0.5">${kid.age} tuổi · 📍 Bị lạc ở:</div>
-          <div class="text-[10px] text-slate-600 font-semibold truncate mt-0.5">${kid.location}</div>
-          <a href="{{ route('missing.detail, 1') }}" class="inline-flex items-center gap-0.5 text-[10px] font-black text-primary hover:underline mt-1.5 uppercase">
-            Hồ sơ chi tiết →
-          </a>
-        </div>
-      </div>
-    `;
+                    <div class="flex gap-3 items-center min-w-[220px]">
+                        <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 flex-shrink-0">
+                        <img src="${kid.img}" class="w-full h-full object-cover" />
+                        </div>
+                        <div class="min-w-0">
+                        <div class="font-extrabold text-xs text-slate-900">${kid.name}</div>
+                        <div class="text-[10px] text-slate-400 font-bold mt-0.5">${kid.age} tuổi · 📍 Bị lạc ở:</div>
+                        <div class="text-[10px] text-slate-600 font-semibold truncate mt-0.5">${kid.location}</div>
+                        <a href="${detailUrl}" class="inline-flex items-center gap-0.5 text-[10px] font-black text-primary hover:underline mt-1.5 uppercase">
+                            Hồ sơ chi tiết →
+                        </a>
+                        </div>
+                    </div>
+                `;
 
                 L.marker([kid.lat, kid.lng], {
                     icon: lostIcon
@@ -188,10 +189,10 @@
                         iconAnchor: [7, 7]
                     });
                     L.marker(e.latlng, {
-                        icon: myIcon
-                    }).addTo(map).bindPopup(
-                        "<div class='font-bold text-xs p-1 text-slate-900'>🛰️ Vị trí hiện tại của bạn</div>"
-                    )
+                            icon: myIcon
+                        }).addTo(map).bindPopup(
+                            "<div class='font-bold text-xs p-1 text-slate-900'>🛰️ Vị trí hiện tại của bạn</div>"
+                        )
                         .openPopup();
                 });
                 map.on('locationerror', () => alert(

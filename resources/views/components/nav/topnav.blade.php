@@ -78,7 +78,7 @@
                 </a>
             @endauth
 
-            <a href="#" class="bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl
+            <a href="{{ route('missing.create') }}" class="bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl
                       hover:bg-primary-dark shadow-lg shadow-primary/10
                       hover:shadow-primary/25 hover:-translate-y-0.5 transition-all duration-300">
                 + Báo tin tìm con
@@ -135,7 +135,7 @@
                     class="text-center font-bold text-slate-700 hover:bg-slate-50 py-3 rounded-xl border border-slate-200 transition-all">
                     Đăng nhập
                 </a>
-                <a href="#"
+                <a href="{{ route('missing.create') }}"
                     class="text-center font-bold bg-primary text-white py-3 rounded-xl hover:bg-primary-dark transition-all">
                     + Báo tin
                 </a>

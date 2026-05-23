@@ -46,27 +46,106 @@
                     <div class="p-6 sm:p-8 space-y-6">
                         <div class="flex flex-col sm:flex-row gap-8 items-start">
 
-                            <!-- Avatar -->
-                            <div class="w-full sm:w-44 flex-shrink-0">
-                                <div
-                                    class="relative overflow-hidden rounded-2xl border-4 border-slate-100 shadow-md bg-slate-900 group aspect-square sm:aspect-auto">
+                            <!-- Avatar photo container + Gallery -->
+                            <div class="w-full sm:w-44 flex-shrink-0"
+                                x-data="{
+                                    open: false,
+                                    current: 0,
+                                    photos: {{ Js::from($case->photos->map(fn($p) => asset('storage/' . $p->path_original))) }},
+                                    prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length },
+                                    next() { this.current = (this.current + 1) % this.photos.length }
+                                }"
+                                @keydown.left.window="if(open) prev()"
+                                @keydown.right.window="if(open) next()"
+                                @keydown.escape.window="open = false">
+
+                                {{-- Ảnh chính --}}
+                                <div class="relative overflow-hidden rounded-2xl border-4 border-slate-100 shadow-md bg-slate-900 group aspect-square sm:aspect-auto cursor-pointer"
+                                    @click="open = true; current = 0">
                                     <img src="{{ $case->thumb_url }}"
                                         class="w-full h-full sm:h-44 object-cover transform group-hover:scale-105 transition-premium"
                                         alt="{{ $case->full_name }}" />
                                     @if($case->photos->count() > 1)
-                                        <div
-                                            class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                                            <span class="text-white text-xs font-bold bg-black/60 px-3 py-1.5 rounded-xl">Xem
-                                                ảnh ({{ $case->photos->count() }})</span>
+                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <span class="text-white text-xs font-bold bg-black/60 px-3 py-1.5 rounded-xl">
+                                                📷 {{ $case->photos->count() }} ảnh
+                                            </span>
                                         </div>
                                     @endif
                                 </div>
+
+                                {{-- Thumbnail strip --}}
+                                @if($case->photos->count() > 1)
+                                    <div class="flex gap-1.5 mt-2 overflow-x-auto pb-1">
+                                        @foreach($case->photos as $i => $photo)
+                                            <img src="{{ asset('storage/' . $photo->path_thumb ?? $photo->path_original) }}"
+                                                class="w-12 h-12 object-cover rounded-lg border-2 border-slate-200 cursor-pointer hover:border-red-400 flex-shrink-0"
+                                                @click="open = true; current = {{ $i }}"
+                                                alt="Ảnh {{ $i + 1 }}" />
+                                        @endforeach
+                                    </div>
+                                @endif
+
                                 @if($case->primaryPhoto)
                                     <p class="text-center text-[10px] text-slate-400 font-bold mt-2.5">
                                         Ảnh chụp rõ nhất
                                         {{ $case->primaryPhoto->updated_at?->format('n/Y') ?? $case->primaryPhoto->created_at->format('n/Y') }}
                                     </p>
                                 @endif
+
+                                {{-- Lightbox Modal --}}
+                                <template x-teleport="body">
+                                    <div x-show="open"
+                                        x-transition:enter="transition ease-out duration-200"
+                                        x-transition:enter-start="opacity-0"
+                                        x-transition:enter-end="opacity-100"
+                                        x-transition:leave="transition ease-in duration-150"
+                                        x-transition:leave-start="opacity-100"
+                                        x-transition:leave-end="opacity-0"
+                                        class="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+                                        @click.self="open = false"
+                                        style="display:none">
+
+                                        {{-- Close --}}
+                                        <button @click="open = false"
+                                            class="absolute top-4 right-4 text-white bg-white/20 hover:bg-white/40 rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold z-10">
+                                            ✕
+                                        </button>
+
+                                        {{-- Counter --}}
+                                        <div class="absolute top-4 left-1/2 -translate-x-1/2 text-white text-sm font-bold bg-black/50 px-3 py-1 rounded-full">
+                                            <span x-text="current + 1"></span> / <span x-text="photos.length"></span>
+                                        </div>
+
+                                        {{-- Prev --}}
+                                        <button x-show="photos.length > 1" @click="prev"
+                                            class="absolute left-4 text-white bg-white/20 hover:bg-white/40 rounded-full w-10 h-10 flex items-center justify-center text-xl z-10">
+                                            ‹
+                                        </button>
+
+                                        {{-- Image --}}
+                                        <img :src="photos[current]"
+                                            class="max-h-[85vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
+                                            :alt="'Ảnh ' + (current + 1)" />
+
+                                        {{-- Next --}}
+                                        <button x-show="photos.length > 1" @click="next"
+                                            class="absolute right-4 text-white bg-white/20 hover:bg-white/40 rounded-full w-10 h-10 flex items-center justify-center text-xl z-10">
+                                            ›
+                                        </button>
+
+                                        {{-- Thumbnail strip --}}
+                                        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                                            <template x-for="(photo, i) in photos" :key="i">
+                                                <img :src="photo"
+                                                    :class="current === i ? 'border-white scale-110' : 'border-transparent opacity-60'"
+                                                    class="w-12 h-12 object-cover rounded-lg border-2 cursor-pointer transition-all"
+                                                    @click="current = i" />
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
                             </div>
 
                             <!-- Key Facts -->
@@ -122,8 +201,8 @@
                                             lạc</span>
                                         <div class="font-extrabold text-slate-800 mt-0.5">
                                             {{ $case->missing_date?->format('d/m/Y') }}
-                                            @if($case->missing_time)
-                                                · Lúc {{ \Carbon\Carbon::parse($case->missing_time)->format('H:i') }}
+                                            @if($case->formatted_time)
+                                                · Lúc {{ $case->formatted_time }}
                                             @endif
                                         </div>
                                     </div>

@@ -12,6 +12,7 @@
         rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
     @stack('head')
 </head>
 
@@ -19,6 +20,9 @@
 
     {{-- ── Top Navigation ── --}}
     @include('components.nav.topnav')
+
+    {{-- Flash message --}}
+    @include('components.ui.success-message')
 
     {{-- ── Page Content ── --}}
     @yield('content')
@@ -91,6 +95,7 @@
         </a>
     </div>
 
+    @livewireScripts
     @stack('scripts')
 </body>
 

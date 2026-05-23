@@ -12,6 +12,11 @@ class MissingChild extends Model
 
     protected $table = 'missing_children';
 
+    /**
+     * [FIX 3] Thêm skin_tone, height_cm, weight_kg vào fillable.
+     * Trước đây 3 trường này bị thiếu nên dù form submit có gửi lên
+     * thì MissingChild::create() vẫn bỏ qua (mass-assignment protection).
+     */
     protected $fillable = [
         'user_id',
         'case_code',
@@ -19,6 +24,9 @@ class MissingChild extends Model
         'dob',
         'age_estimate',
         'gender',
+        'skin_tone',
+        'height_cm',
+        'weight_kg',
         'province_id',
         'district',
         'ward',
@@ -80,7 +88,7 @@ class MissingChild extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Scope
+    // Scopes
     public function scopeApproved($query)
     {
         return $query->where('status', 'APPROVED');
@@ -92,8 +100,9 @@ class MissingChild extends Model
     }
 
     // Helpers
+
     /**
-     * Tính tuổi từ dob hoặc trả về age_estimate
+     * Tính tuổi từ dob hoặc trả về age_estimate.
      */
     public function getAgeAttribute(): ?int
     {
@@ -104,18 +113,54 @@ class MissingChild extends Model
     }
 
     /**
-     * URL ảnh thumbnail để hiển thị (không vỡ)
-     * Ưu tiên: path_thumb → path_blurred → placeholder
+     * Trả về missing_time format H:i nếu hợp lệ, null nếu không.
+     * Tránh Carbon::parse() crash khi cột chứa giá trị text không phải time.
+     */
+    public function getFormattedTimeAttribute(): ?string
+    {
+        $t = $this->missing_time;
+        if (!$t || !preg_match('/^\d{2}:\d{2}/', $t)) {
+            return null;
+        }
+        try {
+            $format = strlen($t) > 5 ? 'H:i:s' : 'H:i';
+            return \Carbon\Carbon::createFromFormat($format, $t)->format('H:i');
+        } catch (\Exception) {
+            return null;
+        }
+    }
+
+    /**
+     * URL ảnh thumbnail để hiển thị (không vỡ).
+     * Ưu tiên: path_thumb → path_blurred → path_original → DiceBear placeholder.
+     * path_thumb và path_blurred được tạo bởi ProcessPhotoJob.
      */
     public function getThumbUrlAttribute(): string
     {
-        $photo = $this->primaryPhoto;
+        // Thử primaryPhoto trước, nếu null thì lấy ảnh đầu tiên trong collection
+        $photo = $this->relationLoaded('primaryPhoto')
+            ? $this->getRelation('primaryPhoto')
+            : null;
+
+        if (!$photo && $this->relationLoaded('photos')) {
+            $photo = $this->photos->first();
+        }
+
+        if (!$photo) {
+            // Fallback query trực tiếp nếu không có relation nào được load
+            $photo = $this->photos()->orderBy('sort_order')->first();
+        }
+
         if ($photo) {
-            $path = $photo->path_thumb ?? $photo->path_blurred ?? $photo->path_original;
-            if ($path && Storage::disk('public')->exists($path)) {
-                return asset('storage/' . $path);
+            // Ưu tiên thumb → blurred → original (original luôn có ngay sau upload)
+            foreach (['path_thumb', 'path_blurred', 'path_original'] as $field) {
+                $path = $photo->$field ?? null;
+                if ($path && Storage::disk('public')->exists($path)) {
+                    return asset('storage/' . $path);
+                }
             }
         }
+
         // Fallback: DiceBear avatar (không vỡ ảnh)
         $seed = urlencode($this->full_name);
         return "https://api.dicebear.com/7.x/thumbs/svg?seed={$seed}&backgroundColor=ffdfbf";
