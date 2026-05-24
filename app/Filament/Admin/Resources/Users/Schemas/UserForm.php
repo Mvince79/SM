@@ -6,6 +6,8 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class UserForm
@@ -14,44 +16,75 @@ class UserForm
     {
         return $schema
             ->components([
-                TextInput::make('full_name')
-                    ->required(),
-                TextInput::make('email')
-                    ->label('Email address')
-                    ->email()
-                    ->required(),
-                DateTimePicker::make('email_verified_at'),
-                TextInput::make('phone')
-                    ->tel(),
-                DateTimePicker::make('phone_verified_at'),
-                TextInput::make('password')
-                    ->password(),
-                TextInput::make('google_id'),
-                TextInput::make('avatar_url')
-                    ->url(),
-                Select::make('role')
-                    ->options(['ADMIN' => 'A d m i n', 'MODERATOR' => 'M o d e r a t o r', 'USER' => 'U s e r'])
-                    ->default('USER')
-                    ->required(),
-                Select::make('status')
-                    ->options(['ACTIVE' => 'A c t i v e', 'BANNED' => 'B a n n e d', 'PENDING' => 'P e n d i n g'])
-                    ->default('ACTIVE')
-                    ->required(),
-                Textarea::make('ban_reason')
-                    ->columnSpanFull(),
-                TextInput::make('province_id')
-                    ->numeric(),
-                TextInput::make('notify_lat')
-                    ->numeric(),
-                TextInput::make('notify_lng')
-                    ->numeric(),
-                TextInput::make('notify_radius_km')
-                    ->required()
-                    ->numeric()
-                    ->default(50),
-                TextInput::make('otp_code'),
-                DateTimePicker::make('otp_expires_at'),
-                DateTimePicker::make('last_active_at'),
+                Section::make('Thông tin cơ bản')
+                    ->schema([
+                        Grid::make(2)->schema([
+                            TextInput::make('full_name')
+                                ->label('Họ và tên')
+                                ->required(),
+                            TextInput::make('email')
+                                ->label('Email')
+                                ->email()
+                                ->required(),
+                        ]),
+                        Grid::make(2)->schema([
+                            TextInput::make('phone')
+                                ->label('Số điện thoại')
+                                ->tel(),
+                            TextInput::make('avatar_url')
+                                ->label('Ảnh đại diện (URL)')
+                                ->url(),
+                        ]),
+                        TextInput::make('password')
+                            ->label('Mật khẩu')
+                            ->password()
+                            ->helperText('Để trống nếu không muốn đổi mật khẩu'),
+                    ]),
+
+                Section::make('Phân quyền & Trạng thái')
+                    ->schema([
+                        Grid::make(2)->schema([
+                            Select::make('role')
+                                ->label('Vai trò')
+                                ->options([
+                                    'ADMIN' => 'Quản trị viên',
+                                    'MODERATOR' => 'Kiểm duyệt viên',
+                                    'USER' => 'Người dùng',
+                                ])
+                                ->default('USER')
+                                ->required(),
+                            Select::make('status')
+                                ->label('Trạng thái')
+                                ->options([
+                                    'ACTIVE' => 'Hoạt động',
+                                    'BANNED' => 'Bị khóa',
+                                    'PENDING' => 'Chờ kích hoạt',
+                                ])
+                                ->default('ACTIVE')
+                                ->required(),
+                        ]),
+                        Textarea::make('ban_reason')
+                            ->label('Lý do khóa tài khoản')
+                            ->placeholder('Điền lý do nếu khóa tài khoản...')
+                            ->rows(2),
+                    ]),
+
+                Section::make('Cài đặt thông báo')
+                    ->schema([
+                        Grid::make(3)->schema([
+                            Select::make('province_id')
+                                ->label('Tỉnh thành')
+                                ->relationship('province', 'name')
+                                ->searchable(),
+                            TextInput::make('notify_lat')->label('Vĩ độ thông báo')->numeric(),
+                            TextInput::make('notify_lng')->label('Kinh độ thông báo')->numeric(),
+                        ]),
+                        TextInput::make('notify_radius_km')
+                            ->label('Bán kính thông báo (km)')
+                            ->numeric()
+                            ->default(50),
+                    ])
+                    ->collapsed(),
             ]);
     }
 }

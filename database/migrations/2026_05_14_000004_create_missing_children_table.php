@@ -74,7 +74,10 @@ return new class extends Migration {
         });
 
         // FULLTEXT index — phải dùng DB::statement vì Blueprint không hỗ trợ FULLTEXT trực tiếp
-        DB::statement('ALTER TABLE missing_children ADD FULLTEXT INDEX ft_missing_search (full_name, clothes_desc, special_marks, circumstances)');
+        // FULLTEXT index — only for MySQL/MariaDB (SQLite does not support this)
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE missing_children ADD FULLTEXT INDEX ft_missing_search (full_name, clothes_desc, special_marks, circumstances)');
+        }
     }
 
     public function down(): void

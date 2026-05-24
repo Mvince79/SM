@@ -9,6 +9,7 @@ use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
@@ -19,60 +20,82 @@ class UsersTable
         return $table
             ->columns([
                 TextColumn::make('full_name')
-                    ->searchable(),
+                    ->label('Họ tên')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('email')
-                    ->label('Email address')
+                    ->label('Email')
                     ->searchable(),
-                TextColumn::make('email_verified_at')
-                    ->dateTime()
-                    ->sortable(),
                 TextColumn::make('phone')
-                    ->searchable(),
-                TextColumn::make('phone_verified_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('google_id')
-                    ->searchable(),
-                TextColumn::make('avatar_url')
-                    ->searchable(),
+                    ->label('Số điện thoại')
+                    ->searchable()
+                    ->placeholder('—'),
                 TextColumn::make('role')
-                    ->badge(),
+                    ->label('Vai trò')
+                    ->badge()
+                    ->color(fn($state) => match ($state) {
+                        'ADMIN' => 'danger',
+                        'MODERATOR' => 'warning',
+                        'USER' => 'info',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn($state) => match ($state) {
+                        'ADMIN' => 'Quản trị viên',
+                        'MODERATOR' => 'Kiểm duyệt viên',
+                        'USER' => 'Người dùng',
+                        default => $state,
+                    }),
                 TextColumn::make('status')
-                    ->badge(),
-                TextColumn::make('province_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('notify_lat')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('notify_lng')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('notify_radius_km')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('otp_code')
-                    ->searchable(),
-                TextColumn::make('otp_expires_at')
-                    ->dateTime()
+                    ->label('Trạng thái')
+                    ->badge()
+                    ->color(fn($state) => match ($state) {
+                        'ACTIVE' => 'success',
+                        'BANNED' => 'danger',
+                        'PENDING' => 'warning',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn($state) => match ($state) {
+                        'ACTIVE' => 'Hoạt động',
+                        'BANNED' => 'Bị khóa',
+                        'PENDING' => 'Chờ kích hoạt',
+                        default => $state,
+                    }),
+                TextColumn::make('email_verified_at')
+                    ->label('Xác minh email')
+                    ->dateTime('d/m/Y H:i')
+                    ->placeholder('Chưa xác minh')
                     ->sortable(),
                 TextColumn::make('last_active_at')
-                    ->dateTime()
+                    ->label('Hoạt động cuối')
+                    ->dateTime('d/m/Y H:i')
+                    ->placeholder('—')
                     ->sortable(),
                 TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Ngày đăng ký')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('deleted_at')
-                    ->dateTime()
+                    ->label('Ngày xóa')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                SelectFilter::make('role')
+                    ->label('Vai trò')
+                    ->options([
+                        'ADMIN' => 'Quản trị viên',
+                        'MODERATOR' => 'Kiểm duyệt viên',
+                        'USER' => 'Người dùng',
+                    ]),
+                SelectFilter::make('status')
+                    ->label('Trạng thái')
+                    ->options([
+                        'ACTIVE' => 'Hoạt động',
+                        'BANNED' => 'Bị khóa',
+                        'PENDING' => 'Chờ kích hoạt',
+                    ]),
                 TrashedFilter::make(),
             ])
             ->recordActions([
@@ -85,6 +108,7 @@ class UsersTable
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 }

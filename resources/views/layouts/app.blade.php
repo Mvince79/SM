@@ -47,10 +47,10 @@
             <div class="space-y-3">
                 <h4 class="footer-heading">Tính năng chính</h4>
                 <ul class="space-y-2 text-xs">
-                    <li><a href="{{ route('cases.index') }}" class="footer-link">Duyệt hồ sơ</a></li>
+                    <li><a href="{{ route('missing.index') }}" class="footer-link">Duyệt hồ sơ</a></li>
                     <li><a href="{{ route('map.index') }}" class="footer-link">Bản đồ định vị GPS</a></li>
                     <li><a href="{{ route('stats.index') }}" class="footer-link">Thống kê dữ liệu</a></li>
-                    <li><a href="{{ route('cases.create') }}" class="footer-link">Báo tin khẩn cấp</a></li>
+                    <li><a href="{{ route('found-children.create') }}" class="footer-link">Báo tin khẩn cấp</a></li>
                 </ul>
             </div>
 
@@ -86,7 +86,7 @@
 
     {{-- ── Mobile FAB ── --}}
     <div class="mobile-fab">
-        <a href="{{ route('cases.create') }}" aria-label="Báo tin khẩn cấp">
+        <a href="{{ route('found-children.create') }}" aria-label="Báo tin khẩn cấp">
             <span class="text-2xl font-bold">🚨</span>
         </a>
     </div>

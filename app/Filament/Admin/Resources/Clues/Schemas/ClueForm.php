@@ -7,6 +7,9 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class ClueForm
@@ -15,44 +18,78 @@ class ClueForm
     {
         return $schema
             ->components([
-                TextInput::make('missing_id')
-                    ->required()
-                    ->numeric(),
-                TextInput::make('user_id')
-                    ->numeric(),
-                Select::make('clue_type')
-                    ->options([
-            'SIGHTING' => 'S i g h t i n g',
-            'RUMOR' => 'R u m o r',
-            'PHOTO' => 'P h o t o',
-            'VIDEO' => 'V i d e o',
-            'OTHER' => 'O t h e r',
-        ])
-                    ->default('SIGHTING')
-                    ->required(),
-                Textarea::make('description')
-                    ->required()
-                    ->columnSpanFull(),
-                TextInput::make('lat')
-                    ->numeric(),
-                TextInput::make('lng')
-                    ->numeric(),
-                DateTimePicker::make('gps_shared_at'),
-                TextInput::make('location_accuracy_m')
-                    ->numeric(),
-                DateTimePicker::make('occurred_at'),
-                FileUpload::make('image_path')
-                    ->image(),
-                TextInput::make('is_verified')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
-                TextInput::make('verified_by')
-                    ->numeric(),
-                TextInput::make('is_anonymous')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
+                Section::make('Thông tin manh mối')
+                    ->schema([
+                        Grid::make(2)->schema([
+                            Select::make('missing_id')
+                                ->label('Hồ sơ mất tích')
+                                ->relationship('missingChild', 'full_name')
+                                ->searchable()
+                                ->required(),
+                            Select::make('user_id')
+                                ->label('Người gửi')
+                                ->relationship('user', 'full_name')
+                                ->searchable()
+                                ->placeholder('Ẩn danh'),
+                        ]),
+                        Grid::make(2)->schema([
+                            Select::make('clue_type')
+                                ->label('Loại manh mối')
+                                ->options([
+                                    'SIGHTING' => 'Mục kích trực tiếp',
+                                    'RUMOR' => 'Tin đồn',
+                                    'PHOTO' => 'Hình ảnh',
+                                    'VIDEO' => 'Video',
+                                    'OTHER' => 'Khác',
+                                ])
+                                ->default('SIGHTING')
+                                ->required(),
+                            DateTimePicker::make('occurred_at')
+                                ->label('Thời điểm xảy ra'),
+                        ]),
+                        Textarea::make('description')
+                            ->label('Mô tả chi tiết')
+                            ->required()
+                            ->rows(4),
+                    ]),
+
+                Section::make('Vị trí GPS')
+                    ->schema([
+                        Grid::make(2)->schema([
+                            TextInput::make('lat')->label('Vĩ độ')->numeric(),
+                            TextInput::make('lng')->label('Kinh độ')->numeric(),
+                        ]),
+                        Grid::make(2)->schema([
+                            DateTimePicker::make('gps_shared_at')->label('Thời điểm chia sẻ GPS'),
+                            TextInput::make('location_accuracy_m')
+                                ->label('Độ chính xác (mét)')
+                                ->numeric(),
+                        ]),
+                    ]),
+
+                Section::make('Hình ảnh & Xác minh')
+                    ->schema([
+                        FileUpload::make('image_path')
+                            ->label('Ảnh đính kèm')
+                            ->image(),
+                        Grid::make(2)->schema([
+                            Select::make('is_verified')
+                                ->label('Trạng thái xác minh')
+                                ->options(['0' => 'Chưa xác minh', '1' => 'Đã xác minh'])
+                                ->default('0')
+                                ->required(),
+                            Select::make('verified_by')
+                                ->label('Admin xác minh')
+                                ->relationship('verifiedBy', 'full_name')
+                                ->searchable()
+                                ->placeholder('—'),
+                        ]),
+                        Select::make('is_anonymous')
+                            ->label('Gửi ẩn danh')
+                            ->options(['0' => 'Không', '1' => 'Có'])
+                            ->default('0')
+                            ->required(),
+                    ]),
             ]);
     }
 }

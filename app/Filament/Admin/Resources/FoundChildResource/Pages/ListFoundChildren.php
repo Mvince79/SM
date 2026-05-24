@@ -13,7 +13,7 @@ class ListFoundChildren extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('Thêm mới'),
+            CreateAction::make(),
         ];
     }
 }

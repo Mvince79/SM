@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class CluesTable
@@ -16,50 +17,76 @@ class CluesTable
     {
         return $table
             ->columns([
-                TextColumn::make('missing_id')
-                    ->numeric()
+                TextColumn::make('missingChild.full_name')
+                    ->label('Hồ sơ mất tích')
+                    ->searchable()
                     ->sortable(),
-                TextColumn::make('user_id')
-                    ->numeric()
-                    ->sortable(),
+                TextColumn::make('user.full_name')
+                    ->label('Người gửi')
+                    ->placeholder('Ẩn danh')
+                    ->searchable(),
                 TextColumn::make('clue_type')
-                    ->badge(),
-                TextColumn::make('lat')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('lng')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('gps_shared_at')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('location_accuracy_m')
-                    ->numeric()
-                    ->sortable(),
+                    ->label('Loại manh mối')
+                    ->badge()
+                    ->color(fn($state) => match ($state) {
+                        'SIGHTING' => 'success',
+                        'PHOTO' => 'info',
+                        'VIDEO' => 'warning',
+                        'RUMOR' => 'gray',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn($state) => match ($state) {
+                        'SIGHTING' => 'Mục kích',
+                        'RUMOR' => 'Tin đồn',
+                        'PHOTO' => 'Hình ảnh',
+                        'VIDEO' => 'Video',
+                        'OTHER' => 'Khác',
+                        default => $state,
+                    }),
+                TextColumn::make('description')
+                    ->label('Mô tả')
+                    ->limit(60)
+                    ->tooltip(fn($record) => $record->description),
                 TextColumn::make('occurred_at')
-                    ->dateTime()
+                    ->label('Thời điểm xảy ra')
+                    ->dateTime('d/m/Y H:i')
+                    ->placeholder('—')
                     ->sortable(),
-                ImageColumn::make('image_path'),
+                ImageColumn::make('image_path')
+                    ->label('Ảnh')
+                    ->circular(),
                 TextColumn::make('is_verified')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('verified_by')
-                    ->numeric()
-                    ->sortable(),
+                    ->label('Đã xác minh')
+                    ->badge()
+                    ->color(fn($state) => $state ? 'success' : 'warning')
+                    ->formatStateUsing(fn($state) => $state ? 'Đã xác minh' : 'Chưa xác minh'),
                 TextColumn::make('is_anonymous')
-                    ->numeric()
-                    ->sortable(),
+                    ->label('Ẩn danh')
+                    ->badge()
+                    ->color(fn($state) => $state ? 'gray' : 'info')
+                    ->formatStateUsing(fn($state) => $state ? 'Ẩn danh' : 'Có danh tính'),
                 TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Ngày gửi')
+                    ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('clue_type')
+                    ->label('Loại manh mối')
+                    ->options([
+                        'SIGHTING' => 'Mục kích',
+                        'RUMOR' => 'Tin đồn',
+                        'PHOTO' => 'Hình ảnh',
+                        'VIDEO' => 'Video',
+                        'OTHER' => 'Khác',
+                    ]),
+                SelectFilter::make('is_verified')
+                    ->label('Trạng thái xác minh')
+                    ->options([
+                        '1' => 'Đã xác minh',
+                        '0' => 'Chưa xác minh',
+                    ]),
             ])
             ->recordActions([
                 ViewAction::make(),
@@ -69,6 +96,7 @@ class CluesTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'desc');
     }
 }

@@ -21,6 +21,9 @@ class MissingChildResource extends Resource
     protected static ?string $model = MissingChild::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?string $navigationLabel = 'Trẻ mất tích';
+    protected static ?string $modelLabel = 'Trẻ mất tích';
+    protected static ?string $pluralModelLabel = 'Trẻ mất tích';
 
     public static function form(Schema $schema): Schema
     {

@@ -3,31 +3,33 @@
 
 @section('content')
 
-    {{-- ── SOS Stories Bar ── --}}
-    <section class="sos-bar">
-        <div class="sos-bar-inner">
-            <div class="sos-badge">
-                <span class="w-2 h-2 bg-primary rounded-full animate-ping"></span> SOS khẩn cấp
-            </div>
-            <div class="flex items-center gap-5 overflow-x-auto no-scrollbar py-1 pr-4 flex-1">
-                @foreach([
-                    ['seed' => 'An1', 'bg' => 'ffdfbf', 'name' => 'H. An · 8t', 'urgent' => true],
-                    ['seed' => 'Linh2', 'bg' => 'b6e3f4', 'name' => 'T. Linh · 6t', 'urgent' => true],
-                    ['seed' => 'Bao', 'bg' => 'ffe4e6', 'name' => 'Q. Bảo · 5t', 'urgent' => true],
-                    ['seed' => 'Duc', 'bg' => 'ffd5dc', 'name' => 'M. Đức · 12t', 'urgent' => false],
-                    ['seed' => 'Hoa', 'bg' => 'c0aede', 'name' => 'T. Hoa · 9t', 'urgent' => false],
-                ] as $kid)
-                    <a href="#" class="flex flex-col items-center flex-shrink-0 group">
-                        <div class="w-12 h-12 rounded-full p-0.5 border-2 {{ $kid['urgent'] ? 'border-primary pulse-dot' : 'border-slate-300' }} flex items-center justify-center transform group-hover:scale-105 transition-all">
-                            <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ $kid['seed'] }}&backgroundColor={{ $kid['bg'] }}"
-                                 class="w-full h-full rounded-full object-cover bg-slate-100" alt=""/>
-                        </div>
-                        <span class="text-[10px] font-bold {{ $kid['urgent'] ? 'text-slate-800' : 'text-slate-500' }} mt-1 text-center truncate w-14">{{ $kid['name'] }}</span>
-                    </a>
-                @endforeach
-            </div>
+  {{-- ── SOS Stories Bar ── --}}
+<section class="sos-bar">
+    <div class="sos-bar-inner">
+        <div class="sos-badge">
+            <span class="w-2 h-2 bg-primary rounded-full animate-ping"></span> SOS khẩn cấp
         </div>
-    </section>
+        <div class="flex items-center gap-5 overflow-x-auto no-scrollbar py-1 pr-4 flex-1">
+            @foreach($sosKids as $index => $kid)
+                <a href="{{ route('missing.detail', $kid->id) }}" 
+                   class="flex flex-col items-center flex-shrink-0 group">
+                    <div class="w-12 h-12 rounded-full p-0.5 border-2 {{ $index < 3 ? 'border-primary pulse-dot' : 'border-slate-300' }} flex items-center justify-center transform group-hover:scale-105 transition-all">
+                        @if($kid->primaryPhoto)
+                            <img src="{{ asset('storage/' . $kid->primaryPhoto->path_thumb) }}"
+                                 class="w-full h-full rounded-full object-cover bg-slate-100" alt=""/>
+                        @else
+                            <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ $kid->id }}&backgroundColor=ffdfbf"
+                                 class="w-full h-full rounded-full object-cover bg-slate-100" alt=""/>
+                        @endif
+                    </div>
+                    <span class="text-[10px] font-bold {{ $index < 3 ? 'text-slate-800' : 'text-slate-500' }} mt-1 text-center truncate w-14">
+                        {{ \Illuminate\Support\Str::limit($kid->full_name, 10) }} · {{ $kid->age_estimate }}t
+                    </span>
+                </a>
+            @endforeach
+        </div>
+    </div>
+</section>
 
     {{-- ── Hero ── --}}
     <section class="hero">
@@ -50,11 +52,11 @@
                     TìmTrẻ.vn kết nối sức mạnh cộng đồng Việt Nam, ứng dụng AI đối chiếu khuôn mặt hiện đại và định vị GPS tức thời để hỗ trợ gia đình tìm lại con em nhanh nhất có thể.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 pt-3">
-                    <a href="{{ route('cases.create') }}"
+                    <a href="{{ route('found-children.create') }}"
                        class="inline-flex items-center justify-center gap-2 bg-primary text-white font-extrabold px-8 py-4 rounded-2xl hover:bg-primary-dark transition-premium text-base shadow-lg shadow-primary/30 hover:-translate-y-0.5">
                         📢 Báo tin khẩn cấp tìm con
                     </a>
-                    <a href="{{ route('cases.index') }}"
+                    <a href="{{ route('missing.index') }}"
                        class="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-md text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/20 transition-premium text-base border border-white/20">
                         🔍 Tìm kiếm thông tin bé lạc
                     </a>
@@ -91,45 +93,51 @@
     </section>
 
     {{-- ── Stats Bar ── --}}
-    <section class="stats-bar">
-        <div class="stats-bar-inner">
-            <div class="stat-item">
-                <div class="stat-num text-primary">1.247</div>
-                <div class="stat-label">Con đã về nhà</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-num text-slate-900">355</div>
-                <div class="stat-label">Đang tích cực tìm</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-num text-brand">48h</div>
-                <div class="stat-label">Thời gian trung bình</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-num text-success">89%</div>
-                <div class="stat-label">Tỷ lệ đoàn tụ</div>
-            </div>
+  <section class="stats-bar">
+    <div class="stats-bar-inner">
+        <div class="stat-item">
+            <div class="stat-num text-primary">{{ number_format($stats['total_found']) }}</div>
+            <div class="stat-label">Con đã về nhà</div>
         </div>
-    </section>
+        <div class="stat-item">
+            <div class="stat-num text-slate-900">{{ number_format($stats['total_approved']) }}</div>
+            <div class="stat-label">Đang tích cực tìm</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num text-brand">48h</div>
+            <div class="stat-label">Thời gian trung bình</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num text-success">89%</div>
+            <div class="stat-label">Tỷ lệ đoàn tụ</div>
+        </div>
+    </div>
+</section>
 
     {{-- ── Quick Search ── --}}
     <section class="quick-search-section">
         <div class="max-w-3xl mx-auto text-center space-y-6">
             <h2 class="text-2xl font-black text-slate-900 tracking-tight">Tìm kiếm nhanh hồ sơ con lạc</h2>
             <p class="text-slate-500 text-sm max-w-lg mx-auto">Nhập tên của con, đặc điểm nhận dạng nổi bật hoặc khu vực bé bị lạc mất để lọc hồ sơ ngay lập tức.</p>
-            <div class="search-box">
-                <div class="relative flex-1 flex items-center px-3">
-                    <svg class="w-5 h-5 text-slate-400 absolute left-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input type="text" placeholder="Tên con, đặc điểm, địa điểm bị lạc..."
-                           class="w-full pl-9 pr-3 py-3 text-slate-800 placeholder-slate-400 bg-transparent text-sm focus:outline-none"/>
-                </div>
-                <a href="{{ route('cases.index') }}"
-                   class="bg-primary text-white font-extrabold px-8 py-3.5 rounded-xl hover:bg-primary-dark shadow-md shadow-primary/20 transition-premium text-sm text-center">
-                    Tìm kiếm
-                </a>
-            </div>
+            <form action="{{ route('missing.index') }}" method="GET" class="search-box">
+    <div class="relative flex-1 flex items-center px-3">
+        <svg class="w-5 h-5 text-slate-400 absolute left-4" fill="none"
+             stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input type="text"
+               name="q"
+               placeholder="Tên con, đặc điểm, địa điểm bị lạc..."
+               class="w-full pl-9 pr-3 py-3 text-slate-800 placeholder-slate-400
+                      bg-transparent text-sm focus:outline-none"/>
+    </div>
+    <button type="submit"
+            class="bg-primary text-white font-extrabold px-8 py-3.5 rounded-xl
+                   hover:bg-primary-dark shadow-md shadow-primary/20 transition-premium text-sm">
+        Tìm kiếm
+    </button>
+</form>
         </div>
     </section>
 
@@ -140,48 +148,52 @@
                 <h2 class="section-title">🚨 Con đang cần tìm gấp</h2>
                 <p class="section-subtitle">Các hồ sơ mất tích trong vòng 72 giờ qua được cộng đồng cảnh báo</p>
             </div>
-            <a href="{{ route('cases.index') }}" class="section-link">
+            <a href="{{ route('missing.index') }}" class="section-link">
                 Xem tất cả hồ sơ <span class="group-hover:translate-x-1 transition-transform">→</span>
             </a>
         </div>
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            @foreach([
-                ['seed' => 'An1', 'bg' => 'ffdfbf', 'name' => 'Nguyễn Văn An', 'age' => 8, 'place' => 'Chợ Bình Tây, Q.6, TP.HCM', 'desc' => 'Mặc áo thun xanh lá sọc trắng, quần đùi thun đen, đi dép tổ ong màu xanh. Nhút nhát, ít nói.', 'time' => '2 giờ trước', 'ai' => '87%'],
-                ['seed' => 'Linh2', 'bg' => 'b6e3f4', 'name' => 'Trần Thị Linh', 'age' => 6, 'place' => 'Hồ Tây, Hà Nội', 'desc' => 'Tóc ngắn ngang vai, mặc váy hoa hồng phấn, đi giày búp bê màu hồng nhạt.', 'time' => '5 giờ trước', 'ai' => null],
-                ['seed' => 'Bao', 'bg' => 'ffe4e6', 'name' => 'Trương Quốc Bảo', 'age' => 5, 'place' => 'Biên Hòa, Đồng Nai', 'desc' => 'Mặc bộ đồ thun khủng long màu vàng, đi dép xăng đan đen. Mất tích gần trường Mầm non Hoa Mai.', 'time' => '14 giờ trước', 'ai' => '73%'],
-            ] as $c)
-                <div class="case-card">
-                    <div class="case-card-img">
-                        <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ $c['seed'] }}&backgroundColor={{ $c['bg'] }}" alt=""/>
-                        <span class="absolute top-3 left-3 bg-primary text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl shadow-glow-sos flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span> Đang tìm gấp
-                        </span>
-                        <span class="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-lg">{{ $c['time'] }}</span>
+    @foreach($urgentCases as $c)
+        <div class="case-card">
+            <div class="case-card-img">
+                @if($c->primaryPhoto)
+                    <img src="{{ asset('storage/' . $c->primaryPhoto->path_thumb) }}" alt="{{ $c->full_name }}"/>
+                @else
+                    <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ $c->id }}&backgroundColor=ffdfbf" alt=""/>
+                @endif
+                <span class="absolute top-3 left-3 bg-primary text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl shadow-glow-sos flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span> Đang tìm gấp
+                </span>
+                <span class="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-lg">
+                    {{ $c->missing_date ? \Carbon\Carbon::parse($c->missing_date)->diffForHumans() : '' }}
+                </span>
+            </div>
+            <div class="case-card-body">
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <h3 class="case-card-name">{{ $c->full_name }}</h3>
+                        <span class="text-xs font-extrabold text-slate-400">{{ $c->age_estimate }} tuổi</span>
                     </div>
-                    <div class="case-card-body">
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between">
-                                <h3 class="case-card-name">{{ $c['name'] }}</h3>
-                                <span class="text-xs font-extrabold text-slate-400">{{ $c['age'] }} tuổi</span>
-                            </div>
-                            <div class="case-card-location"><span>📍</span> {{ $c['place'] }}</div>
-                            <p class="case-card-desc">{{ $c['desc'] }}</p>
-                        </div>
-                        <div class="case-card-footer">
-                            @if($c['ai'])
-                                <span class="badge badge-brand">🤖 AI: {{ $c['ai'] }} khớp</span>
-                            @else
-                                <span class="badge badge-default">📞 Bảo mật liên hệ</span>
-                            @endif
-                            <a href="#" class="text-xs font-extrabold text-primary hover:underline flex items-center gap-1">
-                                Xem hồ sơ <span class="text-[10px]">→</span>
-                            </a>
-                        </div>
+                    <div class="case-card-location">
+                        <span>📍</span>
+                        {{ implode(', ', array_filter([$c->district, $c->province?->name])) }}
                     </div>
+                    @if($c->circumstances)
+                        <p class="case-card-desc">{{ \Illuminate\Support\Str::limit($c->circumstances, 100) }}</p>
+                    @endif
                 </div>
-            @endforeach
+                <div class="case-card-footer">
+                    <span class="badge badge-default">📞 Bảo mật liên hệ</span>
+                    <a href="{{ route('missing.detail', $c->id) }}" 
+                       class="text-xs font-extrabold text-primary hover:underline flex items-center gap-1">
+                        Xem hồ sơ <span class="text-[10px]">→</span>
+                    </a>
+                </div>
+            </div>
         </div>
+    @endforeach
+</div>
     </section>
 
     {{-- ── How It Works ── --}}
@@ -247,7 +259,7 @@
                    class="bg-white text-primary font-black px-8 py-4 rounded-2xl hover:bg-slate-50 shadow-xl transition-premium text-base">
                     🤝 Tham gia làm tình nguyện viên
                 </a>
-                <a href="{{ route('cases.index') }}"
+                <a href="{{ route('missing.index') }}"
                    class="border-2 border-white/80 text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 transition-premium text-base">
                     Duyệt hồ sơ trẻ thất lạc
                 </a>

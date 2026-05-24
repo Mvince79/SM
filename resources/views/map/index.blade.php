@@ -82,7 +82,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             function toggleMenu() {
                 document.getElementById('mobile-menu').classList.toggle('hidden');
             }
@@ -104,45 +104,45 @@
 
             // Mock markers for children
             const kidsList = [{
-                    name: "Nguyễn Văn An",
-                    age: 8,
-                    location: "Chợ Bình Tây, Q.6, TP.HCM",
-                    lat: 10.7553,
-                    lng: 106.6608,
-                    img: "https://api.dicebear.com/7.x/thumbs/svg?seed=An1&backgroundColor=ffdfbf"
-                },
-                {
-                    name: "Trần Thị Linh",
-                    age: 6,
-                    location: "Hồ Tây, Hà Nội",
-                    lat: 21.0504,
-                    lng: 105.8122,
-                    img: "https://api.dicebear.com/7.x/thumbs/svg?seed=Linh2&backgroundColor=b6e3f4"
-                },
-                {
-                    name: "Phạm Minh Đức",
-                    age: 12,
-                    location: "Mỹ Khê, Đà Nẵng",
-                    lat: 16.0689,
-                    lng: 108.2452,
-                    img: "https://api.dicebear.com/7.x/thumbs/svg?seed=Duc&backgroundColor=ffd5dc"
-                },
-                {
-                    name: "Lê Thị Hoa",
-                    age: 9,
-                    location: "Bến Ninh Kiều, Cần Thơ",
-                    lat: 10.0336,
-                    lng: 105.7876,
-                    img: "https://api.dicebear.com/7.x/thumbs/svg?seed=Hoa&backgroundColor=c0aede"
-                },
-                {
-                    name: "Ngô Tuấn Kiệt",
-                    age: 7,
-                    location: "KCN VSIP 2, Bình Dương",
-                    lat: 11.0558,
-                    lng: 106.6800,
-                    img: "https://api.dicebear.com/7.x/thumbs/svg?seed=Tuan&backgroundColor=d1fae5"
-                }
+                name: "Nguyễn Văn An",
+                age: 8,
+                location: "Chợ Bình Tây, Q.6, TP.HCM",
+                lat: 10.7553,
+                lng: 106.6608,
+                img: "https://api.dicebear.com/7.x/thumbs/svg?seed=An1&backgroundColor=ffdfbf"
+            },
+            {
+                name: "Trần Thị Linh",
+                age: 6,
+                location: "Hồ Tây, Hà Nội",
+                lat: 21.0504,
+                lng: 105.8122,
+                img: "https://api.dicebear.com/7.x/thumbs/svg?seed=Linh2&backgroundColor=b6e3f4"
+            },
+            {
+                name: "Phạm Minh Đức",
+                age: 12,
+                location: "Mỹ Khê, Đà Nẵng",
+                lat: 16.0689,
+                lng: 108.2452,
+                img: "https://api.dicebear.com/7.x/thumbs/svg?seed=Duc&backgroundColor=ffd5dc"
+            },
+            {
+                name: "Lê Thị Hoa",
+                age: 9,
+                location: "Bến Ninh Kiều, Cần Thơ",
+                lat: 10.0336,
+                lng: 105.7876,
+                img: "https://api.dicebear.com/7.x/thumbs/svg?seed=Hoa&backgroundColor=c0aede"
+            },
+            {
+                name: "Ngô Tuấn Kiệt",
+                age: 7,
+                location: "KCN VSIP 2, Bình Dương",
+                lat: 11.0558,
+                lng: 106.6800,
+                img: "https://api.dicebear.com/7.x/thumbs/svg?seed=Tuan&backgroundColor=d1fae5"
+            }
             ];
 
             // Render lost children markers with red glowing pulse ring
@@ -155,20 +155,25 @@
                 });
 
                 const popupHtml = `
-      <div class="flex gap-3 items-center min-w-[220px]">
-        <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 flex-shrink-0">
-          <img src="${kid.img}" class="w-full h-full object-cover" />
-        </div>
-        <div class="min-w-0">
-          <div class="font-extrabold text-xs text-slate-900">${kid.name}</div>
-          <div class="text-[10px] text-slate-400 font-bold mt-0.5">${kid.age} tuổi · 📍 Bị lạc ở:</div>
-          <div class="text-[10px] text-slate-600 font-semibold truncate mt-0.5">${kid.location}</div>
-          <a href="{{ route('missing.detail') }}" class="inline-flex items-center gap-0.5 text-[10px] font-black text-primary hover:underline mt-1.5 uppercase">
-            Hồ sơ chi tiết →
-          </a>
-        </div>
-      </div>
-    `;
+              <div class="flex gap-3 items-center min-w-[220px]">
+                <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 flex-shrink-0">
+                  <img src="${kid.img}" class="w-full h-full object-cover" />
+                </div>
+                <div class="min-w-0">
+                  <div class="font-extrabold text-xs text-slate-900">${kid.name}</div>
+                  <div class="text-[10px] text-slate-400 font-bold mt-0.5">${kid.age} tuổi · 📍 Bị lạc ở:</div>
+                  <div class="text-[10px] text-slate-600 font-semibold truncate mt-0.5">${kid.location}</div>
+                  <a href="/missing/${kid.id}" 
+       class="inline-flex items-center gap-0.5 text-[10px] font-black text-primary hover:underline mt-1.5 uppercase">
+      Hồ sơ chi tiết →
+    </a>
+
+         class="inline-flex items-center gap-0.5 text-[10px] font-black text-primary hover:underline mt-1.5 uppercase">
+                    Hồ sơ chi tiết →
+                  </a>
+                </div>
+              </div>
+            `;
 
                 L.marker([kid.lat, kid.lng], {
                     icon: lostIcon
@@ -188,10 +193,10 @@
                         iconAnchor: [7, 7]
                     });
                     L.marker(e.latlng, {
-                            icon: myIcon
-                        }).addTo(map).bindPopup(
-                            "<div class='font-bold text-xs p-1 text-slate-900'>🛰️ Vị trí hiện tại của bạn</div>"
-                            )
+                        icon: myIcon
+                    }).addTo(map).bindPopup(
+                        "<div class='font-bold text-xs p-1 text-slate-900'>🛰️ Vị trí hiện tại của bạn</div>"
+                    )
                         .openPopup();
                 });
                 map.on('locationerror', () => alert(

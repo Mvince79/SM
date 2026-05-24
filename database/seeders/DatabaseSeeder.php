@@ -8,13 +8,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call([
-            ProvincesSeeder::class,
-            FoundChildSeeder::class,
-        ]);
-
-        // Seed default Admin Account
-        \App\Models\User::firstOrCreate(
+        $admin = \App\Models\User::firstOrCreate(
             ['email' => 'admin@timkiemtreem.vn'],
             [
                 'full_name' => 'Hệ thống Admin',
@@ -25,5 +19,11 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+
+        $this->call([
+            ProvincesSeeder::class,
+            MissingChildSeeder::class,
+            FoundChildSeeder::class,
+        ]);
     }
 }
