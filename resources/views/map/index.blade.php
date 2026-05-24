@@ -87,6 +87,9 @@
                 document.getElementById('mobile-menu').classList.toggle('hidden');
             }
 
+            // Base URL prefix for missing detail routes
+            const missingDetailBase = '/missing';
+
             // Initialize main map tracking the country center
             const map = L.map('full-map', {
                 zoomControl: false
@@ -104,6 +107,7 @@
 
             // Mock markers for children
             const kidsList = [{
+                id: 1,
                 name: "Nguyễn Văn An",
                 age: 8,
                 location: "Chợ Bình Tây, Q.6, TP.HCM",
@@ -112,6 +116,7 @@
                 img: "https://api.dicebear.com/7.x/thumbs/svg?seed=An1&backgroundColor=ffdfbf"
             },
             {
+                id: 2,
                 name: "Trần Thị Linh",
                 age: 6,
                 location: "Hồ Tây, Hà Nội",
@@ -120,6 +125,7 @@
                 img: "https://api.dicebear.com/7.x/thumbs/svg?seed=Linh2&backgroundColor=b6e3f4"
             },
             {
+                id: 3,
                 name: "Phạm Minh Đức",
                 age: 12,
                 location: "Mỹ Khê, Đà Nẵng",
@@ -128,6 +134,7 @@
                 img: "https://api.dicebear.com/7.x/thumbs/svg?seed=Duc&backgroundColor=ffd5dc"
             },
             {
+                id: 4,
                 name: "Lê Thị Hoa",
                 age: 9,
                 location: "Bến Ninh Kiều, Cần Thơ",
@@ -136,6 +143,7 @@
                 img: "https://api.dicebear.com/7.x/thumbs/svg?seed=Hoa&backgroundColor=c0aede"
             },
             {
+                id: 5,
                 name: "Ngô Tuấn Kiệt",
                 age: 7,
                 location: "KCN VSIP 2, Bình Dương",
