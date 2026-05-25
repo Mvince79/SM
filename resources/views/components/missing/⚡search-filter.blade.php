@@ -17,6 +17,7 @@ new class extends Component
     public function mount(): void
     {
         $this->provinces = Province::where('is_active', 1)->orderBy('name')->get();
+        $this->dispatch('filters-updated', filters: $this->getFilters());
     }
 
     public function updated(): void

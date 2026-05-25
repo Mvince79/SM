@@ -14,9 +14,14 @@ class MissingChildRepository
         $province = $filters['province'] ?? '';
         $gender = $filters['gender'] ?? '';
         $age = $filters['age'] ?? '';
+        $status = $filters['status'] ?? '';
 
-        $query = MissingChild::whereIn('status', ['APPROVED', 'FOUND'])
-            ->with(['primaryPhoto', 'province'])
+        $query = MissingChild::with(['primaryPhoto', 'province'])
+            ->when(
+                $status,
+                fn($q) => $q->where('status', $status),
+                fn($q) => $q->whereIn('status', ['APPROVED', 'FOUND'])
+            )
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($q2) use ($q) {
                     $q2->where('full_name', 'like', "%{$q}%")
@@ -38,11 +43,13 @@ class MissingChildRepository
                 };
             });
 
-        match ($sort) {
-            'urgent' => $query->orderByRaw("FIELD(status, 'APPROVED', 'FOUND')")->latest('approved_at'),
-            'oldest' => $query->oldest('approved_at'),
-            default => $query->latest('approved_at'),
-        };
+        if ($sort === 'oldest') {
+            $query->oldest('approved_at');
+        } elseif ($sort === 'urgent') {
+            $query->orderByRaw("FIELD(status, 'APPROVED', 'FOUND')")->latest('approved_at');
+        } else {
+            $query->latest('approved_at');
+        }
 
         return $query->paginate($perPage)->withQueryString();
     }
@@ -51,7 +58,6 @@ class MissingChildRepository
     {
         $query = MissingChild::with(['photos', 'primaryPhoto', 'province', 'clues.user']);
 
-        // Owner có thể xem hồ sơ của mình dù chưa được duyệt (PENDING/REJECTED)
         $authId = Auth::user()->id ?? null;
         if ($authId) {
             $query->where(function ($q) use ($authId) {

@@ -34,7 +34,7 @@ new class extends Component
                           d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
                 <input type="text"
-                       wire:model="keyword"
+                       wire:model.live="keyword"
                        wire:keydown.enter="search"
                        placeholder="Tên con, đặc điểm, địa điểm bị lạc..."
                        class="w-full pl-9 pr-3 py-3 text-slate-800 placeholder-slate-400 bg-transparent text-sm focus:outline-none"/>

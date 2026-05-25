@@ -13,15 +13,14 @@ new class extends Component
     #[Url] public string $sort = 'latest';
 
     public array $filters = [
-        'q' => '', 'province' => '', 'gender' => '', 'age' => '',
+        'q' => '', 'province' => '', 'gender' => '', 'age' => '', 'status' => '',
     ];
 
-    // Lắng nghe event từ SearchFilter
     #[On('filters-updated')]
     public function updateFilters(array $filters): void
     {
         $this->filters = $filters;
-        $this->resetPage(); // về trang 1 khi filter thay đổi
+        $this->resetPage();
     }
 
     public function updatedSort(): void
@@ -80,7 +79,6 @@ new class extends Component
             {{-- Pagination --}}
             @if($cases->hasPages())
                 <div class="flex items-center justify-center gap-2 mt-12">
-                    {{-- Previous --}}
                     @if($cases->onFirstPage())
                         <span class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300 text-sm font-bold cursor-not-allowed">←</span>
                     @else
@@ -97,7 +95,6 @@ new class extends Component
                         @endif
                     @endforeach
 
-                    {{-- Next --}}
                     @if($cases->hasMorePages())
                         <button wire:click="nextPage"
                                 class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors text-sm font-bold">→</button>
