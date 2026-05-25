@@ -18,7 +18,7 @@
             </div>
         @endif
 
-        <form action="{{ route('found-children.update', $foundChild) }}" method="POST" class="bg-white p-6 rounded-lg border">
+        <form action="{{ route('found-children.update', $foundChild) }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-lg border">
             @csrf
             @method('PUT')
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -50,7 +50,7 @@
 
                 <!-- Giới tính ước tính -->
                 <div>
-                    <label class="block text-sm font-medium mb-1">Giới tính ước tính</label>
+                    <label class="block text-sm font-medium mb-1">Giới tính</label>
                     <select name="gender_estimate" class="w-full border rounded h-12 px-3 @error('gender_estimate') border-red-500 @enderror">
                         <option value="">-- Không xác định --</option>
                         <option value="MALE" {{ $foundChild->gender_estimate == 'MALE' ? 'selected' : '' }}>Nam</option>
@@ -103,6 +103,18 @@
                 @error('special_marks')<span class="text-xs text-red-500 mt-1">{{ $message }}</span>@enderror
             </div>
 
+            <!-- Ảnh (tùy chọn) -->
+            <div class="mt-4">
+                <label class="block text-sm font-medium mb-1">Tải ảnh mới <span id="photos-count-edit" class="text-xs text-slate-500">(0)</span></label>
+                <input id="photos-input-edit" type="file" name="photos[]" accept="image/*" multiple class="w-full @error('photos') border-red-500 @enderror" />
+                <div class="mt-2 flex items-center gap-2">
+                    <input type="checkbox" id="set_primary" name="set_primary" value="1" />
+                    <label for="set_primary" class="text-sm">Đặt làm ảnh chính</label>
+                </div>
+                @error('photos')<span class="text-xs text-red-500 mt-1">{{ $message }}</span>@enderror
+                @error('photos.*')<span class="text-xs text-red-500 mt-1">{{ $message }}</span>@enderror
+            </div>
+
             <div class="flex justify-end gap-3 mt-6">
                 <a href="{{ route('found-children.show', $foundChild) }}" class="px-4 py-2 border rounded hover:bg-gray-50">Hủy</a>
                 <button type="submit" class="bg-primary text-white px-6 py-2 rounded hover:opacity-90">Lưu thay đổi</button>
@@ -110,4 +122,17 @@
         </form>
     </div>
 </main>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('photos-input-edit');
+    const count = document.getElementById('photos-count-edit');
+    if (!input) return;
+    function update() {
+        const n = input.files ? input.files.length : 0;
+        count.textContent = `(${n})`;
+    }
+    input.addEventListener('change', update);
+    update();
+});
+</script>
 @endsection

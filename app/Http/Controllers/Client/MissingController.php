@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Models\MissingChild;
 use App\Http\Requests\Missing\SearchMissingRequest;
 use App\Http\Requests\Missing\StoreMissingChildRequest;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Services\MissingChildService;
 
 class MissingController extends Controller
@@ -26,6 +28,23 @@ class MissingController extends Controller
         $data = $this->missingChildService->getDetailForPublic($id);
 
         return view('missing.detail', $data);
+    }
+
+    public function qr(int $id)
+    {
+        $case = MissingChild::query()->findOrFail($id);
+        $detailUrl = route('missing.detail', ['id' => $case->id]);
+
+        $svg = QrCode::format('svg')
+            ->size(320)
+            ->margin(1)
+            ->errorCorrection('H')
+            ->generate($detailUrl);
+
+        return response($svg, 200, [
+            'Content-Type' => 'image/svg+xml; charset=UTF-8',
+            'Cache-Control' => 'public, max-age=3600',
+        ]);
     }
 
     public function create()

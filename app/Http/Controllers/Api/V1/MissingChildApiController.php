@@ -7,6 +7,7 @@ use App\Http\Resources\MissingChildCollection;
 use App\Http\Resources\MissingChildResource;
 use App\Models\MissingChild;
 use App\Services\MissingChildSearchService;
+use App\Services\MissingChildViewCountService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -21,10 +22,12 @@ use Illuminate\Support\Facades\Cache;
 class MissingChildApiController extends Controller
 {
     protected MissingChildSearchService $searchService;
+    protected MissingChildViewCountService $viewCountService;
 
-    public function __construct(MissingChildSearchService $searchService)
+    public function __construct(MissingChildSearchService $searchService, MissingChildViewCountService $viewCountService)
     {
         $this->searchService = $searchService;
+        $this->viewCountService = $viewCountService;
     }
 
     /**
@@ -113,7 +116,7 @@ class MissingChildApiController extends Controller
         }
 
         // Increment view count (async via Redis counter)
-        $this->incrementViewCount($missing->id);
+        $this->viewCountService->hit($missing->id);
 
         return new MissingChildResource($missing);
     }

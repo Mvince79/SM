@@ -17,6 +17,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::prefix('missing')->name('missing.')->group(function () {
     Route::get('/', [MissingController::class, 'index'])->name('index');
     Route::get('/detail/{id}', [MissingController::class, 'detail'])->name('detail');
+    Route::get('/detail/{id}/qr.svg', [MissingController::class, 'qr'])->name('qr');
 });
 
 Route::prefix('map')->name('map.')->group(function () {
@@ -51,4 +52,8 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
         'update' => 'found-children.update',
         'destroy' => 'found-children.destroy',
     ]);
+
+    // Upload photo for a FoundChild
+    Route::post('found-children/{foundChild}/photos', [\App\Http\Controllers\FoundChildController::class, 'storePhoto'])
+        ->name('found-children.photos.store');
 });

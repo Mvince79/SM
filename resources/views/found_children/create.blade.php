@@ -18,7 +18,7 @@
             </div>
         @endif
 
-        <form action="{{ route('found-children.store') }}" method="POST" class="bg-white p-6 rounded-lg border">
+        <form action="{{ route('found-children.store') }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-lg border">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Tỉnh/Thành -->
@@ -102,11 +102,33 @@
                 @error('special_marks')<span class="text-xs text-red-500 mt-1">{{ $message }}</span>@enderror
             </div>
 
+            <!-- Ảnh -->
+            <div class="mt-4">
+                <label class="block text-sm font-medium mb-1">Ảnh (bắt buộc) <span id="photos-count" class="text-xs text-slate-500">(0)</span></label>
+                <input id="photos-input" type="file" name="photos[]" accept="image/*" multiple class="w-full @error('photos') border-red-500 @enderror" required />
+                <p class="text-xs text-slate-500 mt-1">Chọn nhiều ảnh nếu cần. Định dạng: jpg, jpeg, png, webp. Kích thước tối đa 5MB mỗi ảnh.</p>
+                @error('photos')<span class="text-xs text-red-500 mt-1">{{ $message }}</span>@enderror
+                @error('photos.*')<span class="text-xs text-red-500 mt-1">{{ $message }}</span>@enderror
+            </div>
+
             <div class="flex justify-end gap-3 mt-6">
                 <a href="{{ route('found-children.index') }}" class="px-4 py-2 border rounded hover:bg-gray-50">Hủy</a>
-                <button type="submit" class="bg-primary text-white px-6 py-2 rounded hover:opacity-90">Tạo hồ sơ</button>
+                <button type="submit" class="bg-primary text-white px-6 py-2 rounded hover:opacity-90">Ok</button>
             </div>
         </form>
     </div>
 </main>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('photos-input');
+    const count = document.getElementById('photos-count');
+    if (!input) return;
+    function update() {
+        const n = input.files ? input.files.length : 0;
+        count.textContent = `(${n})`;
+    }
+    input.addEventListener('change', update);
+    update();
+});
+</script>
 @endsection

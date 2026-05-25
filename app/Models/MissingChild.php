@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class MissingChild extends Model
@@ -83,6 +84,11 @@ class MissingChild extends Model
         return $this->belongsTo(Province::class);
     }
 
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -137,32 +143,68 @@ class MissingChild extends Model
      */
     public function getThumbUrlAttribute(): string
     {
-        // Thử primaryPhoto trước, nếu null thì lấy ảnh đầu tiên trong collection
-        $photo = $this->relationLoaded('primaryPhoto')
-            ? $this->getRelation('primaryPhoto')
-            : null;
+        $url = $this->getDetailPrimaryPhotoUrlAttribute();
 
-        if (!$photo && $this->relationLoaded('photos')) {
-            $photo = $this->photos->first();
-        }
-
-        if (!$photo) {
-            // Fallback query trực tiếp nếu không có relation nào được load
-            $photo = $this->photos()->orderBy('sort_order')->first();
-        }
-
-        if ($photo) {
-            // Ưu tiên thumb → blurred → original (original luôn có ngay sau upload)
-            foreach (['path_thumb', 'path_blurred', 'path_original'] as $field) {
-                $path = $photo->$field ?? null;
-                if ($path && Storage::disk('public')->exists($path)) {
-                    return asset('storage/' . $path);
-                }
-            }
+        if ($url) {
+            return $url;
         }
 
         // Fallback: DiceBear avatar (không vỡ ảnh)
         $seed = urlencode($this->full_name);
         return "https://api.dicebear.com/7.x/thumbs/svg?seed={$seed}&backgroundColor=ffdfbf";
+    }
+
+    public function getDetailPhotoUrlsAttribute(): array
+    {
+        $authenticated = Auth::check();
+
+        $photos = $this->relationLoaded('photos')
+            ? $this->photos
+            : $this->photos()->orderBy('sort_order')->get();
+
+        return $photos->map(function (Photo $photo) use ($authenticated) {
+            return $this->resolvePhotoUrlForViewer($photo, $authenticated);
+        })->filter()->values()->all();
+    }
+
+    public function getDetailPrimaryPhotoUrlAttribute(): ?string
+    {
+        $authenticated = Auth::check();
+        $photo = $this->relationLoaded('primaryPhoto')
+            ? $this->getRelation('primaryPhoto')
+            : $this->primaryPhoto()->first();
+
+        if (! $photo) {
+            $photo = $this->relationLoaded('photos')
+                ? $this->photos->first()
+                : $this->photos()->orderBy('sort_order')->first();
+        }
+
+        return $photo ? $this->resolvePhotoUrlForViewer($photo, $authenticated) : null;
+    }
+
+    public function getQrCodeUrlAttribute(): ?string
+    {
+        if ($this->qr_code_path && Storage::disk('public')->exists($this->qr_code_path)) {
+            return asset('storage/' . $this->qr_code_path);
+        }
+
+        return route('missing.qr', ['id' => $this->id]);
+    }
+
+    protected function resolvePhotoUrlForViewer(Photo $photo, bool $authenticated): ?string
+    {
+        $fields = $authenticated
+            ? ['path_original', 'path_thumb', 'path_blurred']
+            : ['path_blurred'];
+
+        foreach ($fields as $field) {
+            $path = $photo->{$field} ?? null;
+            if ($path && Storage::disk('public')->exists($path)) {
+                return asset('storage/' . $path);
+            }
+        }
+
+        return null;
     }
 }

@@ -24,6 +24,14 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach($items as $item)
                     <a href="{{ route('found-children.show', $item) }}" class="block p-4 border rounded-lg hover:shadow-md transition bg-white">
+                        <div class="mb-3">
+                            @php($primary = $item->photos->where('is_primary', 1)->first() ?? $item->photos->first())
+                            @if($primary)
+                                <img src="{{ Storage::url($primary->path_original) }}" alt="Ảnh" class="w-full h-40 object-cover rounded mb-2" />
+                            @else
+                                <div class="w-full h-40 bg-gray-100 rounded flex items-center justify-center text-sm text-slate-400 mb-2">Không có ảnh</div>
+                            @endif
+                        </div>
                         <div class="flex justify-between items-start mb-2">
                             <span class="text-xs font-semibold text-slate-500 uppercase">{{ $item->found_date->format('d/m/Y') }}</span>
                             @php($status = $item->getAttribute('status'))

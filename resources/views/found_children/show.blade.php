@@ -111,6 +111,22 @@
                     <p class="text-sm text-slate-700 leading-relaxed">{{ $item->special_marks }}</p>
                 </div>
                 @endif
+
+                @if($item->photos->isNotEmpty())
+                <div class="bg-white p-6 rounded-lg border mb-4">
+                    <h2 class="font-bold text-lg mb-4">Ảnh đã tải lên</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        @foreach($item->photos as $photo)
+                            <a href="{{ Storage::url($photo->path_original) }}" target="_blank" class="block group">
+                                <img src="{{ Storage::url($photo->path_original) }}" alt="Ảnh {{ $loop->iteration }}" class="w-full h-36 object-cover rounded-lg border group-hover:opacity-90 transition" />
+                                @if($photo->is_primary)
+                                    <span class="mt-2 inline-flex text-xs font-semibold px-2 py-1 rounded bg-primary/10 text-primary">Ảnh chính</span>
+                                @endif
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
             </div>
 
             <!-- Sidebar -->
@@ -137,6 +153,28 @@
                     <p class="text-sm font-semibold text-slate-800">{{ $item->user->full_name }}</p>
                     <p class="text-xs text-slate-500 mt-1">{{ $item->user->email }}</p>
                 </div>
+
+                <!-- Upload Photo -->
+                @can('update', $item)
+                <div class="bg-white p-4 rounded-lg border mt-4">
+                    <h3 class="font-bold text-sm mb-2">Tải ảnh lên</h3>
+                    <form action="{{ route('found-children.photos.store', $item) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div>
+                            <input type="file" name="photos[]" accept="image/*" multiple class="w-full @error('photos') border-red-500 @enderror" required />
+                            @error('photos')<span class="text-xs text-red-500">{{ $message }}</span>@enderror
+                            @error('photos.*')<span class="text-xs text-red-500">{{ $message }}</span>@enderror
+                        </div>
+                        <div class="mt-2 flex items-center gap-2">
+                            <input type="checkbox" id="set_primary" name="set_primary" value="1" />
+                            <label for="set_primary" class="text-sm">Đặt làm ảnh chính</label>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="bg-primary text-white px-4 py-2 rounded">Upload ảnh</button>
+                        </div>
+                    </form>
+                </div>
+                @endcan
             </div>
         </div>
     </div>

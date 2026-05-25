@@ -51,7 +51,7 @@
                                 x-data="{
                                     open: false,
                                     current: 0,
-                                    photos: {{ Js::from($case->photos->map(fn($p) => asset('storage/' . $p->path_original))) }},
+                                    photos: {{ Js::from($case->detail_photo_urls) }},
                                     prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length },
                                     next() { this.current = (this.current + 1) % this.photos.length }
                                 }"
@@ -62,23 +62,23 @@
                                 {{-- Ảnh chính --}}
                                 <div class="relative overflow-hidden rounded-2xl border-4 border-slate-100 shadow-md bg-slate-900 group aspect-square sm:aspect-auto cursor-pointer"
                                     @click="open = true; current = 0">
-                                    <img src="{{ $case->thumb_url }}"
+                                    <img src="{{ $case->detail_primary_photo_url ?? $case->thumb_url }}"
                                         class="w-full h-full sm:h-44 object-cover transform group-hover:scale-105 transition-premium"
                                         alt="{{ $case->full_name }}" />
-                                    @if($case->photos->count() > 1)
+                                    @if(count($case->detail_photo_urls) > 1)
                                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <span class="text-white text-xs font-bold bg-black/60 px-3 py-1.5 rounded-xl">
-                                                📷 {{ $case->photos->count() }} ảnh
+                                                📷 {{ count($case->detail_photo_urls) }} ảnh
                                             </span>
                                         </div>
                                     @endif
                                 </div>
 
                                 {{-- Thumbnail strip --}}
-                                @if($case->photos->count() > 1)
+                                @if(count($case->detail_photo_urls) > 1)
                                     <div class="flex gap-1.5 mt-2 overflow-x-auto pb-1">
-                                        @foreach($case->photos as $i => $photo)
-                                            <img src="{{ asset('storage/' . $photo->path_thumb ?? $photo->path_original) }}"
+                                        @foreach($case->detail_photo_urls as $i => $photoUrl)
+                                            <img src="{{ $photoUrl }}"
                                                 class="w-12 h-12 object-cover rounded-lg border-2 border-slate-200 cursor-pointer hover:border-red-400 flex-shrink-0"
                                                 @click="open = true; current = {{ $i }}"
                                                 alt="Ảnh {{ $i + 1 }}" />
@@ -157,6 +157,10 @@
                                             {{ $case->full_name }}</h1>
                                         <p class="text-xs text-slate-400 font-bold mt-2">Mã vụ việc: <span
                                                 class="font-mono text-slate-700">#{{ $case->case_code }}</span></p>
+                                        <div class="mt-3 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full">
+                                            <span>👁</span>
+                                            <span>{{ number_format($case->view_count) }} lượt xem</span>
+                                        </div>
                                     </div>
                                     <button title="Sao chép liên kết"
                                         onclick="navigator.clipboard.writeText(window.location.href); alert('Đã sao chép link hồ sơ!')"
@@ -379,20 +383,68 @@
                 <!-- Contact block -->
                 <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
                     <h4 class="font-extrabold text-slate-900 text-sm uppercase tracking-wider">Thông tin liên lạc</h4>
-                    <p class="text-xs text-slate-400 leading-relaxed font-semibold">Để chống đăng tin giả và bảo vệ thông
-                        tin cá nhân của phụ huynh, bạn cần đăng nhập tài khoản tình nguyện viên đã xác minh danh tính để kết
-                        nối.</p>
+                    @guest
+                        <p class="text-xs text-slate-400 leading-relaxed font-semibold">Số điện thoại liên hệ đang được ẩn.
+                            Đăng nhập để mở tính năng chat nội bộ và kết nối với gia đình.</p>
 
-                    <a href="{{ route('auth.login') }}"
-                        class="block w-full bg-slate-900 text-white font-extrabold text-xs py-3.5 rounded-2xl text-center hover:bg-slate-800 shadow transition-colors uppercase tracking-widest">
-                        Đăng nhập để liên hệ
-                    </a>
+                        <a href="{{ route('auth.login') }}"
+                            class="block w-full bg-slate-900 text-white font-extrabold text-xs py-3.5 rounded-2xl text-center hover:bg-slate-800 shadow transition-colors uppercase tracking-widest">
+                            Đăng nhập để liên hệ
+                        </a>
+                    @else
+                        <div class="space-y-2">
+                            <p class="text-sm font-bold text-slate-900">{{ $case->contact_name }}</p>
+                            <p class="text-xs text-slate-500">{{ $case->contact_relation }}</p>
+                            @if(Auth::check())
+                                @if($case->contact_phone)
+                                    <p class="text-sm font-extrabold text-slate-800">SĐT: <a href="tel:{{ $case->contact_phone }}" class="text-primary">{{ $case->contact_phone }}</a></p>
+                                @else
+                                    <p class="text-xs text-slate-400 leading-relaxed font-semibold">Số điện thoại chưa được cung cấp.</p>
+                                @endif
+                            @else
+                                <p class="text-xs text-slate-400 leading-relaxed font-semibold">Liên hệ nội bộ sẽ được mở cho tài khoản đã đăng nhập.</p>
+                            @endif
+                        </div>
+                    @endguest
 
-                    <div
-                        class="flex items-center gap-2 justify-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                        <span>🔒</span> Mã hóa dữ liệu bảo mật 100%
+                    <div class="flex items-center gap-2 justify-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                        <span>🔒</span> Thông tin liên hệ được bảo vệ
                     </div>
                 </div>
+
+                <form class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4" onsubmit="return false;">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <h4 class="font-extrabold text-slate-900 text-sm uppercase tracking-wider">QR hồ sơ</h4>
+                            <p class="text-[10px] text-slate-400 font-semibold mt-1">Mở nhanh hồ sơ bằng quét mã</p>
+                        </div>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-full">QR</span>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Đường dẫn QR</label>
+                        <input id="qr-link" type="text" readonly value="{{ route('missing.qr', ['id' => $case->id]) }}"
+                            class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600 focus:outline-none" />
+                    </div>
+
+                    <div class="rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 p-4 flex justify-center">
+                        <img src="{{ route('missing.qr', ['id' => $case->id]) }}" alt="QR hồ sơ {{ $case->full_name }}" class="max-w-full h-auto" />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <a href="{{ route('missing.qr', ['id' => $case->id]) }}" target="_blank"
+                            class="text-center rounded-2xl border border-slate-200 px-3 py-3 text-xs font-extrabold text-slate-700 hover:bg-slate-50 transition-colors">
+                            Mở QR
+                        </a>
+                        <button type="button"
+                            onclick="navigator.clipboard.writeText(document.getElementById('qr-link').value); alert('Đã sao chép link QR!')"
+                            class="rounded-2xl bg-primary text-white px-3 py-3 text-xs font-extrabold hover:bg-primary-dark transition-colors">
+                            Sao chép
+                        </button>
+                    </div>
+
+                    <p class="text-[10px] text-slate-400 font-semibold text-center uppercase tracking-wide">Quét mã để mở hồ sơ nhanh</p>
+                </form>
 
                 <!-- Interactive Mini map tracking location -->
                 @if($case->lat && $case->lng)

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class FoundChild extends Model
 {
@@ -61,9 +62,47 @@ class FoundChild extends Model
         return $this->belongsTo(Province::class, 'province_id');
     }
 
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
     public function photos()
     {
         return $this->morphMany(Photo::class, 'model');
+    }
+
+    public function primaryPhoto()
+    {
+        return $this->morphOne(Photo::class, 'model')
+            ->where('is_primary', 1)
+            ->orderBy('sort_order');
+    }
+
+    public function getPrimaryPhotoUrlAttribute(): ?string
+    {
+        $photo = $this->relationLoaded('primaryPhoto')
+            ? $this->getRelation('primaryPhoto')
+            : $this->primaryPhoto()->first();
+
+        if (! $photo) {
+            $photo = $this->relationLoaded('photos')
+                ? $this->photos->first()
+                : $this->photos()->orderBy('sort_order')->first();
+        }
+
+        if (! $photo) {
+            return null;
+        }
+
+        foreach (['path_thumb', 'path_original'] as $field) {
+            $path = $photo->{$field} ?? null;
+            if ($path && Storage::disk('public')->exists($path)) {
+                return asset('storage/' . $path);
+            }
+        }
+
+        return null;
     }
 
     public function comments()

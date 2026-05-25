@@ -15,6 +15,8 @@ class FoundChildRequest extends FormRequest
     {
         return [
             'province_id' => 'required|exists:provinces,id',
+            'photos' => 'required|array|min:1',
+            'photos.*' => 'image|mimes:jpg,jpeg,png,webp|max:5120',
             'found_date' => 'required|date',
             'found_time' => 'nullable|date_format:H:i',
             'gender_estimate' => 'nullable|in:MALE,FEMALE,UNKNOWN',
@@ -32,6 +34,7 @@ class FoundChildRequest extends FormRequest
         return [
             'province_id' => 'tỉnh/thành',
             'found_date' => 'ngày phát hiện',
+            'photos' => 'ảnh',
             'found_time' => 'giờ phát hiện',
             'gender_estimate' => 'giới tính ước tính',
             'age_estimate' => 'tuổi ước tính',

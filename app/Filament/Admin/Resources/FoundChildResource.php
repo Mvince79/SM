@@ -3,8 +3,11 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\FoundChildResource\Pages;
+use App\Filament\Admin\Resources\FoundChildResource\RelationManagers\PhotosRelationManager;
+use App\Filament\Admin\Resources\FoundChildResource\Schemas\FoundChildInfolist;
 use App\Models\FoundChild;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -67,6 +70,14 @@ class FoundChildResource extends Resource
                 ])
                 ->required()
                 ->default('PENDING'),
+            FileUpload::make('photo_upload')
+                ->label('Ảnh chính')
+                ->image()
+                ->disk('public')
+                ->directory(fn($record) => 'found_children/' . ($record?->id ?? 'tmp'))
+                ->multiple()
+                ->maxFiles(20)
+                ->imagePreviewHeight(80),
         ]);
     }
 
@@ -104,6 +115,18 @@ class FoundChildResource extends Resource
             ->bulkActions([
                 \Filament\Actions\DeleteBulkAction::make(),
             ]);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return FoundChildInfolist::configure($schema);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            PhotosRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
