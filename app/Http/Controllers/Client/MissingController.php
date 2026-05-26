@@ -46,6 +46,12 @@ class MissingController extends Controller
             'Cache-Control' => 'public, max-age=3600',
         ]);
     }
+    public function detailByCaseCode(string $caseCode)
+    {
+        $data = $this->missingChildService->getDetailForPublicByCaseCode($caseCode);
+
+        return view('missing.detail', $data);
+    }
 
     public function create()
     {

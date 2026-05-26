@@ -463,6 +463,15 @@
                 <!-- Social sharing -->
                 <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
                     <h4 class="font-extrabold text-slate-900 text-sm uppercase tracking-wider">Lan toả để giúp tìm con</h4>
+                    @if($case->qr_code_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($case->qr_code_path))
+                        <div class="flex items-center gap-3">
+                            <img src="{{ asset('storage/' . $case->qr_code_path) }}" alt="QR code" class="w-20 h-20 rounded-lg border" />
+                            <div class="flex-1">
+                                <div class="text-xs text-slate-500 font-bold">QR Code hồ sơ</div>
+                                <a href="{{ asset('storage/' . $case->qr_code_path) }}" download="{{ basename($case->qr_code_path) }}" class="inline-block mt-2 bg-slate-900 text-white text-xs font-extrabold py-2 px-3 rounded-xl">Tải QR Code</a>
+                            </div>
+                        </div>
+                    @endif
                     <div class="grid grid-cols-2 gap-2">
                         <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(request()->url()) }}"
                             target="_blank"

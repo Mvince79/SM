@@ -14,6 +14,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\OtpService::class);
         $this->app->singleton(\App\Services\RateLimiterService::class);
         $this->app->singleton(\App\Services\GoogleAuthService::class);
+        $this->app->singleton(\App\Services\QrCodeService::class);
     }
 
     /**

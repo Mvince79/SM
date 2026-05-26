@@ -70,4 +70,22 @@ class MissingChildRepository
 
         return $query->findOrFail($id);
     }
+
+    public function findPublicByCaseCode(string $caseCode): MissingChild
+    {
+        $query = MissingChild::with(['photos', 'primaryPhoto', 'province', 'clues.user']);
+
+        // Owner can view their own record even if not approved
+        $authId = Auth::user()->id ?? null;
+        if ($authId) {
+            $query->where(function ($q) use ($authId) {
+                $q->whereIn('status', ['APPROVED', 'FOUND'])
+                    ->orWhere('user_id', $authId);
+            });
+        } else {
+            $query->whereIn('status', ['APPROVED', 'FOUND']);
+        }
+
+        return $query->where('case_code', $caseCode)->firstOrFail();
+    }
 }

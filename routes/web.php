@@ -18,6 +18,11 @@ Route::prefix('missing')->name('missing.')->group(function () {
     Route::get('/', [MissingController::class, 'index'])->name('index');
     Route::get('/detail/{id}', [MissingController::class, 'detail'])->name('detail');
     Route::get('/detail/{id}/qr.svg', [MissingController::class, 'qr'])->name('qr');
+    // Public detail by case_code for QR scan (e.g. /missing/MC-2026-00001)
+    // Restrict pattern so it doesn't catch other routes like /create
+    Route::get('/{case_code}', [MissingController::class, 'detailByCaseCode'])
+        ->where('case_code', '^MC-\d{4}-\d{5}$')
+        ->name('by_case_code');
 });
 
 Route::prefix('map')->name('map.')->group(function () {

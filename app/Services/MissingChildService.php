@@ -36,4 +36,13 @@ class MissingChildService
 
         return compact('case');
     }
+
+    public function getDetailForPublicByCaseCode(string $caseCode): array
+    {
+        $case = $this->missingChildRepository->findPublicByCaseCode($caseCode);
+
+        $case->increment('view_count');
+
+        return compact('case');
+    }
 }

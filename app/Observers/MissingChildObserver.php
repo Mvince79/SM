@@ -58,6 +58,21 @@ class MissingChildObserver
         }
 
         Log::info("MissingChild Observer (created): Generated case_code {$missingChild->case_code} for child ID {$missingChild->id}");
+
+        // Generate QR code PNG pointing to public detail URL and save path to model
+        try {
+            $qrService = app(\App\Services\QrCodeService::class);
+            // Per spec: QR should point to /missing/{case_code}
+            $detailUrl = url('/missing/' . $missingChild->case_code);
+            $path = $qrService->generate($detailUrl, $missingChild->case_code);
+
+            // Save relative path into model without firing events
+            $missingChild->qr_code_path = $path;
+            $missingChild->saveQuietly();
+            Log::info("MissingChild Observer: QR code generated at {$path} for {$missingChild->case_code}");
+        } catch (\Throwable $e) {
+            Log::warning('QR generation failed: ' . $e->getMessage());
+        }
     }
 
     /**
