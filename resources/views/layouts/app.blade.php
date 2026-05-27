@@ -23,6 +23,7 @@
 
     {{-- Flash message --}}
     @include('components.ui.success-message')
+    @include('components.ui.error-message')
 
     {{-- ── Page Content ── --}}
     @yield('content')

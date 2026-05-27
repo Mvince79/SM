@@ -70,7 +70,7 @@ new class extends Component
 
         Auth::user()->update($updateData);
 
-        session()->flash('success', '✅ Cập nhật hồ sơ thành công!');
+        session()->flash('success', 'Cập nhật hồ sơ thành công!');
         $this->redirect(route('profile.index'));
     }
 

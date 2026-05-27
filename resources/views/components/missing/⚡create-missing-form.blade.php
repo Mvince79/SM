@@ -273,7 +273,7 @@ new class extends Component {
             return $case;
         });
 
-        session()->flash('success', '🎉 Đăng tin thành công! Hồ sơ đang chờ xét duyệt.');
+        session()->flash('success', 'Đăng tin thành công! Hồ sơ đang chờ xét duyệt.');
         $this->redirect(route('missing.detail', (int) $case->id));
     }
 };

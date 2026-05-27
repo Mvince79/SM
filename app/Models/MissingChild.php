@@ -94,6 +94,15 @@ class MissingChild extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable')
+            ->whereNull('parent_id')
+            ->where('is_approved', 1)
+            ->with(['user', 'replies.user'])
+            ->latest();
+    }
+
     // Scopes
     public function scopeApproved($query)
     {
