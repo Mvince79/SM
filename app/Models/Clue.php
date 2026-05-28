@@ -10,6 +10,7 @@ class Clue extends Model
 
     protected $fillable = [
         'missing_id',
+        'parent_id',
         'user_id',
         'clue_type',
         'description',
@@ -48,7 +49,11 @@ class Clue extends Model
         return $this->belongsTo(User::class, 'verified_by');
     }
 
-    /** Hiển thị tên người gửi (ẩn danh hoặc tên thật) */
+    public function replies()
+    {
+        return $this->hasMany(Clue::class, 'parent_id')->with('user')->oldest();
+    }
+
     public function getDisplayNameAttribute(): string
     {
         if ($this->is_anonymous || !$this->user) {
@@ -57,7 +62,6 @@ class Clue extends Model
         return $this->user->name;
     }
 
-    /** Initials để hiện avatar chữ */
     public function getInitialsAttribute(): string
     {
         $name = $this->display_name;
