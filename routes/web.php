@@ -62,3 +62,6 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
     Route::post('found-children/{foundChild}/photos', [\App\Http\Controllers\FoundChildController::class, 'storePhoto'])
         ->name('found-children.photos.store');
 });
+
+Route::get('/test-403', fn() => abort(403));
+Route::get('/test-500', fn() => abort(500));

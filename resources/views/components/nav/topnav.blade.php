@@ -7,6 +7,19 @@
 --}}
 
 @php
+    // Đảm bảo session đã được start (cần thiết khi render error pages vì
+    // chúng bypass middleware stack → Auth::user() trả null nếu không có session)
+    try {
+        $req = request();
+        if (!$req->hasSession()) {
+            $sess = app('session')->driver();
+            $sess->setId($req->cookies->get($sess->getName()));
+            $sess->start();
+            $req->setLaravelSession($sess);
+            app('auth')->shouldUse('web');
+        }
+    } catch (\Throwable) {}
+
     // $active = request()->routeIs(...func_get_args()) ? 'active' : '';
     $navLinks = [
         ['route' => 'home', 'label' => 'Trang chủ', 'href' => route('home')],
