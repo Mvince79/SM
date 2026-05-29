@@ -12,7 +12,6 @@ new class extends Component
     public $user;
     public $provinces;
 
-    // Form fields
     public string $full_name   = '';
     public string $phone       = '';
     public string $province_id = '';
@@ -27,7 +26,6 @@ new class extends Component
         $this->province_id = (string) ($user->province_id ?? '');
     }
 
-    // Validate avatar ngay khi chọn file
     public function updatedAvatarUpload(): void
     {
         $this->validate([
@@ -74,14 +72,12 @@ new class extends Component
         $this->redirect(route('profile.index'));
     }
 
-    // Resize avatar 300x300 bằng GD thuần (không cần cài thêm package)
     protected function processAvatar(): ?string
     {
         try {
             $tmpPath  = $this->avatarUpload->getRealPath();
             $mimeType = mime_content_type($tmpPath);
 
-            // Validate MIME thực bằng finfo
             $src = match($mimeType) {
                 'image/jpeg' => imagecreatefromjpeg($tmpPath),
                 'image/png'  => imagecreatefrompng($tmpPath),
@@ -89,7 +85,6 @@ new class extends Component
                 default      => throw new \Exception('Định dạng ảnh không hỗ trợ'),
             };
 
-            // Crop hình vuông từ center rồi resize 300x300
             $w    = imagesx($src);
             $h    = imagesy($src);
             $size = min($w, $h);

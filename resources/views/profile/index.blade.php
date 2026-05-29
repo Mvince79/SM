@@ -109,7 +109,7 @@
         <div class="border-b border-slate-200 flex gap-6 text-sm font-bold">
             <button @click="tab = 'posts'"
                     :class="tab === 'posts' ? 'py-3 text-primary border-b-2 border-primary relative z-10' : 'py-3 text-slate-400 hover:text-slate-700 transition-colors'">
-                Tin đã đăng ({{ $user->missingChildren->count() }})
+                Tin của tôi ({{ $user->missingChildren->count() }})
             </button>
             <button @click="tab = 'clues'"
                     :class="tab === 'clues' ? 'py-3 text-primary border-b-2 border-primary relative z-10' : 'py-3 text-slate-400 hover:text-slate-700 transition-colors'">
@@ -121,50 +121,9 @@
             </button>
         </div>
 
-        {{-- Tab: Tin đã đăng --}}
-        <div x-show="tab === 'posts'" x-transition class="space-y-4">
-            @forelse($user->missingChildren()->latest()->get() as $case)
-                <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium flex flex-col sm:flex-row gap-5 items-center justify-between">
-                    <div class="flex gap-4 items-center w-full sm:w-auto">
-                        <div class="w-16 h-16 rounded-2xl overflow-hidden bg-slate-900 border border-slate-200 flex-shrink-0">
-                            <img src="{{ $case->thumb_url }}"
-                                 alt="{{ $case->full_name }}"
-                                 class="w-full h-full object-cover"/>
-                        </div>
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <h3 class="font-extrabold text-slate-900 text-sm">{{ $case->full_name }}</h3>
-                                <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full
-                                    {{ $case->status === 'APPROVED' ? 'bg-primary/10 text-primary'
-                                        : ($case->status === 'FOUND'    ? 'bg-success/10 text-success'
-                                        : ($case->status === 'PENDING'  ? 'bg-amber-100 text-amber-600'
-                                        : 'bg-slate-100 text-slate-500')) }}">
-                                    {{ ['PENDING'=>'Chờ duyệt','APPROVED'=>'Đang tìm gấp','FOUND'=>'Đã tìm thấy','REJECTED'=>'Bị từ chối','CLOSED'=>'Đã đóng'][$case->status] ?? $case->status }}
-                                </span>
-                            </div>
-                            <p class="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wide">
-                                📍 {{ $case->district ?? $case->province?->name }}
-                                · Mất tích: {{ $case->missing_date?->format('d/m/Y') }}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 w-full sm:w-auto justify-end">
-                        <a href="{{ route('missing.detail', $case->id) }}"
-                           class="border border-slate-200 text-slate-700 text-xs font-extrabold py-2.5 px-4 rounded-xl hover:bg-slate-50 transition-colors">
-                            Chi tiết tin
-                        </a>
-                    </div>
-                </div>
-            @empty
-                <div class="text-center py-14 space-y-4">
-                    <div class="text-4xl">📭</div>
-                    <h3 class="font-extrabold text-slate-700 text-base">Bạn chưa có tin đăng nào</h3>
-                    <a href="{{ route('missing.create') }}"
-                       class="inline-block bg-primary text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-primary-dark transition-colors">
-                        + Đăng tin tìm con ngay
-                    </a>
-                </div>
-            @endforelse
+        {{-- Tab: Tin của tôi (T-20 / PB-PAGE-09) — Livewire component --}}
+        <div x-show="tab === 'posts'" x-transition>
+            @livewire('profile.my-posts')
         </div>
 
         {{-- Tab: Manh mối --}}
