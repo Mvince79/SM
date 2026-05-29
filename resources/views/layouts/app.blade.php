@@ -11,6 +11,70 @@
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
+    <script>
+        // Guard: prevent non-user-gesture scripts from triggering geolocation prompts.
+        (function(){
+            try{
+                if (!navigator.geolocation) return;
+
+                var nativeGet = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+                var nativeWatch = navigator.geolocation.watchPosition && navigator.geolocation.watchPosition.bind(navigator.geolocation);
+                var nativeClear = navigator.geolocation.clearWatch && navigator.geolocation.clearWatch.bind(navigator.geolocation);
+                // expose native methods for explicit user-gesture calls
+                try { window.__nativeGeolocationGet = nativeGet; window.__nativeGeolocationWatch = nativeWatch; window.__nativeGeolocationClear = nativeClear; } catch(e) {}
+
+                navigator.geolocation.getCurrentPosition = function(success, error, options){
+                    if (window.__allowGeolocation__) {
+                        return nativeGet(success, error, options);
+                    }
+                    // log stack to help identify callers, but do NOT call their error handler
+                    try{
+                        var stack = new Error().stack;
+                        console.warn('[gps-guard] Blocked getCurrentPosition call (no user gesture). Stack:', stack);
+                    }catch(e){}
+                    // intentionally do not call error callback to avoid alerts on page load
+                };
+
+                if (nativeWatch) {
+                    // track fake watch ids
+                    var _nextWatchId = 1;
+                    var _activeWatches = {};
+                    navigator.geolocation.watchPosition = function(success, error, options){
+                        if (window.__allowGeolocation__) {
+                                return nativeWatch(success, error, options);
+                            }
+                            // do not call error callback when blocked
+                        var id = _nextWatchId++;
+                        _activeWatches[id] = true;
+                        return id;
+                    };
+
+                    navigator.geolocation.clearWatch = function(id){
+                        if (_activeWatches[id]) delete _activeWatches[id];
+                        if (nativeClear) return nativeClear(id);
+                    };
+                }
+
+                window.allowGeolocationForNextCall = function(){
+                    var now = Date.now();
+                    // require a recent real user gesture (click/keydown/touchstart) to permit
+                    if (!window.__lastUserGestureAt || (now - window.__lastUserGestureAt) > 3000) {
+                        console.warn('[gps-guard] allowGeolocationForNextCall ignored: no recent user gesture');
+                        return false;
+                    }
+                    window.__allowGeolocation__ = true;
+                    console.log('[gps-guard] allowGeolocationForNextCall set');
+                    setTimeout(function(){ window.__allowGeolocation__ = false; console.log('[gps-guard] allowGeolocationForNextCall expired'); }, 15000);
+                    return true;
+                };
+                // track last user gesture (click/touch) so we can distinguish programmatic calls
+                window.__lastUserGestureAt = 0;
+                ['click','keydown','touchstart'].forEach(function(ev){
+                    window.addEventListener(ev, function(){ window.__lastUserGestureAt = Date.now(); }, { passive: true, capture: true });
+                });
+            }catch(e){ /* ignore */ }
+        })();
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     @stack('head')

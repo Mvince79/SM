@@ -2,6 +2,7 @@
 @section('title', $case->full_name . ' — Chi tiết hồ sơ')
 
 @section('content')
+    
     <!-- BREADCRUMB -->
     <div class="max-w-7xl mx-auto px-4 py-2 sm:py-4">
         <nav
@@ -422,9 +423,78 @@
                 </div>
 
                 <!-- CLUES SECTION -->
-                <div
-                    class="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-3 sm:p-6 lg:p-8 space-y-4 sm:space-y-6 shadow-premium">
-                    @livewire('missing.clue-form', ['missingId' => $case->id])
+                <div class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-premium">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                        <h3 class="font-black text-slate-900 text-lg tracking-tight">Manh mối từ cộng đồng <span
+                                class="text-primary">({{ $case->clues->count() }})</span></h3>
+                        <button onclick="document.getElementById('clue-box-form').classList.toggle('hidden')"
+                            class="text-xs font-black text-primary hover:text-primary-dark transition-colors uppercase tracking-wider">
+                            + Gửi manh mối mới
+                        </button>
+                    </div>
+
+                    <!-- Interactive Clue Box Form (Livewire) -->
+                    <div id="clue-box-form" class="hidden bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-4">
+                        @livewire('missing-child.clue-form', ['missingId' => $case->id])
+                    </div>
+
+                    <!-- Comment Thread List -->
+                    <div class="space-y-6">
+
+                        @forelse($case->clues as $clue)
+                            <div class="flex gap-3.5 items-start">
+                                @if($clue->user && !$clue->is_anonymous)
+                                    <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                                            <img src="{{ $clue->user->avatar_url }}" alt="{{ $clue->display_name }}" class="w-full h-full object-cover cursor-pointer js-lightbox" data-fullsrc="{{ $clue->user->avatar_url }}" />
+                                        </div>
+                                @else
+                                    <div
+                                        class="w-10 h-10 rounded-full {{ $clue->is_verified ? 'bg-brand/10 border border-brand/20 text-brand' : 'bg-slate-100 border border-slate-200 text-slate-500' }} flex-shrink-0 flex items-center justify-center font-bold text-sm">
+                                        {{ $clue->initials }}
+                                    </div>
+                                @endif
+                                <div class="flex-1 space-y-2">
+                                    <div class="bg-slate-100 p-4 rounded-2xl inline-block max-w-full {{ $clue->is_verified ? 'border-l-4 border-success' : '' }}">
+                                        <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                            <span class="text-xs font-extrabold text-slate-900">{{ $clue->display_name }}</span>
+                                            @if($clue->is_verified)
+                                                <span
+                                                    class="bg-success-light text-success border border-success/35 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">Đã
+                                                    xác minh ✓</span>
+                                            @else
+                                                <span
+                                                    class="bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">Đang
+                                                    xác minh</span>
+                                            @endif
+                                            <span class="text-[10px] text-slate-400 font-bold">{{ $clue->created_at->diffForHumans() }}</span>
+                                        </div>
+                                        <p class="text-xs text-slate-600 leading-relaxed font-medium">
+                                            {{ $clue->description }}
+                                        </p>
+                                        @if($clue->image_path)
+                                            <div class="mt-3">
+                                                <img src="{{ asset('storage/' . $clue->image_path) }}" alt="Clue image" class="max-h-48 rounded shadow-sm object-contain border cursor-pointer js-lightbox" data-fullsrc="{{ asset('storage/' . $clue->image_path) }}" />
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <div class="flex items-center gap-3 text-[10px] font-bold text-slate-400 pl-2">
+                                        @if($clue->lat && $clue->lng)
+                                            @php $mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' . $clue->lat . ',' . $clue->lng; @endphp
+                                            <a href="{{ $mapsUrl }}" target="_blank" rel="noopener noreferrer" class="bg-primary/10 text-primary px-2.5 py-1 rounded-full inline-flex items-center gap-2">
+                                                <span>📍</span>
+                                                <span>{{ number_format($clue->lat, 4) }}, {{ number_format($clue->lng, 4) }}</span>
+                                            </a>
+                                        @endif
+                                        <button class="hover:text-primary transition-colors">Phản hồi</button>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-xs text-slate-400 font-semibold text-center py-4">Chưa có manh mối nào. Hãy là người đầu tiên chia sẻ thông tin!</p>
+                        @endforelse
+
+                    </div>
                 </div>
 
                 {{-- Comment Section --}}
@@ -455,7 +525,7 @@
                         Nếu bạn đang đứng cạnh bé hoặc nhìn thấy bé ngay lúc này, hãy ấn nút dưới đây để chia sẻ toạ độ GPS
                         chính xác.
                     </p>
-                    <button onclick="shareGPS()"
+                    <button id="btn-share-gps" onclick="shareGPS()"
                         class="w-full bg-white text-primary font-black py-4 rounded-2xl hover:bg-slate-50 transition-premium text-sm shadow-md">
                         📍 Chia sẻ vị trí GPS tức thời
                     </button>
@@ -546,12 +616,48 @@
                         <h4 class="font-extrabold text-slate-900 text-xs sm:text-sm uppercase tracking-wider">Vị trí mất
                             tích</h4>
                         <div id="mini-map"
-                            class="h-36 sm:h-44 bg-slate-150 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 z-10"
-                            data-lat="{{ $case->lat }}" data-lng="{{ $case->lng }}"></div>
-                        <p
-                            class="text-[9px] sm:text-[10px] text-slate-400 font-semibold text-center uppercase tracking-wide break-words">
-                            📍
-                            {{ collect([$case->address_detail, $case->ward, $case->district, $case->province?->name])->filter()->implode(', ') }}
+                            class="h-44 bg-slate-150 rounded-2xl overflow-hidden border border-slate-200 z-10"
+                            data-lat="{{ $case->lat }}"
+                            data-lng="{{ $case->lng }}"></div>
+                        <script>
+                            (function(){
+                                var el = document.getElementById('mini-map');
+                                if(!el) return;
+                                var lat = parseFloat(el.dataset.lat);
+                                var lng = parseFloat(el.dataset.lng);
+                                if(!lat || !lng) return;
+
+                                function setup(){
+                                    try{
+                                        var map = L.map('mini-map', { zoomControl: false, scrollWheelZoom: false }).setView([lat, lng], 15);
+                                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+                                        var lostIcon = L.divIcon({
+                                            className: 'pulse-dot',
+                                            html: '<div style="width:14px;height:14px;background:#FF3B30;border:2px solid white;border-radius:50%;box-shadow:0 0 0 3px rgba(255,59,48,0.3);"></div>',
+                                            iconSize: [14,14], iconAnchor: [7,7]
+                                        });
+
+                                        L.marker([lat, lng], { icon: lostIcon }).addTo(map);
+                                    }catch(e){ console.error('mini-map init error', e); }
+                                }
+
+                                if(window.L) return setup();
+
+                                // load leaflet css+js from CDN then init
+                                var css = document.createElement('link');
+                                css.rel = 'stylesheet';
+                                css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                                document.head.appendChild(css);
+
+                                var s = document.createElement('script');
+                                s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                                s.onload = setup;
+                                document.body.appendChild(s);
+                            })();
+                        </script>
+                        <p class="text-[10px] text-slate-400 font-semibold text-center uppercase tracking-wide">
+                            📍 {{ collect([$case->address_detail, $case->ward, $case->district, $case->province?->name])->filter()->implode(', ') }}
                         </p>
                     </div>
                 @endif
@@ -598,15 +704,280 @@
 
     <script>
         function shareGPS() {
+            // mark a user gesture now (inline onclick may not update the capture listener early enough)
+            try { window.__lastUserGestureAt = Date.now(); } catch(e) {}
+
             if (navigator.geolocation) {
+                var btn = document.getElementById('btn-share-gps');
+                var oldHtml = null;
+                if (btn) {
+                    try { oldHtml = btn.innerHTML; btn.disabled = true; btn.innerHTML = 'Đang lấy…'; } catch(e){}
+                }
+
+                // Prefer calling the browser's native API exposed by the layout (avoids guard races)
+                if (window.__nativeGeolocationGet) {
+                    try {
+                        window.__nativeGeolocationGet(function(pos){
+                            var lat = pos.coords.latitude;
+                            var lng = pos.coords.longitude;
+                            var box = document.getElementById('clue-box-form');
+                            if (box) box.classList.remove('hidden');
+                            try {
+                                if (window.Livewire && typeof Livewire.emit === 'function') {
+                                    Livewire.emit('setLocation', { lat: lat, lng: lng });
+                                } else if (window.livewire && typeof livewire.emit === 'function') {
+                                    livewire.emit('setLocation', { lat: lat, lng: lng });
+                                }
+                            } catch (e) {}
+                            try {
+                                var latInput = document.getElementById('clue-lat-input');
+                                var lngInput = document.getElementById('clue-lng-input');
+                                if (latInput) { latInput.value = lat; latInput.dispatchEvent(new Event('input', { bubbles: true })); }
+                                if (lngInput) { lngInput.value = lng; lngInput.dispatchEvent(new Event('input', { bubbles: true })); }
+                            } catch (e) {}
+                            if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            // Show brief confirmation so user knows coords were captured
+                            try { alert('Đã lấy tọa độ: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '\nBạn có thể chỉnh mô tả và gửi manh mối.'); } catch(e) {}
+
+                            // Removed automatic immediate POST sharing — only populate form and emit Livewire.
+                            if (btn) { try { btn.disabled = false; if(oldHtml!==null) btn.innerHTML = oldHtml; } catch(e){} }
+                        }, function(err){
+                            alert('Không thể lấy vị trí GPS: ' + (err.message || 'Lỗi không xác định'));
+                            if (btn) { try { btn.disabled = false; if(oldHtml!==null) btn.innerHTML = oldHtml; } catch(e){} }
+                        }, { enableHighAccuracy: true, timeout: 10000 });
+                        return;
+                    } catch(e) {
+                        // fall back to normal flow below
+                    }
+                }
+
+                // fallback: normal permission-based flow
                 navigator.geolocation.getCurrentPosition(function(pos) {
-                    alert('Tọa độ của bạn: ' + pos.coords.latitude + ', ' + pos.coords.longitude +
-                        '\nTính năng gửi GPS sẽ có ở Sprint 2.');
-                });
+                    var lat = pos.coords.latitude;
+                    var lng = pos.coords.longitude;
+
+                    var box = document.getElementById('clue-box-form');
+                    if (box) box.classList.remove('hidden');
+
+                    try {
+                        if (window.Livewire && typeof Livewire.emit === 'function') {
+                            Livewire.emit('setLocation', { lat: lat, lng: lng });
+                        } else if (window.livewire && typeof livewire.emit === 'function') {
+                            livewire.emit('setLocation', { lat: lat, lng: lng });
+                        }
+                    } catch (e) {}
+
+                    try {
+                        var latInput = document.getElementById('clue-lat-input');
+                        var lngInput = document.getElementById('clue-lng-input');
+                        if (latInput) { latInput.value = lat; latInput.dispatchEvent(new Event('input', { bubbles: true })); }
+                        if (lngInput) { lngInput.value = lng; lngInput.dispatchEvent(new Event('input', { bubbles: true })); }
+                    } catch (e) {}
+
+                    if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    alert('Đã lấy tọa độ: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '\nBạn có thể chỉnh mô tả và gửi manh mối.');
+                }, function(err){
+                    alert('Không thể lấy vị trí GPS: ' + (err.message || 'Lỗi không xác định'));
+                    if (btn) { try { btn.disabled = false; if(oldHtml!==null) btn.innerHTML = oldHtml; } catch(e){} }
+                }, { enableHighAccuracy: true, timeout: 10000 });
+
+                setTimeout(function(){ if (btn) { try { btn.disabled = false; if(oldHtml!==null) btn.innerHTML = oldHtml; } catch(e){} } }, 12000);
             } else {
                 alert('Trình duyệt không hỗ trợ GPS.');
             }
         }
+
+                    function doGetPosition() {
+                        navigator.geolocation.getCurrentPosition(function(pos) {
+                            var lat = pos.coords.latitude;
+                            var lng = pos.coords.longitude;
+
+                            // Open the clue form
+                            var box = document.getElementById('clue-box-form');
+                            if (box) box.classList.remove('hidden');
+
+                            // Emit to Livewire listener `setLocation`
+                            try {
+                                if (window.Livewire && typeof Livewire.emit === 'function') {
+                                    Livewire.emit('setLocation', { lat: lat, lng: lng });
+                                } else if (window.livewire && typeof livewire.emit === 'function') {
+                                    livewire.emit('setLocation', { lat: lat, lng: lng });
+                                }
+                            } catch (e) {
+                                // ignore
+                            }
+
+                            // Also populate any hidden inputs in the clue form for non-Livewire consumers
+                            try {
+                                var latInput = document.getElementById('clue-lat-input');
+                                var lngInput = document.getElementById('clue-lng-input');
+                                if (latInput) {
+                                    latInput.value = lat;
+                                    latInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                                if (lngInput) {
+                                    lngInput.value = lng;
+                                    lngInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                            } catch (e) {
+                                // ignore
+                            }
+
+                            // Scroll to form for visibility
+                            if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                            // Brief confirmation
+                            alert('Đã lấy tọa độ: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '\nBạn có thể chỉnh mô tả và gửi manh mối.');
+                        }, function(err){
+                            alert('Không thể lấy vị trí GPS: ' + (err.message || 'Lỗi không xác định'));
+                            if (btn) { try { btn.disabled = false; if(oldHtml!==null) btn.innerHTML = oldHtml; } catch(e){} }
+                        }, { enableHighAccuracy: true, timeout: 10000 });
+                    }
+
+                    // Use Permissions API to check state
+                    if (navigator.permissions && navigator.permissions.query) {
+                        navigator.permissions.query({ name: 'geolocation' }).then(function(result){
+                            if (result.state === 'denied') {
+                                if (btn) { try { btn.disabled = false; if(oldHtml!==null) btn.innerHTML = oldHtml; } catch(e){} }
+                                alert('Quyền vị trí đã bị chặn cho trang này. Vui lòng cho phép vị trí trong cài đặt trình duyệt và thử lại.');
+                                return;
+                            }
+                                // allow next geolocation call (user gesture)
+                                if (window.allowGeolocationForNextCall) window.allowGeolocationForNextCall();
+                                doGetPosition();
+                        }).catch(function(){
+                            doGetPosition();
+                        });
+                    } else {
+                        doGetPosition();
+                    }
+    </script>
+    
+    {{-- Lightbox modal for avatar and clue images --}}
+    <div id="lightbox-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/90 p-4">
+        <button id="lightbox-close" aria-label="Đóng" class="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold z-30">✕</button>
+        <div id="lightbox-backdrop" class="absolute inset-0" style="cursor:default"></div>
+
+        <div class="relative z-20 flex items-center justify-center max-h-[85vh] max-w-[90vw]">
+            <div class="absolute -bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-2 z-40">
+                <button id="lb-zoom-out" class="bg-white/10 text-white rounded-full w-10 h-10 flex items-center justify-center">−</button>
+                <button id="lb-zoom-reset" class="bg-white/10 text-white rounded-full w-10 h-10 flex items-center justify-center">1×</button>
+                <button id="lb-zoom-in" class="bg-white/10 text-white rounded-full w-10 h-10 flex items-center justify-center">+</button>
+            </div>
+
+            <img id="lightbox-img" src="" alt="" class="max-h-[85vh] max-w-[90vw] object-contain rounded-lg shadow-2xl z-10 touch-none cursor-grab" style="transform-origin:center center; transition: transform 120ms ease;" />
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            function openLightbox(src, alt){
+                var modal = document.getElementById('lightbox-modal');
+                var img = document.getElementById('lightbox-img');
+                img.src = src || '';
+                img.alt = alt || '';
+                modal.classList.remove('hidden');
+            }
+
+            function closeLightbox(){
+                var modal = document.getElementById('lightbox-modal');
+                var img = document.getElementById('lightbox-img');
+                img.src = '';
+                modal.classList.add('hidden');
+            }
+
+            document.addEventListener('click', function(e){
+                var el = e.target.closest('.js-lightbox');
+                if(el){
+                    e.preventDefault();
+                    var src = el.dataset.fullsrc || el.src;
+                    var alt = el.alt || '';
+                    openLightbox(src, alt);
+                }
+            });
+
+            document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+            document.getElementById('lightbox-backdrop').addEventListener('click', function(e){
+                // close if clicking outside the image area (backdrop)
+                closeLightbox();
+            });
+
+            // Zoom/drag state
+            var lbImg = document.getElementById('lightbox-img');
+            var scale = 1;
+            var minScale = 1;
+            var maxScale = 4;
+            var startX = 0, startY = 0, originX = 0, originY = 0, isPanning = false;
+
+            function applyTransform(){
+                lbImg.style.transform = 'translate(' + originX + 'px,' + originY + 'px) scale(' + scale + ')';
+            }
+
+            document.getElementById('lb-zoom-in').addEventListener('click', function(){
+                scale = Math.min(maxScale, +(scale + 0.25).toFixed(2));
+                applyTransform();
+            });
+            document.getElementById('lb-zoom-out').addEventListener('click', function(){
+                scale = Math.max(minScale, +(scale - 0.25).toFixed(2));
+                if(scale === 1) { originX = 0; originY = 0; }
+                applyTransform();
+            });
+            document.getElementById('lb-zoom-reset').addEventListener('click', function(){
+                scale = 1; originX = 0; originY = 0; applyTransform();
+            });
+
+            // wheel zoom
+            lbImg.addEventListener('wheel', function(e){
+                if(!e.deltaY) return;
+                e.preventDefault();
+                var delta = e.deltaY > 0 ? -0.15 : 0.15;
+                scale = Math.min(maxScale, Math.max(minScale, +(scale + delta).toFixed(2)));
+                applyTransform();
+            }, { passive: false });
+
+            // double click toggle
+            lbImg.addEventListener('dblclick', function(e){
+                if(scale === 1){ scale = 2; } else { scale = 1; originX = 0; originY = 0; }
+                applyTransform();
+            });
+
+            // pointer drag for panning when zoomed
+            lbImg.addEventListener('pointerdown', function(e){
+                if(scale <= 1) return;
+                isPanning = true;
+                lbImg.setPointerCapture(e.pointerId);
+                startX = e.clientX; startY = e.clientY;
+            });
+            lbImg.addEventListener('pointermove', function(e){
+                if(!isPanning) return;
+                var dx = e.clientX - startX;
+                var dy = e.clientY - startY;
+                startX = e.clientX; startY = e.clientY;
+                originX += dx; originY += dy;
+                applyTransform();
+            });
+            lbImg.addEventListener('pointerup', function(e){ if(isPanning){ isPanning = false; try{ lbImg.releasePointerCapture(e.pointerId); }catch(e){} } });
+            lbImg.addEventListener('pointercancel', function(){ isPanning = false; });
+
+            document.addEventListener('keydown', function(e){
+                if(!document.getElementById('lightbox-modal')) return;
+                if(e.key === 'Escape') closeLightbox();
+            });
+        })();
+    </script>
+    <script>
+        // Debug helper: ensure GPS button clicks are detected and surface errors
+        document.addEventListener('DOMContentLoaded', function(){
+            var btn = document.getElementById('btn-share-gps');
+            if(!btn) return;
+            btn.addEventListener('click', function(){
+                try{
+                    console.log('[DEBUG] GPS button clicked');
+                }catch(e){
+                    // ignore
+                }
+            });
+        });
     </script>
 @endsection
 
