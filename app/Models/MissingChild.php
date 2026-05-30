@@ -50,6 +50,7 @@ class MissingChild extends Model
         'qr_code_path',
         'view_count',
         'share_count',
+        'rejection_reason',
     ];
 
     protected $casts = [
