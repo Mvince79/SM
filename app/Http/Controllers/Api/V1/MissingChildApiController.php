@@ -154,4 +154,17 @@ class MissingChildApiController extends Controller
 
         return $radius;
     }
+
+    /**
+     * DELETE /api/v1/missing-children/{missingChild}
+     * Soft delete — chỉ owner hoặc admin mới được xóa
+     */
+    public function destroy(MissingChild $missingChild): \Illuminate\Http\JsonResponse
+    {
+        $this->authorize('delete', $missingChild);
+
+        $missingChild->delete();
+
+        return response()->json(['message' => 'Đã xóa tin đăng.'], 200);
+    }
 }

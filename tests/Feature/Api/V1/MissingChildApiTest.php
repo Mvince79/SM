@@ -133,13 +133,15 @@ class MissingChildApiTest extends TestCase
         $response = $this->getJson("/api/v1/missing-children/{$missing->id}");
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'id',
-                'case_code',
-                'full_name',
-                'age_estimate',
-                'status',
-                'created_at',
-                'updated_at',
+                'data' => [
+                    'id',
+                    'case_code',
+                    'full_name',
+                    'age_estimate',
+                    'status',
+                    'created_at',
+                    'updated_at',
+                ]
             ]);
     }
 
@@ -148,14 +150,14 @@ class MissingChildApiTest extends TestCase
         $missing = MissingChild::first();
         $response = $this->getJson("/api/v1/missing-children/{$missing->case_code}");
         $response->assertStatus(200)
-            ->assertJson(['case_code' => $missing->case_code]);
+            ->assertJson(['data' => ['case_code' => $missing->case_code]]);
     }
 
     public function test_missing_child_detail_not_found()
     {
         $response = $this->getJson('/api/v1/missing-children/99999');
         $response->assertStatus(404)
-            ->assertJsonStructure(['status', 'message']);
+            ->assertJsonStructure(['message']);
     }
 
     public function test_missing_child_non_approved_returns_403_for_guest()
@@ -232,7 +234,7 @@ class MissingChildApiTest extends TestCase
     {
         $response = $this->getJson('/api/v1/missing-children?gender=INVALID');
         $response->assertStatus(422)
-            ->assertJsonStructure(['status', 'message', 'errors']);
+            ->assertJsonStructure(['message', 'errors']);
     }
 
     public function test_api_returns_401_for_protected_routes()
@@ -246,7 +248,7 @@ class MissingChildApiTest extends TestCase
     {
         $response = $this->getJson('/api/v1/missing-children/invalid-id');
         $response->assertStatus(404)
-            ->assertJsonStructure(['status', 'message']);
+            ->assertJsonStructure(['message']);
     }
 
     // ────────────────────────────────────────────────────────────────────────

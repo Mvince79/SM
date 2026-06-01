@@ -58,7 +58,9 @@ return new class extends Migration {
         });
 
         // FULLTEXT index
-        DB::statement('ALTER TABLE found_children ADD FULLTEXT INDEX ft_found_search (condition_desc, clothes_desc, special_marks)');
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE found_children ADD FULLTEXT INDEX ft_found_search (condition_desc, clothes_desc, special_marks)');
+        }
     }
 
     public function down(): void

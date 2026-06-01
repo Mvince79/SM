@@ -45,7 +45,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         // TODO: Sprint 2 - Authenticated endpoints for create, update, delete
         // Route::post('/missing-children', [MissingChildApiController::class, 'store']);
         // Route::put('/missing-children/{id}', [MissingChildApiController::class, 'update']);
-        // Route::delete('/missing-children/{id}', [MissingChildApiController::class, 'destroy']);
+        Route::delete('/missing-children/{missingChild}', [MissingChildApiController::class, 'destroy'])
+            ->name('missing-children.destroy');
     });
 });
 

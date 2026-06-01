@@ -174,7 +174,7 @@ class MissingChild extends Model
             ? $this->getRelation('primaryPhoto')
             : $this->primaryPhoto()->first();
 
-        if (! $photo) {
+        if (!$photo) {
             $photo = $this->relationLoaded('photos')
                 ? $this->photos->first()
                 : $this->photos()->orderBy('sort_order')->first();

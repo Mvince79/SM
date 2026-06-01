@@ -43,9 +43,9 @@ return new class extends Migration {
                 ->onUpdate('cascade');
         });
 
-        // CHECK constraint DB-level (MySQL 8.0+): không cho phép insert tin nhắn rỗng
-        // fix v2.2: Enforce ở cả DB lẫn Laravel, tránh insert rỗng từ bất kỳ nguồn nào
-        DB::statement('ALTER TABLE messages ADD CONSTRAINT chk_messages_content CHECK (body IS NOT NULL OR attachment_path IS NOT NULL)');
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE messages ADD CONSTRAINT chk_messages_content CHECK (body IS NOT NULL OR attachment_path IS NOT NULL)');
+        }
     }
 
     public function down(): void
