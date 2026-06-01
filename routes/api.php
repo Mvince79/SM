@@ -5,53 +5,50 @@ use App\Http\Controllers\Api\V1\MapDataController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
-
 // ────────────────────────────────────────────────────────────────────────────────
-// Public API (no authentication required)
-// Rate limit: 60 requests/minute
+// Public API — 60 requests/minute
 // ────────────────────────────────────────────────────────────────────────────────
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
-    // Missing Children - Public endpoints
-    Route::get('/missing-children', [MissingChildApiController::class, 'index'])
-        ->name('missing-children.index')
-        ->middleware('throttle:60,1');
 
-    Route::get('/missing-children/{id}', [MissingChildApiController::class, 'show'])
-        ->name('missing-children.show')
-        ->middleware('throttle:60,1');
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::get('/missing-children', [MissingChildApiController::class, 'index'])
+            ->name('missing-children.index');
 
-    // Map Data - Public endpoint (for Leaflet map)
-    Route::get('/map-data', [MapDataController::class, 'index'])
-        ->name('map-data.index')
-        ->middleware('throttle:60,1');
+        Route::get('/missing-children/{id}', [MissingChildApiController::class, 'show'])
+            ->name('missing-children.show');
+
+        Route::get('/map-data', [MapDataController::class, 'index'])
+            ->name('map-data.index');
+    });
 
     // ────────────────────────────────────────────────────────────────────────────
-    // Authenticated API routes (future use for Sprint 2+)
-    // Rate limit: 120 requests/minute for authenticated users
+    // POST missing child — 5 requests/minute (chống spam đăng tin)
     // ────────────────────────────────────────────────────────────────────────────
+    Route::middleware(['auth:sanctum', 'throttle:5,1'])->group(function () {
+        // Route::post('/missing-children', [MissingChildApiController::class, 'store'])
+        //     ->name('missing-children.store');
+    });
 
+    // ────────────────────────────────────────────────────────────────────────────
+    // POST clues — 10 requests/minute (chống spam manh mối)
+    // ────────────────────────────────────────────────────────────────────────────
+    Route::middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
+        // Route::post('/clues', [ClueApiController::class, 'store'])
+        //     ->name('clues.store');
+    });
+
+    // ────────────────────────────────────────────────────────────────────────────
+    // Authenticated — 120 requests/minute
+    // ────────────────────────────────────────────────────────────────────────────
     Route::middleware(['auth:sanctum', 'throttle:120,1'])->group(function () {
-        // TODO: Sprint 2 - Authenticated endpoints for create, update, delete
-        // Route::post('/missing-children', [MissingChildApiController::class, 'store']);
-        // Route::put('/missing-children/{id}', [MissingChildApiController::class, 'update']);
         Route::delete('/missing-children/{missingChild}', [MissingChildApiController::class, 'destroy'])
             ->name('missing-children.destroy');
     });
 });
 
 // ────────────────────────────────────────────────────────────────────────────────
-// Health check endpoint
+// Health check
 // ────────────────────────────────────────────────────────────────────────────────
 
 Route::get('/health', function (Request $request) {
