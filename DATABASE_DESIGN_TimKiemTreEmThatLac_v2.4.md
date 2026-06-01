@@ -1,15 +1,14 @@
 # THIẾT KẾ CƠ SỞ DỮ LIỆU
-## Website Tìm Kiếm Trẻ Em Thất Lạc — Tích hợp AI Nhận Diện Khuôn Mặt & Bản Đồ Định Vị Vị Trí — v2.3 (Production-Ready)
+## Website Tìm Kiếm Trẻ Em Thất Lạc — Tích hợp AI Nhận Diện Khuôn Mặt & Bản Đồ Định Vị Vị Trí — v2.4 (Production-Ready)
 
 **Stack:** MySQL 8.0 · Laravel 12 · Chuẩn: ISO/IEC 9075, Silicon Valley best practices, thực tế Việt Nam  
-**Ngày:** 15/05/2026 · Nhóm: Khang · Linh · Thanh · Nhân  
-**Ghi chú v2.3 (so với v2.2):**
-- ✅ Làm rõ tên đề tài: "AI Nhận Diện Khuôn Mặt & Bản Đồ Định Vị Vị Trí" — tên chính xác hơn cho hội đồng
-- ✅ Bổ sung cột `gps_shared_at` vào bảng `clues` — timestamp khi người dùng bấm "Chia sẻ vị trí GPS"
-- ✅ Bổ sung cột `location_accuracy_m` vào bảng `clues` — độ chính xác GPS (mét) từ Geolocation API
-- ✅ Bổ sung query mẫu 7.7: Lấy tất cả manh mối có GPS để hiển thị marker realtime trên bản đồ
-- ✅ Bổ sung checklist bảo mật GPS realtime (consent, throttle, privacy)
-- ✅ Ghi chú rõ: AI Age Progression & Chatbot là tính năng post-launch (sau khi hoàn thành core)
+**Ngày:** 01/06/2026 · Nhóm: Khang · Linh · Thanh · Nhân  
+**Ghi chú v2.4 (so với v2.3):**
+- ✅ Bổ sung 4 cột SEO vào bảng `missing_children`: `slug`, `meta_title`, `meta_description`, `og_image_url`
+- ✅ Bổ sung 2 cột còn thiếu vào bảng `clues`: `is_hidden`, `verified_at`
+- ✅ Cập nhật Indexes bảng `missing_children`: thêm `UNIQUE INDEX uq_missing_slug (slug)`
+- ✅ Cập nhật Checklist bảo mật: thêm mục SEO & slug
+- ✅ Cập nhật Lịch sử phiên bản
 
 ---
 
@@ -214,11 +213,14 @@ CONSTRAINT fk_fcm_user FOREIGN KEY (user_id)
 
 ### 3.4. `missing_children` — Tin đăng trẻ mất tích
 
+> **v2.4:** Bổ sung 4 cột SEO: `slug`, `meta_title`, `meta_description`, `og_image_url`
+
 | Cột | Kiểu | Độ dài | Null | Default | Ghi chú |
 |---|---|---|---|---|---|
 | `id` | BIGINT UNSIGNED | — | NO | AUTO_INCREMENT | PK |
 | `user_id` | BIGINT UNSIGNED | — | NO | — | FK → users.id |
-| `case_code` | VARCHAR | 20 | NO | — | Mã hồ sơ: `MC-2026-00001` (auto-gen) |
+| `case_code` | VARCHAR | 20 | YES | NULL | Mã hồ sơ: `MC-2026-00001` (auto-gen) |
+| `slug` | VARCHAR | 200 | YES | NULL | **[v2.4 — SEO]** URL-friendly: `nguyen-van-an-mc-2026-00001` — auto-gen từ `full_name` + `case_code` |
 | `full_name` | VARCHAR | 100 | NO | — | Tên trẻ |
 | `dob` | DATE | — | YES | NULL | Ngày sinh (nếu biết) |
 | `age_estimate` | TINYINT UNSIGNED | — | YES | NULL | Tuổi ước tính (nếu không rõ ngày sinh) |
@@ -251,6 +253,9 @@ CONSTRAINT fk_fcm_user FOREIGN KEY (user_id)
 | `qr_code_path` | VARCHAR | 500 | YES | NULL | Đường dẫn ảnh QR Code |
 | `view_count` | INT UNSIGNED | — | NO | `0` | Lượt xem |
 | `share_count` | INT UNSIGNED | — | NO | `0` | Lượt chia sẻ |
+| `meta_title` | VARCHAR | 160 | YES | NULL | **[v2.4 — SEO]** Tiêu đề trang tối đa 160 ký tự — VD: `"Tìm kiếm bé Nguyễn Văn An, 8 tuổi, mất tích tại TP HCM"` |
+| `meta_description` | TEXT | — | YES | NULL | **[v2.4 — SEO]** Mô tả trang cho Google/Facebook — tối đa 320 ký tự khuyến nghị |
+| `og_image_url` | VARCHAR | 500 | YES | NULL | **[v2.4 — SEO]** URL ảnh Open Graph cho Facebook/Zalo share — fallback về `primary_photo` nếu NULL |
 | `created_at` | TIMESTAMP | — | YES | NULL | — |
 | `updated_at` | TIMESTAMP | — | YES | NULL | — |
 | `deleted_at` | TIMESTAMP | — | YES | NULL | Soft delete — GDPR Art.17 |
@@ -259,6 +264,7 @@ CONSTRAINT fk_fcm_user FOREIGN KEY (user_id)
 ```sql
 PRIMARY KEY (id)
 UNIQUE INDEX uq_missing_case_code (case_code)
+UNIQUE INDEX uq_missing_slug (slug)                          -- [v2.4] SEO slug unique
 INDEX idx_missing_user_id (user_id)
 INDEX idx_missing_province_id (province_id)
 INDEX idx_missing_status (status)
@@ -285,6 +291,9 @@ CONSTRAINT fk_missing_approved_by FOREIGN KEY (approved_by)
 > - `contact_phone` lưu trong DB nhưng **không trả về trong API public** — chỉ qua chat nội bộ sau khi login. Tuân thủ Nghị định 13/2023/NĐ-CP.
 > - `ward` (phường/xã) bổ sung vì thực tế tìm kiếm ở VN thường dùng đến cấp phường.
 > - `reward_info` — thực tế Việt Nam gia đình hay đăng kèm thông tin tiền thưởng; lưu dạng text tự do.
+> - **[v2.4] `slug`** auto-gen bằng `Str::slug($full_name) . '-' . strtolower($case_code)` trong `MissingChild::booted()`. VD: `nguyen-van-an-mc-2026-00001`. Route chi tiết chuyển sang `/missing/{slug}` thay cho `/missing/{id}`.
+> - **[v2.4] `meta_title`** nếu NULL → fallback: `"Tìm kiếm {full_name}, {age} tuổi | TimKiemTreEm"`.
+> - **[v2.4] `og_image_url`** nếu NULL → fallback về `primary_photo.path_thumb` (public URL). Dùng cho thẻ `<meta property="og:image">` — quan trọng khi share lên Facebook/Zalo vì tỷ lệ click tăng đáng kể khi có ảnh preview.
 
 ---
 
@@ -431,8 +440,6 @@ CONSTRAINT fk_fmr_confirmed_by FOREIGN KEY (confirmed_by)
     REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
 ```
 
-> **Lưu ý UNIQUE với NULL:** MySQL cho phép nhiều NULL trong UNIQUE index — nên khi `missing_photo_id` hoặc `found_photo_id` là NULL (ảnh đã bị xóa), constraint không bảo vệ được. Enforce tính duy nhất ở tầng Laravel trước khi insert.
-
 ---
 
 ### 3.8. `age_progression_photos` — Ảnh khuôn mặt theo tuổi (AI)
@@ -478,22 +485,26 @@ CONSTRAINT fk_age_prog_approved_by FOREIGN KEY (approved_by)
 
 ### 3.9. `clues` — Manh mối cộng đồng
 
+> **v2.4:** Bổ sung 2 cột còn thiếu so với migration thực tế: `is_hidden`, `verified_at`
+
 | Cột | Kiểu | Độ dài | Null | Default | Ghi chú |
 |---|---|---|---|---|---|
 | `id` | BIGINT UNSIGNED | — | NO | AUTO_INCREMENT | PK |
 | `missing_id` | BIGINT UNSIGNED | — | NO | — | FK → missing_children.id |
 | `user_id` | BIGINT UNSIGNED | — | YES | NULL | FK → users.id (NULL = ẩn danh) |
-| `clue_type` | ENUM | — | NO | `'SIGHTING'` | `'SIGHTING'` (mục kích), `'RUMOR'` (nghe đồn), `'PHOTO'` (ảnh), `'VIDEO'` (video), `'OTHER'` |
+| `clue_type` | ENUM | — | NO | `'SIGHTING'` | `'SIGHTING'`, `'RUMOR'`, `'PHOTO'`, `'VIDEO'`, `'OTHER'` |
 | `description` | TEXT | — | NO | — | Nội dung manh mối |
-| `lat` | DECIMAL | (10,7) | YES | NULL | Vĩ độ GPS khi gửi manh mối (Geolocation API trình duyệt) |
+| `lat` | DECIMAL | (10,7) | YES | NULL | Vĩ độ GPS khi gửi manh mối |
 | `lng` | DECIMAL | (10,7) | YES | NULL | Kinh độ GPS khi gửi manh mối |
 | `gps_shared_at` | TIMESTAMP | — | YES | NULL | Thời điểm người dùng bấm "Chia sẻ vị trí" — NULL = không share GPS |
-| `location_accuracy_m` | SMALLINT UNSIGNED | — | YES | NULL | Độ chính xác GPS (mét) từ `position.coords.accuracy` — dùng để hiện badge "~5m" hoặc "~500m" trên bản đồ |
+| `location_accuracy_m` | SMALLINT UNSIGNED | — | YES | NULL | Độ chính xác GPS (mét) từ `position.coords.accuracy` |
 | `occurred_at` | DATETIME | — | YES | NULL | Thời điểm xảy ra (nếu biết) |
 | `image_path` | VARCHAR | 500 | YES | NULL | Ảnh kèm theo (nếu có) |
 | `is_verified` | TINYINT(1) | — | NO | `0` | Admin đã xác minh |
 | `verified_by` | BIGINT UNSIGNED | — | YES | NULL | FK → users.id (admin xác minh) |
+| `verified_at` | TIMESTAMP | — | YES | NULL | **[v2.4]** Thời điểm admin xác minh — NULL = chưa xác minh |
 | `is_anonymous` | TINYINT(1) | — | NO | `0` | Ẩn danh — không hiện tên user |
+| `is_hidden` | TINYINT(1) | — | NO | `0` | **[v2.4]** Admin ẩn manh mối (spam/vi phạm) — không hiện trên trang public |
 | `created_at` | TIMESTAMP | — | YES | NULL | — |
 | `updated_at` | TIMESTAMP | — | YES | NULL | — |
 
@@ -515,13 +526,13 @@ CONSTRAINT fk_clues_missing FOREIGN KEY (missing_id)
 CONSTRAINT fk_clues_user FOREIGN KEY (user_id)
     REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
 
--- FIX v2.2: Bổ sung FK bị thiếu ở v2.1
 CONSTRAINT fk_clues_verified_by FOREIGN KEY (verified_by)
     REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
 ```
 
-> **GPS Realtime (v2.3):** Khi người dùng gửi manh mối, frontend gọi `navigator.geolocation.getCurrentPosition()` và truyền `lat`, `lng`, `accuracy` lên server. Cột `gps_shared_at` đặt bằng `NOW()` để phân biệt manh mối có GPS với manh mối nhập tay. Marker màu vàng trên bản đồ = manh mối có GPS xác nhận; marker xám = không có GPS.
-> **Privacy GPS:** Vị trí GPS của người gửi manh mối KHÔNG hiển thị public — chỉ admin và người đăng tin mới thấy tọa độ chính xác. Người dùng thường chỉ thấy "khu vực" (tỉnh/quận). Tuân thủ Nghị định 13/2023/NĐ-CP khoản dữ liệu vị trí cá nhân.
+> **GPS Realtime (v2.3):** Khi người dùng gửi manh mối, frontend gọi `navigator.geolocation.getCurrentPosition()` và truyền `lat`, `lng`, `accuracy` lên server. Cột `gps_shared_at` đặt bằng `NOW()` để phân biệt manh mối có GPS với manh mối nhập tay.  
+> **[v2.4] `is_hidden`:** Admin có thể ẩn manh mối spam mà không xóa hẳn — dữ liệu vẫn giữ để audit log. Tương tự `is_hidden` trong bảng `comments`.  
+> **[v2.4] `verified_at`:** Timestamp khi admin click "Xác minh" — dùng để hiển thị "Xác minh lúc 10:30 15/05/2026" trên trang chi tiết, tăng độ tin cậy cho cộng đồng.
 
 ---
 
@@ -570,7 +581,7 @@ CONSTRAINT fk_comments_parent FOREIGN KEY (parent_id)
 | `to_user_id` | BIGINT UNSIGNED | — | NO | — | FK → users.id |
 | `missing_id` | BIGINT UNSIGNED | — | YES | NULL | FK → missing_children.id (ngữ cảnh) |
 | `body` | TEXT | — | YES | NULL | Nội dung tin nhắn văn bản |
-| `attachment_path` | VARCHAR | 500 | YES | NULL | Đường dẫn file đính kèm (ảnh/video ngắn) |
+| `attachment_path` | VARCHAR | 500 | YES | NULL | Đường dẫn file đính kèm |
 | `attachment_type` | ENUM | — | YES | NULL | `'IMAGE'`, `'VIDEO'`, `'FILE'` |
 | `read_at` | TIMESTAMP | — | YES | NULL | NULL = chưa đọc |
 | `created_at` | TIMESTAMP | — | YES | NULL | — |
@@ -578,7 +589,6 @@ CONSTRAINT fk_comments_parent FOREIGN KEY (parent_id)
 
 **Check Constraint (DB-level — MySQL 8.0+):**
 ```sql
--- FIX v2.2: Enforce ở cả DB lẫn Laravel, tránh insert rỗng từ bất kỳ nguồn nào
 CONSTRAINT chk_messages_content
     CHECK (body IS NOT NULL OR attachment_path IS NOT NULL)
 ```
@@ -609,9 +619,6 @@ CONSTRAINT fk_messages_missing FOREIGN KEY (missing_id)
 
 ### 3.12. `chatbot_sessions` — Phiên Chatbot
 
-> Lưu lịch sử chatbot hướng dẫn người dân. Rule-based hoặc GPT-4o mini.  
-> Không cần lưu toàn bộ conversation history — chỉ lưu `current_step` để resume.
-
 | Cột | Kiểu | Độ dài | Null | Default | Ghi chú |
 |---|---|---|---|---|---|
 | `id` | BIGINT UNSIGNED | — | NO | AUTO_INCREMENT | PK |
@@ -619,9 +626,9 @@ CONSTRAINT fk_messages_missing FOREIGN KEY (missing_id)
 | `user_id` | BIGINT UNSIGNED | — | YES | NULL | FK → users.id (NULL nếu chưa login) |
 | `intent` | ENUM | — | YES | NULL | `'REPORT_MISSING'`, `'REPORT_FOUND'`, `'SEARCH'`, `'GENERAL'` |
 | `current_step` | VARCHAR | 50 | YES | NULL | Bước hiện tại trong flow |
-| `collected_data` | JSON | — | YES | NULL | Dữ liệu đã thu thập — schema: `{name, age, gender, location, missing_date, ...}` |
+| `collected_data` | JSON | — | YES | NULL | Dữ liệu đã thu thập |
 | `status` | ENUM | — | NO | `'ACTIVE'` | `'ACTIVE'`, `'COMPLETED'`, `'ABANDONED'` |
-| `completed_action` | VARCHAR | 100 | YES | NULL | Hành động cuối: `'redirected_to_post_form'`, `'submitted_report'`... |
+| `completed_action` | VARCHAR | 100 | YES | NULL | Hành động cuối |
 | `ip_address` | VARCHAR | 45 | YES | NULL | IP người dùng (IPv4/IPv6) |
 | `user_agent` | VARCHAR | 300 | YES | NULL | Browser info |
 | `created_at` | TIMESTAMP | — | YES | NULL | — |
@@ -642,14 +649,9 @@ CONSTRAINT fk_chatbot_user FOREIGN KEY (user_id)
     REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
 ```
 
-> **Retention policy:** Xóa sessions `COMPLETED` / `ABANDONED` sau 30 ngày bằng Laravel Scheduler.  
-> **`collected_data` JSON schema tham chiếu:** `{"name": "Nguyễn Văn A", "age": 8, "gender": "MALE", "province_id": 1, "missing_date": "2026-05-10"}`
-
 ---
 
 ### 3.13. `notifications` — Thông báo (Laravel default)
-
-> Bảng chuẩn của Laravel — `php artisan notifications:table`
 
 | Cột | Kiểu | Độ dài | Null | Default | Ghi chú |
 |---|---|---|---|---|---|
@@ -673,8 +675,6 @@ INDEX idx_notifications_read_at (read_at)
 
 ### 3.14. `activity_logs` — Nhật ký hành động (Spatie Activity Log)
 
-> Spatie Activity Log tự tạo migration — đưa vào để tham chiếu cấu trúc
-
 | Cột | Kiểu | Độ dài | Null | Default | Ghi chú |
 |---|---|---|---|---|---|
 | `id` | BIGINT UNSIGNED | — | NO | AUTO_INCREMENT | PK |
@@ -694,8 +694,6 @@ INDEX idx_notifications_read_at (read_at)
 
 ### 3.15. `personal_access_tokens` — API Token (Laravel Sanctum)
 
-> Dự phòng cho mobile app / API client — tự tạo bởi `php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"`
-
 | Cột | Kiểu | Độ dài | Null | Default | Ghi chú |
 |---|---|---|---|---|---|
 | `id` | BIGINT UNSIGNED | — | NO | AUTO_INCREMENT | PK |
@@ -703,7 +701,7 @@ INDEX idx_notifications_read_at (read_at)
 | `tokenable_id` | BIGINT UNSIGNED | — | NO | — | Model ID |
 | `name` | VARCHAR | 255 | NO | — | Tên token (VD: `'mobile-app'`) |
 | `token` | VARCHAR | 64 | NO | — | UNIQUE — SHA-256 hash |
-| `abilities` | TEXT | — | YES | NULL | JSON array abilities (VD: `["read", "write"]`) |
+| `abilities` | TEXT | — | YES | NULL | JSON array abilities |
 | `last_used_at` | TIMESTAMP | — | YES | NULL | — |
 | `expires_at` | TIMESTAMP | — | YES | NULL | — |
 | `created_at` | TIMESTAMP | — | YES | NULL | — |
@@ -741,10 +739,6 @@ INDEX idx_notifications_read_at (read_at)
 | `photos` | 1:n | `age_progression_photos` | `original_photo_id` | SET NULL | CASCADE |
 | `comments` | 1:n | `comments` | `comments.parent_id` | CASCADE (self-ref) | CASCADE |
 
-> **Lưu ý ON DELETE RESTRICT:** Không cho phép xóa `user` nếu còn hồ sơ tin đăng. Phải soft delete user (`deleted_at`) và xử lý ở tầng Laravel. Không để DB tự cascade xóa hồ sơ trẻ em.
-
-> **Polymorphic ON DELETE:** MySQL không hỗ trợ FK cho polymorphic. Xử lý bằng `Observer` trong Laravel — khi xóa `MissingChild` hoặc `FoundChild` thì observer xóa tất cả `photos` và `comments` liên quan.
-
 ---
 
 ## 5. MIGRATION ORDER (Thứ tự tạo bảng)
@@ -772,6 +766,11 @@ INDEX idx_notifications_read_at (read_at)
 17. failed_jobs            → php artisan queue:failed-table
 18. cache                  → php artisan cache:table
 19. sessions               → php artisan session:table
+
+-- Alter migrations (Sprint 2+)
+20. alter_missing_children_case_code_nullable
+21. add_seo_fields_to_missing_children        → [v2.4] slug, meta_title, meta_description, og_image_url
+22. add_verified_at_is_hidden_to_clues        → [v2.4] verified_at, is_hidden
 ```
 
 ---
@@ -779,22 +778,13 @@ INDEX idx_notifications_read_at (read_at)
 ## 6. GLOBAL DATABASE SETTINGS
 
 ```sql
--- Tạo database
 CREATE DATABASE missing_children_db
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
--- Engine mặc định
 SET GLOBAL default_storage_engine = InnoDB;
-
--- Timezone Việt Nam UTC+7
 SET GLOBAL time_zone = '+07:00';
-
--- Full-text search: giảm min token size xuống 2 cho tên VN ngắn (1-2 ký tự)
 SET GLOBAL innodb_ft_min_token_size = 2;
-
--- Strict mode khuyến nghị (bỏ comment để bật)
--- SET GLOBAL sql_mode = 'STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO';
 ```
 
 ---
@@ -803,12 +793,7 @@ SET GLOBAL innodb_ft_min_token_size = 2;
 
 ### 7.1. Tìm kiếm gần vị trí (Haversine + Bounding Box)
 
-> **Tối ưu v2.2:** Thêm bounding box filter trước Haversine để tận dụng index `(lat, lng)`, tránh full table scan.
-
 ```sql
--- Bước 1: lat/lng delta tương ứng ~radius_km (1 độ ≈ 111 km)
--- Bước 2: Bounding box để dùng index, sau đó Haversine chính xác trong HAVING
-
 SELECT id, full_name, missing_date,
     (6371 * ACOS(
         COS(RADIANS(:lat)) * COS(RADIANS(lat)) *
@@ -867,7 +852,7 @@ WHERE status = 'APPROVED'
   AND auto_expire_notified_at IS NULL;
 ```
 
-### 7.5. Lấy conversation chat giữa 2 user (có phân trang)
+### 7.5. Lấy conversation chat giữa 2 user
 
 ```sql
 SELECT * FROM messages
@@ -896,17 +881,13 @@ GROUP BY p.id, p.name
 ORDER BY total_missing DESC;
 ```
 
-### 7.7. Lấy tất cả manh mối có GPS để hiển thị marker realtime trên bản đồ
-
-> **Mục đích:** Feed dữ liệu cho Leaflet.js — marker màu vàng trên bản đồ tổng quan = manh mối cộng đồng có tọa độ GPS. Người xem thấy "khu vực" trẻ được mục kích, không thấy tọa độ chính xác.
+### 7.7. Lấy tất cả manh mối có GPS để hiển thị marker realtime
 
 ```sql
--- Lấy manh mối có GPS đã xác minh (hoặc chưa xác minh nếu muốn hiện ngay)
 SELECT
     c.id,
     c.missing_id,
     c.clue_type,
-    -- Làm tròn 2 chữ số thập phân (~1km accuracy) để không lộ vị trí chính xác trên public map
     ROUND(c.lat, 2) AS lat_public,
     ROUND(c.lng, 2) AS lng_public,
     c.location_accuracy_m,
@@ -917,16 +898,35 @@ SELECT
 FROM clues c
 JOIN missing_children mc ON mc.id = c.missing_id
 WHERE c.lat IS NOT NULL
-  AND c.gps_shared_at IS NOT NULL   -- Chỉ lấy manh mối có GPS thực sự (không phải nhập tay)
+  AND c.gps_shared_at IS NOT NULL
+  AND c.is_hidden = 0
   AND mc.status = 'APPROVED'
   AND mc.deleted_at IS NULL
-  AND c.occurred_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)  -- 30 ngày gần nhất
+  AND c.occurred_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
 ORDER BY c.gps_shared_at DESC
-LIMIT 200;  -- Giới hạn để không quá tải Leaflet
+LIMIT 200;
+```
 
--- Để admin xem tọa độ chính xác (không làm tròn):
--- ROUND(c.lat, 2) → c.lat
--- ROUND(c.lng, 2) → c.lng
+### 7.8. [v2.4] Lấy hồ sơ theo slug cho trang chi tiết SEO
+
+```sql
+-- Route: GET /missing/{slug}
+-- Thay thế cho: GET /missing/{id}
+SELECT mc.*, p.name AS province_name
+FROM missing_children mc
+LEFT JOIN provinces p ON p.id = mc.province_id
+WHERE mc.slug = :slug
+  AND mc.status = 'APPROVED'
+  AND mc.deleted_at IS NULL
+LIMIT 1;
+
+-- Sitemap: lấy tất cả slug đang APPROVED để generate sitemap.xml
+SELECT slug, updated_at
+FROM missing_children
+WHERE status = 'APPROVED'
+  AND deleted_at IS NULL
+  AND slug IS NOT NULL
+ORDER BY updated_at DESC;
 ```
 
 ---
@@ -936,28 +936,24 @@ LIMIT 200;  -- Giới hạn để không quá tải Leaflet
 | Hạng mục | Trạng thái | Ghi chú |
 |---|---|---|
 | Face encoding mã hóa AES-256 | ✅ | `Crypt::encryptString()` trước INSERT |
-| OTP lưu dạng bcrypt hash | ✅ | `Hash::make()`, so sánh bằng `Hash::check()`, `otp_code VARCHAR(255)` |
+| OTP lưu dạng bcrypt hash | ✅ | `Hash::make()`, so sánh bằng `Hash::check()` |
 | Contact phone ẩn API public | ✅ | Không serialize trong Resource |
 | Soft delete toàn bộ hồ sơ | ✅ | `deleted_at` trên `missing_children`, `found_children`, `comments`, `users` |
 | Right to Erasure (GDPR Art.17) | ✅ | Hard delete ảnh + face_encoding theo yêu cầu |
 | Ảnh blur trên danh sách public | ✅ | `path_blurred` trong `photos` |
 | Auto-expire 2 năm | ✅ | `auto_expire_notified_at` + Laravel Scheduler |
-| Rate limiting | ✅ | Tầng Route (Laravel Throttle) — không cần cột DB |
+| Rate limiting | ✅ | Tầng Route (Laravel Throttle) |
 | Audit log admin | ✅ | Spatie Activity Log |
 | Ảnh full-res chỉ cho auth user | ✅ | `path_original` chỉ trả về cho authenticated user |
 | Tuân thủ Nghị định 13/2023/NĐ-CP | ✅ | Không public SĐT, mã hóa face data |
-| FCM token riêng bảng | ✅ | `fcm_tokens` — tách biệt, revoke được theo device |
-| Chatbot session retention 30 ngày | ✅ | Scheduler cleanup `COMPLETED`/`ABANDONED` |
-| Polymorphic delete qua Observer | ✅ | Không dùng DB CASCADE cho polymorphic |
-| ISO province code không trùng | ✅ | `VN-DN` (Đà Nẵng) vs `VN-DNA` (Đồng Nai) — fix v2.2 |
-| DB-level content constraint | ✅ | `CHECK (body IS NOT NULL OR attachment_path IS NOT NULL)` — fix v2.2 |
-| FK `clues.verified_by` đầy đủ | ✅ | `fk_clues_verified_by` → users.id — fix v2.2 |
-| **GPS realtime — user consent** | ✅ | Frontend hỏi quyền `navigator.geolocation` — không tự lấy vị trí. Nút "Chia sẻ vị trí" rõ ràng, có thể bỏ qua |
-| **GPS realtime — làm tròn tọa độ public** | ✅ | API public trả về `ROUND(lat,2)` / `ROUND(lng,2)` (~1km) — không lộ địa chỉ nhà. Admin thấy tọa độ gốc |
-| **GPS realtime — throttle submit manh mối** | ✅ | Rate limit: 10 manh mối/user/giờ (Laravel Throttle) — tránh spam GPS |
-| **GPS realtime — log `gps_shared_at`** | ✅ | Timestamp riêng khi user share GPS — phân biệt với lat/lng nhập tay |
-
-> **📌 Tính năng POST-LAUNCH (không phải MVP):** AI Age Progression (`age_progression_photos`) và Chatbot (`chatbot_sessions`) — schema DB đã thiết kế sẵn, nhưng tính năng chỉ implement SAU khi core (face matching + bản đồ + GPS realtime) hoàn chỉnh và được hội đồng chấp thuận. Hội đồng hỏi → trả lời: "Schema đã chuẩn bị, chờ sau bảo vệ sẽ mở rộng."
+| GPS realtime — user consent | ✅ | Frontend hỏi quyền `navigator.geolocation` |
+| GPS realtime — làm tròn tọa độ public | ✅ | `ROUND(lat,2)` / `ROUND(lng,2)` (~1km) |
+| GPS realtime — throttle submit manh mối | ✅ | Rate limit: 10r/min (Laravel Throttle) |
+| GPS realtime — log `gps_shared_at` | ✅ | Timestamp riêng khi user share GPS |
+| **[v2.4] SEO slug unique** | ✅ | `UNIQUE INDEX uq_missing_slug` — tránh duplicate URL |
+| **[v2.4] OG image fallback** | ✅ | `og_image_url` NULL → fallback `primary_photo.path_thumb` — không bao giờ thiếu ảnh khi share |
+| **[v2.4] meta_description độ dài** | ✅ | Khuyến nghị ≤ 320 ký tự — enforce ở tầng Laravel validation |
+| **[v2.4] Clue `is_hidden`** | ✅ | Admin ẩn manh mối mà không xóa — audit trail giữ nguyên |
 
 ---
 
@@ -967,10 +963,11 @@ LIMIT 200;  -- Giới hạn để không quá tải Leaflet
 |---|---|---|
 | v2.0 | 13/05/2026 | Thiết kế ban đầu |
 | v2.1 | 14/05/2026 | Bổ sung `chatbot_sessions`, `fcm_tokens`, `clue_type`, `reward_info`, `attachment_path`, fix UNIQUE `face_match_results`, sửa 34 tỉnh |
-| v2.2 | 14/05/2026 | Fix ISO code `VN-DN2` → `VN-DNA`; cập nhật seed 34 tỉnh đúng danh sách chính thức 12/06/2025; sửa `otp_code VARCHAR(10)` → `VARCHAR(255)`; bổ sung FK `fk_clues_verified_by`; thêm CHECK constraint DB-level cho `messages`; tăng `provinces.code` CHAR(5) → CHAR(6); tối ưu query Haversine với bounding box; document JSON schema `collected_data` |
-| **v2.3** | **15/05/2026** | **Làm rõ tên đề tài "AI Nhận Diện Khuôn Mặt & Bản Đồ Định Vị Vị Trí"; thêm cột `gps_shared_at` và `location_accuracy_m` vào bảng `clues`; bổ sung query 7.7 marker GPS realtime trên bản đồ; bổ sung checklist bảo mật GPS (consent, làm tròn tọa độ public, throttle); ghi chú rõ Age Progression và Chatbot là tính năng post-launch** |
+| v2.2 | 14/05/2026 | Fix ISO code; sửa `otp_code`; bổ sung FK `fk_clues_verified_by`; CHECK constraint `messages`; tăng `provinces.code` CHAR(6); tối ưu Haversine |
+| v2.3 | 15/05/2026 | Làm rõ tên đề tài; thêm `gps_shared_at` và `location_accuracy_m` vào `clues`; query 7.7 GPS realtime; checklist bảo mật GPS |
+| **v2.4** | **01/06/2026** | **Bổ sung 4 cột SEO vào `missing_children`: `slug` (UNIQUE), `meta_title`, `meta_description`, `og_image_url`; bổ sung 2 cột thiếu vào `clues`: `is_hidden`, `verified_at`; thêm query 7.8 (slug lookup + sitemap); cập nhật Migration Order; cập nhật Checklist bảo mật** |
 
 ---
 
-*Phiên bản: 2.3 — 15/05/2026*  
-*Dựa trên: `KeHoach_DuAn_TimKiemTreEmThatLac_v2.3.docx` + `DATABASE_DESIGN_TimKiemTreEmThatLac_v2.2.md`*
+*Phiên bản: 2.4 — 01/06/2026*  
+*Dựa trên: `DATABASE_DESIGN_TimKiemTreEmThatLac_v2.3.md` + rà soát migration thực tế Sprint 2*
