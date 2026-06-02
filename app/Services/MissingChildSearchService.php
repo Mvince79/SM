@@ -6,6 +6,7 @@ use App\Models\MissingChild;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class MissingChildSearchService
 {
@@ -14,7 +15,8 @@ class MissingChildSearchService
 
     public function search(array $filters = []): LengthAwarePaginator
     {
-        $cacheKey = $this->getCacheKey($filters);
+        $page = $filters['page'] ?? 1;
+        $cacheKey = $this->getCacheKey($filters) . ':page:' . $page;
 
         if (Cache::has($cacheKey)) {
             return Cache::get($cacheKey);
@@ -25,7 +27,7 @@ class MissingChildSearchService
             self::PER_PAGE,
             ['*'],
             'page',
-            $filters['page'] ?? 1
+            $page
         );
 
         Cache::put($cacheKey, $result, self::CACHE_TTL);
@@ -45,11 +47,23 @@ class MissingChildSearchService
 
         // 1. FULLTEXT search
         if ($hasKeyword) {
-            $keyword = $this->escapeBooleanKeyword($filters['q']);
-            $query->whereRaw(
-                "MATCH(full_name, clothes_desc, special_marks, circumstances) AGAINST(? IN BOOLEAN MODE)",
-                [$keyword]
-            );
+            $driver = DB::getDriverName();
+            if ($driver === 'sqlite') {
+                $kw = $filters['q'];
+                $query->where(function ($q) use ($kw) {
+                    $kwLower = mb_strtolower($kw);
+                    $q->whereRaw('LOWER(full_name) LIKE ?', ["%{$kwLower}%"])
+                        ->orWhereRaw('LOWER(clothes_desc) LIKE ?', ["%{$kwLower}%"])
+                        ->orWhereRaw('LOWER(special_marks) LIKE ?', ["%{$kwLower}%"])
+                        ->orWhereRaw('LOWER(circumstances) LIKE ?', ["%{$kwLower}%"]);
+                });
+            } else {
+                $keyword = $this->escapeBooleanKeyword($filters['q']);
+                $query->whereRaw(
+                    "MATCH(full_name, clothes_desc, special_marks, circumstances) AGAINST(? IN BOOLEAN MODE)",
+                    [$keyword]
+                );
+            }
         }
 
         // 2. Filter tỉnh
@@ -88,29 +102,31 @@ class MissingChildSearchService
             $query->whereBetween('lat', [$bbox['min_lat'], $bbox['max_lat']])
                 ->whereBetween('lng', [$bbox['min_lng'], $bbox['max_lng']]);
 
-            $selectParts = ['missing_children.*'];
-            $bindings = [];
+            $driver = DB::getDriverName();
+            if ($driver === 'sqlite') {
+                // SQLite không có acos — chỉ select thường, sort bằng newest
+                $query->selectRaw('missing_children.*');
+            } else {
+                $selectParts = ['missing_children.*'];
+                $bindings = [];
+                $selectParts[] = "(6371 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat)))) AS distance_km";
+                $bindings = [$lat, $lng, $lat];
 
-            $selectParts[] = "(6371 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat)))) AS distance_km";
-            $bindings = array_merge($bindings, [$lat, $lng, $lat]);
-
-            if ($hasKeyword) {
-                $selectParts[] = "MATCH(full_name, clothes_desc, special_marks, circumstances) AGAINST(? IN BOOLEAN MODE) AS relevance";
-                $bindings[] = $filters['q'];
+                if ($hasKeyword && DB::getDriverName() !== 'sqlite') {
+                    $selectParts[] = "MATCH(full_name, clothes_desc, special_marks, circumstances) AGAINST(? IN BOOLEAN MODE) AS relevance";
+                    $bindings[] = $filters['q'];
+                }
+                $query->selectRaw(implode(', ', $selectParts), $bindings);
+                $query->having('distance_km', '<=', $radius);
             }
-
-            $query->selectRaw(implode(', ', $selectParts), $bindings);
-            $query->having('distance_km', '<=', $radius);
-
         } else {
             $selectParts = ['missing_children.*'];
             $bindings = [];
 
-            if ($hasKeyword) {
+            if ($hasKeyword && DB::getDriverName() !== 'sqlite') {
                 $selectParts[] = "MATCH(full_name, clothes_desc, special_marks, circumstances) AGAINST(? IN BOOLEAN MODE) AS relevance";
                 $bindings[] = $filters['q'];
             }
-
             $query->selectRaw(implode(', ', $selectParts), $bindings);
         }
 
@@ -118,11 +134,15 @@ class MissingChildSearchService
         $sort = $filters['sort'] ?? 'newest';
 
         if ($sort === 'near_me' && $hasLocation) {
-            $query->orderBy('distance_km', 'asc');
+            if (DB::getDriverName() !== 'sqlite') {
+                $query->orderBy('distance_km', 'asc');
+            } else {
+                $query->latest('missing_date'); // fallback cho SQLite
+            }
         } elseif ($sort === 'oldest') {
             $query->orderBy('missing_date', 'asc');
         } else {
-            if ($hasKeyword) {
+            if ($hasKeyword && DB::getDriverName() !== 'sqlite') {
                 $query->orderByRaw('relevance DESC');
             }
             $query->latest('missing_date');

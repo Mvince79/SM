@@ -7,6 +7,7 @@ use App\Models\Province;
 use App\Models\User;
 use App\Services\MissingChildSearchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -40,7 +41,28 @@ class MissingChildSearchServiceTest extends TestCase
     {
         // Tạo user và province
         $user = User::factory()->create();
-        $province = Province::first() ?? Province::factory()->create(['id' => 1, 'name' => 'Hà Nội']);
+        DB::table('provinces')->insert([
+            [
+                'id' => 1,
+                'name' => 'Hà Nội',
+                'code' => 'VN-HN',
+                'short_code' => 'HAN',
+                'region' => 'BAC',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 2,
+                'name' => 'TP Huế',
+                'code' => 'VN-HUE',
+                'short_code' => 'HUE',
+                'region' => 'TRUNG',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
 
         // Tạo 50 missing children
         for ($i = 1; $i <= 50; $i++) {
@@ -53,7 +75,7 @@ class MissingChildSearchServiceTest extends TestCase
                 'province_id' => $i % 5 === 0 ? 2 : 1,
                 'missing_date' => now()->subDays($i),
                 'missing_time' => '14:30:00',
-                'clothes_desc' => "Áo xanh, quần đen {$i}",
+                'clothes_desc' => "áo xanh, quần đen {$i}",
                 'special_marks' => "Có scar trên trán {$i}",
                 'circumstances' => "Mất tích khi đi học, hôm {$i}",
                 'contact_name' => 'Mẹ ' . $user->full_name,

@@ -20,7 +20,7 @@ class MissingChildService
         $provinces = Province::where('is_active', 1)->orderBy('name')->get();
         $q = $filters['q'] ?? '';
 
-        return compact('cases', 'provinces', 'q');
+        return compact('cases', 'provinces', 'q', 'filters');
     }
 
     public function getDetailForPublic(int $id): array

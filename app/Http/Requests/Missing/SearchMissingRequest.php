@@ -15,9 +15,11 @@ class SearchMissingRequest extends FormRequest
     {
         return [
             'q' => ['nullable', 'string', 'max:100'],
-            'province' => ['nullable', 'integer'],
-            'gender' => ['nullable', 'in:MALE,FEMALE'],
-            'age' => ['nullable', 'in:0-5,5-10,10-15,15+'],
+            'province_id' => ['nullable', 'integer'],  
+            'gender' => ['nullable', 'in:MALE,FEMALE,UNKNOWN'],
+            'age_min' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'age_max' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'sort' => ['nullable', 'in:newest,oldest,near_me'],    
             'status' => ['nullable', 'in:APPROVED,FOUND'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
@@ -25,12 +27,15 @@ class SearchMissingRequest extends FormRequest
 
     public function filters(): array
     {
-        return [
+        return array_filter([
             'q' => $this->query('q', ''),
-            'province' => $this->query('province', ''),
-            'gender' => $this->query('gender', ''),
-            'age' => $this->query('age', ''),
-            'status' => $this->query('status', ''),
-        ];
+            'province_id' => $this->query('province_id'),  
+            'gender' => $this->query('gender'),
+            'age_min' => $this->query('age_min'),       
+            'age_max' => $this->query('age_max'),
+            'sort' => $this->query('sort', 'newest'),
+            'status' => $this->query('status'),
+            'page' => $this->query('page', 1),
+        ], fn($v) => $v !== null && $v !== '');
     }
 }

@@ -11,9 +11,11 @@ class MissingChildRepository
     public function searchPublic(array $filters, int $perPage = 15, string $sort = 'latest'): LengthAwarePaginator
     {
         $q = $filters['q'] ?? '';
-        $province = $filters['province'] ?? '';
+        $province = $filters['province_id'] ?? $filters['province'] ?? '';
         $gender = $filters['gender'] ?? '';
-        $age = $filters['age'] ?? '';
+        $ageMin = $filters['age_min'] ?? null;
+        $ageMax = $filters['age_max'] ?? null;
+        $sort = $filters['sort'] ?? 'latest';
         $status = $filters['status'] ?? '';
 
         $query = MissingChild::with(['primaryPhoto', 'province'])
@@ -33,15 +35,8 @@ class MissingChildRepository
             })
             ->when($province, fn($q) => $q->where('province_id', $province))
             ->when($gender, fn($q) => $q->where('gender', $gender))
-            ->when($age, function ($query) use ($age) {
-                match ($age) {
-                    '0-5' => $query->where('age_estimate', '<', 5),
-                    '5-10' => $query->whereBetween('age_estimate', [5, 10]),
-                    '10-15' => $query->whereBetween('age_estimate', [10, 15]),
-                    '15+' => $query->where('age_estimate', '>', 15),
-                    default => null,
-                };
-            });
+            ->when($ageMin, fn($q) => $q->where('age_estimate', '>=', (int) $ageMin))
+            ->when($ageMax, fn($q) => $q->where('age_estimate', '<=', (int) $ageMax));
 
         if ($sort === 'oldest') {
             $query->oldest('approved_at');
@@ -56,36 +51,34 @@ class MissingChildRepository
 
     public function findPublicById(int $id): MissingChild
     {
-        $query = MissingChild::with(['photos', 'primaryPhoto', 'province', 'clues.user']);
+        $case = MissingChild::with(['photos', 'primaryPhoto', 'province', 'clues.user'])
+            ->findOrFail($id);
 
-        $authId = Auth::user()->id ?? null;
-        if ($authId) {
-            $query->where(function ($q) use ($authId) {
-                $q->whereIn('status', ['APPROVED', 'FOUND'])
-                    ->orWhere('user_id', $authId);
-            });
-        } else {
-            $query->whereIn('status', ['APPROVED', 'FOUND']);
+        $authId = Auth::id();
+        $canView = in_array($case->status, ['APPROVED', 'FOUND'])
+            || ($authId && $case->user_id === $authId);
+
+        if (!$canView) {
+            abort(403);
         }
 
-        return $query->findOrFail($id);
+        return $case;
     }
 
     public function findPublicByCaseCode(string $caseCode): MissingChild
     {
-        $query = MissingChild::with(['photos', 'primaryPhoto', 'province', 'clues.user']);
+        $case = MissingChild::with(['photos', 'primaryPhoto', 'province', 'clues.user'])
+            ->where('case_code', $caseCode)
+            ->firstOrFail();
 
-        // Owner can view their own record even if not approved
-        $authId = Auth::user()->id ?? null;
-        if ($authId) {
-            $query->where(function ($q) use ($authId) {
-                $q->whereIn('status', ['APPROVED', 'FOUND'])
-                    ->orWhere('user_id', $authId);
-            });
-        } else {
-            $query->whereIn('status', ['APPROVED', 'FOUND']);
+        $authId = Auth::id();
+        $canView = in_array($case->status, ['APPROVED', 'FOUND'])
+            || ($authId && $case->user_id === $authId);
+
+        if (!$canView) {
+            abort(403);
         }
 
-        return $query->where('case_code', $caseCode)->firstOrFail();
+        return $case;
     }
 }

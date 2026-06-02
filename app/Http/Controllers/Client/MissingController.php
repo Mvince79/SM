@@ -61,4 +61,17 @@ class MissingController extends Controller
     public function store(StoreMissingChildRequest $request)
     {
     }
+
+    public function detailByQuery(\Illuminate\Http\Request $request)
+    {
+        if ($request->has('case_code')) {
+            $data = $this->missingChildService->getDetailForPublicByCaseCode($request->case_code);
+        } elseif ($request->has('id')) {
+            $data = $this->missingChildService->getDetailForPublic((int) $request->id);
+        } else {
+            abort(404);
+        }
+
+        return view('missing.detail', $data);
+    }
 }
