@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\Users;
 
+use App\Filament\Admin\Resources\Users\RelationManagers\MissingChildrenRelationManager;
 use App\Filament\Admin\Resources\Users\Pages\CreateUser;
 use App\Filament\Admin\Resources\Users\Pages\EditUser;
 use App\Filament\Admin\Resources\Users\Pages\ListUsers;
@@ -45,7 +46,7 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            MissingChildrenRelationManager::class,
         ];
     }
 

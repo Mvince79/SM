@@ -2,16 +2,21 @@
 
 namespace App\Filament\Admin\Resources\Users\Tables;
 
+use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\SelectAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class UsersTable
 {
@@ -23,13 +28,16 @@ class UsersTable
                     ->label('Họ tên')
                     ->searchable()
                     ->sortable(),
+
                 TextColumn::make('email')
                     ->label('Email')
                     ->searchable(),
+
                 TextColumn::make('phone')
                     ->label('Số điện thoại')
                     ->searchable()
                     ->placeholder('—'),
+
                 TextColumn::make('role')
                     ->label('Vai trò')
                     ->badge()
@@ -45,6 +53,7 @@ class UsersTable
                         'USER' => 'Người dùng',
                         default => $state,
                     }),
+
                 TextColumn::make('status')
                     ->label('Trạng thái')
                     ->badge()
@@ -60,21 +69,25 @@ class UsersTable
                         'PENDING' => 'Chờ kích hoạt',
                         default => $state,
                     }),
+
                 TextColumn::make('email_verified_at')
                     ->label('Xác minh email')
                     ->dateTime('d/m/Y H:i')
                     ->placeholder('Chưa xác minh')
                     ->sortable(),
+
                 TextColumn::make('last_active_at')
                     ->label('Hoạt động cuối')
                     ->dateTime('d/m/Y H:i')
                     ->placeholder('—')
                     ->sortable(),
+
                 TextColumn::make('created_at')
                     ->label('Ngày đăng ký')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('deleted_at')
                     ->label('Ngày xóa')
                     ->dateTime('d/m/Y H:i')
@@ -89,6 +102,7 @@ class UsersTable
                         'MODERATOR' => 'Kiểm duyệt viên',
                         'USER' => 'Người dùng',
                     ]),
+
                 SelectFilter::make('status')
                     ->label('Trạng thái')
                     ->options([
@@ -96,11 +110,53 @@ class UsersTable
                         'BANNED' => 'Bị khóa',
                         'PENDING' => 'Chờ kích hoạt',
                     ]),
+
                 TrashedFilter::make(),
             ])
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+
+                Action::make('ban')
+                    ->label('Khóa')
+                    ->color('danger')
+                    ->visible(fn(User $record): bool => $record->status !== 'BANNED')
+                    ->form([
+                        Textarea::make('ban_reason')
+                            ->label('Lý do khóa')
+                            ->required(),
+                    ])
+                    ->action(function (User $record, array $data): void {
+                        $record->update([
+                            'status' => 'BANNED',
+                            'ban_reason' => $data['ban_reason'],
+                        ]);
+                    }),
+
+                Action::make('unban')
+                    ->label('Mở khóa')
+                    ->color('success')
+                    ->visible(fn(User $record): bool => $record->status === 'BANNED')
+                    ->action(function (User $record): void {
+                        $record->update([
+                            'status' => 'ACTIVE',
+                            'ban_reason' => null,
+                        ]);
+                    }),
+
+                SelectAction::make('change_role')
+                    ->label('Đổi quyền')
+                    ->options([
+                        'USER' => 'Người dùng',
+                        'MODERATOR' => 'Kiểm duyệt viên',
+                        'ADMIN' => 'Quản trị viên',
+                    ])
+                    ->visible(fn(): bool => Auth::check() && Auth::user()->role === 'ADMIN')
+                    ->action(function (User $record, string $state): void {
+                        $record->update([
+                            'role' => $state,
+                        ]);
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
