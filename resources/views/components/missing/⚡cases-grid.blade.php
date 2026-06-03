@@ -63,46 +63,74 @@ new class extends Component
     {{-- Grid --}}
     <main class="max-w-7xl mx-auto px-4 pb-16">
 
-        @if($cases->isEmpty())
-            <div class="text-center py-24 text-slate-400">
-                <div class="text-6xl mb-4">🔍</div>
-                <p class="font-extrabold text-slate-700 text-lg">Không tìm thấy hồ sơ nào</p>
-                <p class="text-sm mt-2">Thử thay đổi từ khoá hoặc bỏ bớt bộ lọc</p>
-            </div>
-        @else
+        <div wire:loading.class.remove="hidden" class="hidden">
             <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-                @foreach($cases as $case)
-                    <x-ui.case-card :case="$case"/>
-                @endforeach
+                @for ($i = 0; $i < 6; $i++)
+                    <div class="bg-white border border-slate-200/80 rounded-3xl overflow-hidden shadow-premium">
+                        <x-ui.skeleton height="220px" rounded="rounded-none" />
+
+                        <div class="p-5 space-y-4">
+                            <div class="flex items-center justify-between gap-4">
+                                <x-ui.skeleton height="20px" width="62%" />
+                                <x-ui.skeleton height="16px" width="48px" />
+                            </div>
+
+                            <x-ui.skeleton height="14px" width="80%" />
+                            <x-ui.skeleton height="14px" width="100%" />
+                            <x-ui.skeleton height="14px" width="72%" />
+
+                            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                                <x-ui.skeleton height="28px" width="112px" rounded="rounded-full" />
+                                <x-ui.skeleton height="16px" width="64px" />
+                            </div>
+                        </div>
+                    </div>
+                @endfor
             </div>
+        </div>
 
-            {{-- Pagination --}}
-            @if($cases->hasPages())
-                <div class="flex items-center justify-center gap-2 mt-12">
-                    @if($cases->onFirstPage())
-                        <span class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300 text-sm font-bold cursor-not-allowed">←</span>
-                    @else
-                        <button wire:click="previousPage"
-                                class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors text-sm font-bold">←</button>
-                    @endif
-
-                    @foreach($cases->getUrlRange(1, $cases->lastPage()) as $page => $url)
-                        @if($page == $cases->currentPage())
-                            <span class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white text-sm font-extrabold shadow-md shadow-primary/20">{{ $page }}</span>
-                        @else
-                            <button wire:click="gotoPage({{ $page }})"
-                                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors text-sm font-extrabold">{{ $page }}</button>
-                        @endif
-                    @endforeach
-
-                    @if($cases->hasMorePages())
-                        <button wire:click="nextPage"
-                                class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors text-sm font-bold">→</button>
-                    @else
-                        <span class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300 text-sm font-bold cursor-not-allowed">→</span>
-                    @endif
+        <div wire:loading.class="hidden">
+            @if($cases->isEmpty())
+                <div class="text-center py-24 text-slate-400">
+                    <div class="text-6xl mb-4">🔍</div>
+                    <p class="font-extrabold text-slate-700 text-lg">Không tìm thấy hồ sơ nào</p>
+                    <p class="text-sm mt-2">Thử thay đổi từ khoá hoặc bỏ bớt bộ lọc</p>
                 </div>
+            @else
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+                    @foreach($cases as $case)
+                        <x-ui.case-card :case="$case"/>
+                    @endforeach
+                </div>
+
+                {{-- Pagination --}}
+                @if($cases->hasPages())
+                    <div class="flex items-center justify-center gap-2 mt-12">
+                        @if($cases->onFirstPage())
+                            <span class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300 text-sm font-bold cursor-not-allowed">←</span>
+                        @else
+                            <button wire:click="previousPage"
+                                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors text-sm font-bold">←</button>
+                        @endif
+
+                        @foreach($cases->getUrlRange(1, $cases->lastPage()) as $page => $url)
+                            @if($page == $cases->currentPage())
+                                <span class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white text-sm font-extrabold shadow-md shadow-primary/20">{{ $page }}</span>
+                            @else
+                                <button wire:click="gotoPage({{ $page }})"
+                                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-colors text-sm font-extrabold">{{ $page }}</button>
+                            @endif
+                        @endforeach
+
+                        @if($cases->hasMorePages())
+                            <button wire:click="nextPage"
+                                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors text-sm font-bold">→</button>
+                        @else
+                            <span class="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300 text-sm font-bold cursor-not-allowed">→</span>
+                        @endif
+                    </div>
+                @endif
             @endif
-        @endif
+        </div>
     </main>
 </div>

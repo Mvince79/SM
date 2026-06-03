@@ -1,5 +1,28 @@
 <div>
 
+<div wire:loading.class.remove="hidden" class="hidden">
+    @for ($i = 0; $i < 4; $i++)
+        <div class="w-full border-b p-4">
+            <div class="flex items-center gap-3">
+                <x-ui.skeleton width="56px" height="56px" rounded="rounded-full" class="shrink-0" />
+
+                <div class="flex-1 min-w-0 space-y-2">
+                    <div class="flex items-center gap-2">
+                        <x-ui.skeleton height="18px" width="58%" />
+                        <x-ui.skeleton height="22px" width="28px" rounded="rounded-full" />
+                    </div>
+
+                    <x-ui.skeleton height="14px" width="76%" />
+                </div>
+
+                <x-ui.skeleton width="12px" height="12px" rounded="rounded-full" />
+            </div>
+        </div>
+    @endfor
+</div>
+
+<div wire:loading.class="hidden">
+
 @forelse($users as $user)
 
     <button
@@ -62,5 +85,7 @@
     </div>
 
 @endforelse
+
+</div>
 
 </div>
