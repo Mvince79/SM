@@ -25,7 +25,8 @@
         ['route' => 'home', 'label' => 'Trang chủ', 'href' => route('home')],
         ['route' => 'missing.index', 'label' => 'Hồ sơ mất tích', 'href' => route('missing.index')],
         ['route' => 'map.index', 'label' => 'Bản đồ tìm kiếm', 'href' => route('map.index')],
-        ['route' => 'stats.index', 'label' => 'Thống kê', 'href' => '#'],
+        ['route' => 'stats.index', 'label' => 'Thống kê', 'href' => route('stats.index')],
+       
     ];
 @endphp
 
@@ -86,38 +87,40 @@
                     </button>
 
                     <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50">
-                        <a href="{{ route('profile.index') }}" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Hồ sơ cá nhân</a>
+                        <a href="{{ route('profile.index') }}"
+                            class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Hồ sơ cá nhân</a>
                         <a href="#" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">Cài đặt</a>
                         <div class="border-t"></div>
                         <form method="POST" action="{{ route('auth.logout') }}">
                             @csrf
-                            <button type="submit" class="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50">Đăng xuất</button>
+                            <button type="submit"
+                                class="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50">Đăng
+                                xuất</button>
                         </form>
                     </div>
-                </div>
-            @else
-                <a href="{{ route('auth.login') }}"
-                    class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors">
-                    Đăng nhập
-                </a>
-            @endauth
+            </div>
+        @else
+            <a href="{{ route('auth.login') }}"
+                class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors">
+                Đăng nhập
+            </a>
+        @endauth
 
-            <a href="{{ route('missing.create') }}"
-                class="bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl
+        <a href="{{ route('missing.create') }}"
+            class="bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl
                       hover:bg-primary-dark shadow-lg shadow-primary/10
                       hover:shadow-primary/25 hover:-translate-y-0.5 transition-all duration-300">
-                + Báo tin tìm con
-            </a>
-        </div>
+            + Báo tin tìm con
+        </a>
+    </div>
 
-        {{-- ── Mobile Hamburger ── --}}
-        <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
-            class="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors"
-            aria-label="Toggle menu">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-        </button>
+    {{-- ── Mobile Hamburger ── --}}
+    <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
+        class="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors" aria-label="Toggle menu">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+    </button>
 
     </div>
 

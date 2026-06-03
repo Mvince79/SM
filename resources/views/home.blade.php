@@ -3,33 +3,34 @@
 
 @section('content')
 
-  {{-- ── SOS Stories Bar ── --}}
-<section class="sos-bar">
-    <div class="sos-bar-inner">
-        <div class="sos-badge">
-            <span class="w-2 h-2 bg-primary rounded-full animate-ping"></span> SOS khẩn cấp
+    {{-- ── SOS Stories Bar ── --}}
+    <section class="sos-bar">
+        <div class="sos-bar-inner">
+            <div class="sos-badge">
+                <span class="w-2 h-2 bg-primary rounded-full animate-ping"></span> SOS khẩn cấp
+            </div>
+            <div class="flex items-center gap-5 overflow-x-auto no-scrollbar py-1 pr-4 flex-1">
+                @foreach ($sosKids as $index => $kid)
+                    <a href="{{ route('missing.detail', $kid->id) }}" class="flex flex-col items-center flex-shrink-0 group">
+                        <div
+                            class="w-12 h-12 rounded-full p-0.5 border-2 {{ $index < 3 ? 'border-primary pulse-dot' : 'border-slate-300' }} flex items-center justify-center transform group-hover:scale-105 transition-all">
+                            @if ($kid->primaryPhoto)
+                                <img src="{{ asset('storage/' . $kid->primaryPhoto->path_thumb) }}"
+                                    class="w-full h-full rounded-full object-cover bg-slate-100" alt="" />
+                            @else
+                                <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ $kid->id }}&backgroundColor=ffdfbf"
+                                    class="w-full h-full rounded-full object-cover bg-slate-100" alt="" />
+                            @endif
+                        </div>
+                        <span
+                            class="text-[10px] font-bold {{ $index < 3 ? 'text-slate-800' : 'text-slate-500' }} mt-1 text-center truncate w-14">
+                            {{ \Illuminate\Support\Str::limit($kid->full_name, 10) }} · {{ $kid->age_estimate }}t
+                        </span>
+                    </a>
+                @endforeach
+            </div>
         </div>
-        <div class="flex items-center gap-5 overflow-x-auto no-scrollbar py-1 pr-4 flex-1">
-            @foreach($sosKids as $index => $kid)
-                <a href="{{ route('missing.detail', $kid->id) }}" 
-                   class="flex flex-col items-center flex-shrink-0 group">
-                    <div class="w-12 h-12 rounded-full p-0.5 border-2 {{ $index < 3 ? 'border-primary pulse-dot' : 'border-slate-300' }} flex items-center justify-center transform group-hover:scale-105 transition-all">
-                        @if($kid->primaryPhoto)
-                            <img src="{{ asset('storage/' . $kid->primaryPhoto->path_thumb) }}"
-                                 class="w-full h-full rounded-full object-cover bg-slate-100" alt=""/>
-                        @else
-                            <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ $kid->id }}&backgroundColor=ffdfbf"
-                                 class="w-full h-full rounded-full object-cover bg-slate-100" alt=""/>
-                        @endif
-                    </div>
-                    <span class="text-[10px] font-bold {{ $index < 3 ? 'text-slate-800' : 'text-slate-500' }} mt-1 text-center truncate w-14">
-                        {{ \Illuminate\Support\Str::limit($kid->full_name, 10) }} · {{ $kid->age_estimate }}t
-                    </span>
-                </a>
-            @endforeach
-        </div>
-    </div>
-</section>
+    </section>
 
     {{-- ── Hero ── --}}
     <section class="hero">
@@ -54,6 +55,8 @@
                     TìmTrẻ.vn kết nối sức mạnh cộng đồng Việt Nam, ứng dụng AI đối chiếu khuôn mặt hiện đại và định vị GPS
                     tức thời để hỗ trợ gia đình tìm lại con em nhanh nhất có thể.
                 </p>
+                
+               
                 <div class="flex flex-col sm:flex-row gap-4 pt-3">
                     <a href="{{ route('missing.create') }}"
                         class="inline-flex items-center justify-center gap-2 bg-primary text-white font-extrabold px-8 py-4 rounded-2xl hover:bg-primary-dark transition-premium text-base shadow-lg shadow-primary/30 hover:-translate-y-0.5">

@@ -5,8 +5,10 @@ use App\Http\Controllers\Client\MissingController;
 use App\Http\Controllers\Client\ProfileController;
 use App\Http\Controllers\Client\StatsController;
 use App\Http\Controllers\Client\HomeController;
+use App\Models\Message;
 use Illuminate\Support\Facades\Route;
-
+use Illuminate\Support\Facades\Storage;
+use App\Http\Livewire\Chat\ChatBox;
 // ── Auth (register, login, OTP, Google OAuth, logout) ──────────────────────
 require __DIR__ . '/auth.php';
 
@@ -61,7 +63,34 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
     // Upload photo for a FoundChild
     Route::post('found-children/{foundChild}/photos', [\App\Http\Controllers\FoundChildController::class, 'storePhoto'])
         ->name('found-children.photos.store');
-});
 
-Route::get('/test-403', fn() => abort(403));
-Route::get('/test-500', fn() => abort(500));
+    Route::middleware(['auth', 'email.verified'])
+        ->get(
+            '/chat/dev/{missing}/{user}',
+            ChatBox::class
+        )
+        ->name('chat.dev');
+    Route::view('/chat', 'chat.index')
+        ->middleware('auth')
+        ->name('chat.index');
+
+    Route::get('/chat/attachment/{filename}', function (string $filename) {
+        abort_if(str_contains($filename, '/') || str_contains($filename, '\\'), 404);
+
+        $path = 'chat-attachments/' . $filename;
+
+        $message = Message::query()
+            ->where('attachment_path', $path)
+            ->where('attachment_type', 'IMAGE')
+            ->where(function ($query) {
+                $query
+                    ->where('from_user_id', auth()->id())
+                    ->orWhere('to_user_id', auth()->id());
+            })
+            ->firstOrFail();
+
+        abort_unless(Storage::disk('private')->exists($message->attachment_path), 404);
+
+        return Storage::disk('private')->response($message->attachment_path);
+    })->name('chat.attachment');
+});
