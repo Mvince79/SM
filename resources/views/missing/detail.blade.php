@@ -139,7 +139,7 @@
                                 </template>
                             </div>
 
-                            <div class="flex-1 min-w-0 sm:hidden">
+                            <div class="flex-1 min-w-0 hidden sm:block">
                                 <div class="flex items-start justify-between gap-1.5">
                                     <div class="min-w-0 flex-1">
                                         <h1
