@@ -18,6 +18,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Database\Eloquent\Model;
 
 class UserResource extends Resource
 {
@@ -73,5 +74,24 @@ class UserResource extends Resource
         return parent::getEloquentQuery()
             ->with(['province:id,name'])
             ->withCount(['missingChildren', 'fcmTokens']);
+    }
+
+    // ─── Global Search ───────────────────────────────────────────────────────
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['full_name', 'email'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'Email' => $record->email,
+            'Trạng thái' => match ($record->status) {
+                'ACTIVE' => 'Hoạt động',
+                'BANNED' => 'Bị khóa',
+                'PENDING' => 'Chờ xác minh',
+                default => $record->status,
+            },
+        ];
     }
 }

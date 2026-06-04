@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Cache;
 
 use Illuminate\Database\Eloquent\Builder;
 
@@ -69,4 +70,22 @@ class ClueResource extends Resource
             ]);
     }
 
+    // ─── Navigation Badge ────────────────────────────────────────────────────
+    public static function getNavigationBadge(): ?string
+    {
+        $count = Cache::remember('badge_clue_unverified', 300, function () {
+            return static::getModel()::where('is_verified', false)->count();
+        });
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): string
+    {
+        $count = Cache::remember('badge_clue_unverified', 300, function () {
+            return static::getModel()::where('is_verified', false)->count();
+        });
+
+        return $count > 10 ? 'danger' : 'warning';
+    }
 }

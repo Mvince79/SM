@@ -18,6 +18,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Admin\Resources\MissingChildren\RelationManagers\CommentsRelationManager;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class MissingChildResource extends Resource
 {
@@ -71,5 +73,45 @@ class MissingChildResource extends Resource
                 'primaryPhoto',
             ])
             ->withCount(['clues', 'comments']);
+    }
+
+    // ─── Navigation Badge ────────────────────────────────────────────────────
+    public static function getNavigationBadge(): ?string
+    {
+        $count = Cache::remember('badge_missing_pending', 300, function () {
+            return static::getModel()::where('status', 'PENDING')->count();
+        });
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): string
+    {
+        $count = Cache::remember('badge_missing_pending', 300, function () {
+            return static::getModel()::where('status', 'PENDING')->count();
+        });
+
+        return $count > 10 ? 'danger' : 'warning';
+    }
+
+    // ─── Global Search ───────────────────────────────────────────────────────
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['full_name', 'case_code'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'Mã hồ sơ' => $record->case_code,
+            'Trạng thái' => match ($record->status) {
+                'PENDING' => 'Chờ duyệt',
+                'APPROVED' => 'Đã duyệt',
+                'FOUND' => 'Đã tìm thấy',
+                'REJECTED' => 'Từ chối',
+                'CLOSED' => 'Đóng',
+                default => $record->status,
+            },
+        ];
     }
 }
