@@ -7,6 +7,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Infolists\Components\ViewEntry;
 
 class ClueInfolist
 {
@@ -62,6 +63,11 @@ class ClueInfolist
                                 ->label('Độ chính xác (mét)')
                                 ->placeholder('—'),
                         ]),
+
+                        ViewEntry::make('map')
+                            ->label('Bản đồ')
+                            ->view('filament.admin.clues.map')
+                            ->columnSpanFull(),
                     ]),
 
                 Section::make('Xác minh')

@@ -10,6 +10,9 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Filament\Actions\Action;
+use Filament\Tables\Filters\Filter;
+use Illuminate\Support\Facades\Auth;
 
 class CluesTable
 {
@@ -81,16 +84,48 @@ class CluesTable
                         'VIDEO' => 'Video',
                         'OTHER' => 'Khác',
                     ]),
+
                 SelectFilter::make('is_verified')
                     ->label('Trạng thái xác minh')
                     ->options([
                         '1' => 'Đã xác minh',
                         '0' => 'Chưa xác minh',
                     ]),
+
+                Filter::make('has_gps')
+                    ->label('Có GPS')
+                    ->query(fn($query) => $query
+                        ->whereNotNull('lat')
+                        ->whereNotNull('lng')),
             ])
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+
+                Action::make('verify')
+                    ->label('Xác minh')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn($record) => ! $record->is_verified)
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        $record->update([
+                            'is_verified' => true,
+                            'verified_by' => Auth::id(),
+                        ]);
+                    }),
+
+                Action::make('hide')
+                    ->label('Ẩn')
+                    ->icon('heroicon-o-eye-slash')
+                    ->color('danger')
+                    ->visible(fn($record) => ! $record->is_hidden)
+                    ->requiresConfirmation()
+                    ->action(function ($record) {
+                        $record->update([
+                            'is_hidden' => true,
+                        ]);
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
