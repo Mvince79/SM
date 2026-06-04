@@ -28,21 +28,45 @@ class MissingChildService
         $case = $this->missingChildRepository->findPublicById($id);
         $this->missingChildViewCountService->hit($case->id);
 
-        // Show immediate increment by adding any pending Redis increments
         $pending = $this->missingChildViewCountService->getPendingCount($case->id);
         if ($pending > 0) {
             $case->view_count = ($case->view_count ?? 0) + $pending;
         }
 
-        return compact('case');
-    }
+        $bannerConfig = $this->buildBannerConfig($case);
 
+        return compact('case', 'bannerConfig');
+    }
     public function getDetailForPublicByCaseCode(string $caseCode): array
     {
         $case = $this->missingChildRepository->findPublicByCaseCode($caseCode);
-
         $case->increment('view_count');
 
-        return compact('case');
+        $bannerConfig = $this->buildBannerConfig($case);
+
+        return compact('case', 'bannerConfig');
+    }
+
+    private function buildBannerConfig($case): array
+    {
+        if ($case->status === 'MATCHED') {
+            return ['badge' => 'bg-green-500', 'badgeText' => 'Đã tìm thấy'];
+        }
+
+        if (!$case->missing_date) {
+            return ['badge' => 'bg-slate-500', 'badgeText' => null];
+        }
+
+        $days = (int) -now()->diffInDays($case->missing_date);
+
+        if ($days <= 3) {
+            return ['badge' => 'bg-red-600', 'badgeText' => 'Mới mất tích'];
+        }
+
+        if ($days <= 30) {
+            return ['badge' => 'bg-orange-500', 'badgeText' => null];
+        }
+
+        return ['badge' => 'bg-slate-500', 'badgeText' => null];
     }
 }

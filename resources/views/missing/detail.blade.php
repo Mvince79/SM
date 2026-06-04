@@ -1090,7 +1090,6 @@
         });
     </script>
 @endsection
-<<<<<<< HEAD
 
 @push('scripts')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -1123,5 +1122,3 @@
         });
     </script>
 @endpush
-=======
->>>>>>> 3c16140 (feat(T-23) - Live chat between two users)
