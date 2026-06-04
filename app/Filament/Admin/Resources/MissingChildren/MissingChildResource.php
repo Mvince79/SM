@@ -18,6 +18,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Admin\Resources\MissingChildren\RelationManagers\CommentsRelationManager;
+use App\Filament\Admin\Resources\MissingChildren\RelationManagers\ActivityLogRelationManager;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
@@ -48,7 +49,8 @@ class MissingChildResource extends Resource
     public static function getRelations(): array
     {
         return [
-            CommentsRelationManager::class
+            CommentsRelationManager::class,
+            ActivityLogRelationManager::class
         ];
     }
 

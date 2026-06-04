@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\Models\Activity;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use App\Models\FaceMatchResult;
 
 class MissingChild extends Model
@@ -14,11 +16,6 @@ class MissingChild extends Model
 
     protected $table = 'missing_children';
 
-    /**
-     * [FIX 3] Thêm skin_tone, height_cm, weight_kg vào fillable.
-     * Trước đây 3 trường này bị thiếu nên dù form submit có gửi lên
-     * thì MissingChild::create() vẫn bỏ qua (mass-assignment protection).
-     */
     protected $fillable = [
         'user_id',
         'case_code',
@@ -227,9 +224,8 @@ class MissingChild extends Model
 
         return null;
     }
-<<<<<<< HEAD
+    public function activities(): MorphMany
+    {
+        return $this->morphMany(Activity::class, 'subject');
+    }
 }
-=======
-
-}
->>>>>>> 4502e7d (feat(T4): implement comments relation manager for MissingChild resource)
