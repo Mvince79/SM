@@ -58,10 +58,17 @@ class MissingChildResource extends Resource
             'edit' => EditMissingChild::route('/{record}/edit'),
         ];
     }
-    
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->withoutGlobalScopes([SoftDeletingScope::class]);
+            ->withoutGlobalScopes([SoftDeletingScope::class])
+            ->with([
+                'province:id,name',
+                'user:id,full_name',
+                'approvedBy:id,full_name',
+                'primaryPhoto',
+            ])
+            ->withCount(['clues', 'comments']);
     }
 }

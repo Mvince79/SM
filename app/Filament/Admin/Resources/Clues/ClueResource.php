@@ -16,6 +16,8 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
+use Illuminate\Database\Eloquent\Builder;
+
 class ClueResource extends Resource
 {
     protected static ?string $model = Clue::class;
@@ -56,4 +58,15 @@ class ClueResource extends Resource
             'edit' => EditClue::route('/{record}/edit'),
         ];
     }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'missingChild:id,full_name,case_code',
+                'user:id,full_name',
+                'verifiedBy:id,full_name',
+            ]);
+    }
+
 }

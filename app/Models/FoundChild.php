@@ -85,13 +85,13 @@ class FoundChild extends Model
             ? $this->getRelation('primaryPhoto')
             : $this->primaryPhoto()->first();
 
-        if (! $photo) {
+        if (!$photo) {
             $photo = $this->relationLoaded('photos')
                 ? $this->photos->first()
                 : $this->photos()->orderBy('sort_order')->first();
         }
 
-        if (! $photo) {
+        if (!$photo) {
             return null;
         }
 
@@ -105,9 +105,8 @@ class FoundChild extends Model
         return null;
     }
 
-    public function comments()
+    public function comments(): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
-        // return $this->morphMany(Comment::class, 'commentable');
-        return $this->belongsTo(Province::class);
+        return $this->morphMany(\App\Models\Comment::class, 'commentable');
     }
 }
