@@ -246,10 +246,3 @@
 </body>
 
 </html>
-
-
-@livewireScripts
-@stack('scripts')
-</body>
-
-</html>

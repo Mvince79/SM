@@ -4,7 +4,7 @@ use App\Http\Controllers\Api\V1\MissingChildApiController;
 use App\Http\Controllers\Api\V1\MapDataController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\V1\StatsApiController;
 // ────────────────────────────────────────────────────────────────────────────────
 // Public API — 60 requests/minute
 // ────────────────────────────────────────────────────────────────────────────────
@@ -20,6 +20,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
         Route::get('/map-data', [MapDataController::class, 'index'])
             ->name('map-data.index');
+        Route::get('/stats', [StatsApiController::class, 'index'])
+            ->name('stats.index');
     });
 
     // ────────────────────────────────────────────────────────────────────────────

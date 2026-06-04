@@ -20,16 +20,16 @@
             <!-- KPI 1 -->
             <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium space-y-2">
                 <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Tổng ca tiếp nhận</div>
-                <div class="text-3xl font-black text-slate-900 tracking-tight">1.602</div>
+                <div id="totalStat" class="text-3xl font-black text-slate-900 tracking-tight">0</div>
                 <div class="text-[10px] font-bold text-slate-400">
-                    <span class="text-success-dark font-extrabold">↑ +12%</span> so với tháng trước
+                    Dữ liệu thống kê từ hệ thống
                 </div>
             </div>
 
             <!-- KPI 2 -->
             <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium space-y-2">
                 <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Ca đã tìm thấy</div>
-                <div class="text-3xl font-black text-success tracking-tight">1.247</div>
+                <div id="foundStat" class="text-3xl font-black text-success tracking-tight">0</div>
                 <div class="text-[10px] font-bold text-slate-400">
                     Đã bàn giao về gia đình an toàn
                 </div>
@@ -37,19 +37,21 @@
 
             <!-- KPI 3 -->
             <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium space-y-2">
-                <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Ca đang tìm gấp</div>
-                <div class="text-3xl font-black text-primary tracking-tight">355</div>
+                <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Ca đang tìm</div>
+                <div id="pendingStat" class="text-3xl font-black text-primary tracking-tight">0</div>
                 <div class="text-[10px] font-bold text-slate-400 font-bold">
-                    🔴 72 giờ qua: 5 trẻ mới lạc
+                    Các hồ sơ đang cần cộng đồng hỗ trợ
                 </div>
             </div>
 
             <!-- KPI 4 -->
             <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium space-y-2">
-                <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Thời gian đoàn tụ</div>
-                <div class="text-3xl font-black text-brand tracking-tight">48 giờ</div>
+                <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Tỷ lệ tìm thấy</div>
+                <div class="text-3xl font-black text-brand tracking-tight">
+                    <span id="foundRateStat">0</span>%
+                </div>
                 <div class="text-[10px] font-bold text-slate-400">
-                    Tính từ lúc phát báo động
+                    Tính trên tổng hồ sơ tiếp nhận
                 </div>
             </div>
 
@@ -61,7 +63,7 @@
             <!-- Left: Line chart trends (8 cols) -->
             <div class="lg:col-span-8 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h3 class="font-extrabold text-slate-800 text-sm uppercase tracking-wider">Xu hướng tìm kiếm thành công
+                    <h3 class="font-extrabold text-slate-800 text-sm uppercase tracking-wider">Xu hướng hồ sơ tiếp nhận
                         theo tháng</h3>
                     <span class="bg-brand/10 text-brand text-[9px] font-black uppercase px-2.5 py-1 rounded-full">Dữ liệu
                         2026</span>
@@ -84,18 +86,18 @@
                     <canvas id="donutChart"></canvas>
                 </div>
 
-                <div class="grid grid-cols-3 gap-2 text-center text-[10px] pt-2">
+                <div id="provinceLegend" class="grid grid-cols-3 gap-2 text-center text-[10px] pt-2">
                     <div>
-                        <span class="font-black text-primary">● TP.HCM</span>
-                        <div class="font-extrabold text-slate-650 mt-0.5">45%</div>
+                        <span class="font-black text-primary">● Đang tải</span>
+                        <div class="font-extrabold text-slate-650 mt-0.5">0%</div>
                     </div>
                     <div>
-                        <span class="font-black text-brand">● Hà Nội</span>
-                        <div class="font-extrabold text-slate-650 mt-0.5">30%</div>
+                        <span class="font-black text-brand">● Đang tải</span>
+                        <div class="font-extrabold text-slate-650 mt-0.5">0%</div>
                     </div>
                     <div>
-                        <span class="font-black text-slate-400">● Tỉnh khác</span>
-                        <div class="font-extrabold text-slate-650 mt-0.5">25%</div>
+                        <span class="font-black text-slate-400">● Đang tải</span>
+                        <div class="font-extrabold text-slate-650 mt-0.5">0%</div>
                     </div>
                 </div>
             </div>
@@ -109,93 +111,129 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         function toggleMenu() {
-            document.getElementById('mobile-menu').classList.toggle('hidden');
+            document.getElementById('mobile-menu')?.classList.toggle('hidden');
         }
 
-        // Set chart.js default font family to match theme
         Chart.defaults.font.family = "'Be Vietnam Pro', sans-serif";
         Chart.defaults.font.weight = '600';
         Chart.defaults.color = '#94A3B8';
 
-        // Line Chart Implementation
-        const ctxLine = document.getElementById('lineChart').getContext('2d');
-        new Chart(ctxLine, {
-            type: 'line',
-            data: {
-                labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
-                datasets: [{
-                    label: 'Ca đã đoàn tụ an toàn',
-                    data: [120, 150, 180, 220, 260, 312],
-                    borderColor: '#12B76A', // Emerald success color
-                    backgroundColor: 'rgba(18, 183, 106, 0.05)',
-                    fill: true,
-                    tension: 0.35,
-                    borderWidth: 3,
-                    pointBackgroundColor: '#12B76A',
-                    pointRadius: 4
-                }, {
-                    label: 'Ca tiếp nhận mới',
-                    data: [140, 180, 210, 245, 290, 345],
-                    borderColor: '#FF3B30', // Primary Coral red
-                    backgroundColor: 'transparent',
-                    tension: 0.35,
-                    borderWidth: 2,
-                    borderDash: [5, 5],
-                    pointBackgroundColor: '#FF3B30',
-                    pointRadius: 3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            boxWidth: 12,
-                            padding: 20,
-                            color: '#475569'
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    },
-                    y: {
-                        grid: {
-                            color: '#F1F5F9'
-                        }
-                    }
-                }
-            }
-        });
+        fetch('/api/v1/stats')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('totalStat').innerText = data.total ?? 0;
+                document.getElementById('foundStat').innerText = data.found ?? 0;
+                document.getElementById('pendingStat').innerText = data.pending ?? 0;
+                document.getElementById('foundRateStat').innerText = data.found_rate_percent ?? 0;
 
-        // Donut Chart Implementation
-        const ctxDonut = document.getElementById('donutChart').getContext('2d');
-        new Chart(ctxDonut, {
-            type: 'doughnut',
-            data: {
-                labels: ['TP.HCM', 'Hà Nội', 'Tỉnh thành khác'],
-                datasets: [{
-                    data: [45, 30, 25],
-                    backgroundColor: ['#FF3B30', '#0052FF', '#94A3B8'], // Coral Red, Royal Blue, Slate Grey
-                    borderWidth: 3,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
+                const monthly = data.trend_monthly ?? [];
+                const monthlyLabels = monthly.map(item => item.month);
+                const monthlyData = monthly.map(item => item.count);
+
+                const provinces = data.missing_by_province ?? [];
+                const provinceLabels = provinces.map(item => item.name);
+                const provinceData = provinces.map(item => item.count);
+
+                const totalProvince = provinceData.reduce((sum, count) => sum + Number(count), 0) || 1;
+
+                const ctxLine = document.getElementById('lineChart').getContext('2d');
+                new Chart(ctxLine, {
+                    type: 'bar',
+                    data: {
+                        labels: monthlyLabels,
+                        datasets: [{
+                            label: 'Hồ sơ tiếp nhận',
+                            data: monthlyData,
+                            borderColor: '#12B76A',
+                            backgroundColor: 'rgba(18, 183, 106, 0.05)',
+                            fill: true,
+                            tension: 0.35,
+                            borderWidth: 3,
+                            pointBackgroundColor: '#12B76A',
+                            pointRadius: 4
+                        }, {
+                            label: 'Dữ liệu thống kê',
+                            data: monthlyData,
+                            borderColor: '#FF3B30',
+                            backgroundColor: 'transparent',
+                            tension: 0.35,
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointBackgroundColor: '#FF3B30',
+                            pointRadius: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 20,
+                                    color: '#475569'
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: '#F1F5F9'
+                                }
+                            }
+                        }
                     }
-                },
-                cutout: '70%'
-            }
-        });
+                });
+
+                const ctxDonut = document.getElementById('donutChart').getContext('2d');
+                new Chart(ctxDonut, {
+                    type: 'doughnut',
+                    data: {
+                        labels: provinceLabels,
+                        datasets: [{
+                            data: provinceData,
+                            backgroundColor: ['#FF3B30', '#0052FF', '#94A3B8', '#12B76A', '#F59E0B'],
+                            borderWidth: 3,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        cutout: '70%'
+                    }
+                });
+
+                const legendColors = ['text-primary', 'text-brand', 'text-slate-400'];
+                const topThree = provinces.slice(0, 3);
+
+                document.getElementById('provinceLegend').innerHTML = topThree.map((item, index) => {
+                    const percent = Math.round((Number(item.count) / totalProvince) * 100);
+
+                    return `
+                            <div>
+                                <span class="font-black ${legendColors[index] ?? 'text-slate-400'}">● ${item.name}</span>
+                                <div class="font-extrabold text-slate-650 mt-0.5">${percent}%</div>
+                            </div>
+                        `;
+                }).join('');
+            })
+            .catch(() => {
+                document.getElementById('totalStat').innerText = 0;
+                document.getElementById('foundStat').innerText = 0;
+                document.getElementById('pendingStat').innerText = 0;
+                document.getElementById('foundRateStat').innerText = 0;
+            });
     </script>
 @endpush
