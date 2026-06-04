@@ -108,6 +108,12 @@ class MissingChild extends Model
     {
         return $this->hasMany(FaceMatchResult::class, 'missing_id');
     }
+
+    public function allComments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
     // Scopes
     public function scopeApproved($query)
     {
@@ -221,4 +227,9 @@ class MissingChild extends Model
 
         return null;
     }
+<<<<<<< HEAD
 }
+=======
+
+}
+>>>>>>> 4502e7d (feat(T4): implement comments relation manager for MissingChild resource)

@@ -8,3 +8,7 @@ Broadcast::channel(
         return (int) $user->id === (int) $userId;
     }
 );
+
+Broadcast::channel('missing-child.{missingId}', function () {
+    return true;
+});

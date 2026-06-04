@@ -17,6 +17,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Admin\Resources\MissingChildren\RelationManagers\CommentsRelationManager;
 
 class MissingChildResource extends Resource
 {
@@ -45,7 +46,7 @@ class MissingChildResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            CommentsRelationManager::class
         ];
     }
 

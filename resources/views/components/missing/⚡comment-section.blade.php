@@ -44,7 +44,7 @@ new class extends Component
             'body.max'      => 'Bình luận tối đa 1000 ký tự.',
         ]);
 
-        Comment::create([
+        $comment = Comment::create([
             'commentable_type' => MissingChild::class,
             'commentable_id'   => $this->caseId,
             'user_id'          => Auth::id(),
@@ -67,7 +67,7 @@ new class extends Component
             'replyBody.required' => 'Vui lòng nhập nội dung phản hồi.',
         ]);
 
-        Comment::create([
+        $reply = Comment::create([
             'commentable_type' => MissingChild::class,
             'commentable_id'   => $this->caseId,
             'user_id'          => Auth::id(),
@@ -132,7 +132,18 @@ new class extends Component
 };
 ?>
 
-<div class="space-y-6">
+<div class="space-y-6"
+     x-data="{ wireId: null }"
+     x-init="
+        wireId = $el.closest('[wire\\:id]')?.getAttribute('wire:id');
+        if (window.Echo && wireId) {
+            window.Echo.channel('missing-child.{{ $caseId }}')
+                .listen('.comment.hidden', () => {
+                    Livewire.find(wireId).$refresh();
+                })
+                ;
+        }
+     ">
 
     {{-- Header --}}
     <div class="flex items-center justify-between">
