@@ -6,6 +6,10 @@ use App\Filament\Admin\Resources\FoundChildResource\Pages;
 use App\Filament\Admin\Resources\FoundChildResource\RelationManagers\PhotosRelationManager;
 use App\Filament\Admin\Resources\FoundChildResource\Schemas\FoundChildInfolist;
 use App\Models\FoundChild;
+use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -13,19 +17,20 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
-use Filament\Actions\EditAction;
-use Filament\Actions\DeleteAction;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use UnitEnum;
-use BackedEnum;
 
 class FoundChildResource extends Resource
 {
     protected static ?string $model = FoundChild::class;
 
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-rectangle-stack';
+
     protected static UnitEnum|string|null $navigationGroup = 'Nội dung';
 
     public static function getModelLabel(): string
@@ -50,7 +55,7 @@ class FoundChildResource extends Resource
             DatePicker::make('found_date')->label('Ngày phát hiện')->required(),
             TextInput::make('found_time')->label('Giờ phát hiện')->placeholder('HH:MM'),
             TextInput::make('age_estimate')->label('Tuổi ước tính'),
-            Select::make('gender_estimate')->label('Giới tính ước tính')->options(['MALE'=>'Nam','FEMALE'=>'Nữ','UNKNOWN'=>'Không rõ']),
+            Select::make('gender_estimate')->label('Giới tính ước tính')->options(['MALE' => 'Nam', 'FEMALE' => 'Nữ', 'UNKNOWN' => 'Không rõ']),
             Textarea::make('condition_desc')->label('Mô tả tình trạng'),
             Textarea::make('clothes_desc')->label('Mô tả quần áo'),
             Textarea::make('special_marks')->label('Dấu hiệu đặc biệt'),
@@ -74,7 +79,7 @@ class FoundChildResource extends Resource
                 ->label('Ảnh chính')
                 ->image()
                 ->disk('public')
-                ->directory(fn($record) => 'found_children/' . ($record?->id ?? 'tmp'))
+                ->directory(fn ($record) => 'found_children/'.($record?->id ?? 'tmp'))
                 ->multiple()
                 ->maxFiles(20)
                 ->imagePreviewHeight(80),
@@ -103,12 +108,58 @@ class FoundChildResource extends Resource
                             'CLOSED' => ['label' => 'Đã đóng', 'class' => 'bg-gray-100 text-gray-800'],
                         ];
                         $s = $map[$state] ?? ['label' => (string) $state, 'class' => 'bg-gray-100 text-gray-800'];
+
                         return sprintf('<span class="px-2 py-1 rounded text-xs %s">%s</span>', $s['class'], $s['label']);
                     })
                     ->html()
                     ->sortable(),
             ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Trạng thái')
+                    ->options([
+                        'PENDING' => 'Chờ duyệt',
+                        'APPROVED' => 'Đã duyệt',
+                        'MATCHED' => 'Đã khớp',
+                        'CLOSED' => 'Đã đóng',
+                    ]),
+                SelectFilter::make('province_id')
+                    ->label('Tỉnh/Thành')
+                    ->relationship('province', 'name')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('gender_estimate')
+                    ->label('Giới tính ước tính')
+                    ->options([
+                        'MALE' => 'Nam',
+                        'FEMALE' => 'Nữ',
+                        'UNKNOWN' => 'Không rõ',
+                    ]),
+                Filter::make('found_date')
+                    ->label('Ngày phát hiện')
+                    ->schema([
+                        DatePicker::make('from')->label('Từ ngày'),
+                        DatePicker::make('until')->label('Đến ngày'),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when(filled($data['from'] ?? null), fn (Builder $query): Builder => $query->whereDate('found_date', '>=', $data['from']))
+                        ->when(filled($data['until'] ?? null), fn (Builder $query): Builder => $query->whereDate('found_date', '<=', $data['until']))),
+                Filter::make('ai_processed')
+                    ->label('Đã AI xử lý')
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('ai_processed_at')),
+            ])
             ->actions([
+                Action::make('approve')
+                    ->label('Duyệt')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn (FoundChild $record): bool => $record->status === 'PENDING')
+                    ->action(fn (FoundChild $record) => $record->update([
+                        'status' => 'APPROVED',
+                        'approved_at' => now(),
+                        'approved_by' => Auth::id(),
+                    ])),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
@@ -136,5 +187,15 @@ class FoundChildResource extends Resource
             'create' => Pages\CreateFoundChild::route('/create'),
             'edit' => Pages\EditFoundChild::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'province:id,name',
+                'user:id,full_name',
+                'approvedBy:id,full_name',
+            ]);
     }
 }

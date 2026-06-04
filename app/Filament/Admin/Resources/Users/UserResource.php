@@ -2,11 +2,12 @@
 
 namespace App\Filament\Admin\Resources\Users;
 
-use App\Filament\Admin\Resources\Users\RelationManagers\MissingChildrenRelationManager;
 use App\Filament\Admin\Resources\Users\Pages\CreateUser;
 use App\Filament\Admin\Resources\Users\Pages\EditUser;
 use App\Filament\Admin\Resources\Users\Pages\ListUsers;
 use App\Filament\Admin\Resources\Users\Pages\ViewUser;
+use App\Filament\Admin\Resources\Users\RelationManagers\FcmTokensRelationManager;
+use App\Filament\Admin\Resources\Users\RelationManagers\MissingChildrenRelationManager;
 use App\Filament\Admin\Resources\Users\Schemas\UserForm;
 use App\Filament\Admin\Resources\Users\Schemas\UserInfolist;
 use App\Filament\Admin\Resources\Users\Tables\UsersTable;
@@ -25,8 +26,11 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
     protected static ?string $navigationLabel = 'Người dùng';
+
     protected static ?string $modelLabel = 'Người dùng';
+
     protected static ?string $pluralModelLabel = 'Người dùng';
 
     public static function form(Schema $schema): Schema
@@ -48,6 +52,7 @@ class UserResource extends Resource
     {
         return [
             MissingChildrenRelationManager::class,
+            FcmTokensRelationManager::class,
         ];
     }
 

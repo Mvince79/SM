@@ -15,17 +15,19 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Cache;
-
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 class ClueResource extends Resource
 {
     protected static ?string $model = Clue::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+
     protected static ?string $navigationLabel = 'Manh mối';
+
     protected static ?string $modelLabel = 'Manh mối';
+
     protected static ?string $pluralModelLabel = 'Manh mối';
 
     public static function form(Schema $schema): Schema

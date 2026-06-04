@@ -32,6 +32,8 @@ class Clue extends Model
         'gps_shared_at' => 'datetime',
         'is_verified' => 'boolean',
         'is_anonymous' => 'boolean',
+        'is_hidden' => 'boolean',
+        'verified_at' => 'datetime',
         'lat' => 'decimal:7',
         'lng' => 'decimal:7',
         'is_hidden' => 'boolean',
@@ -60,22 +62,25 @@ class Clue extends Model
 
     public function getDisplayNameAttribute(): string
     {
-        if ($this->is_anonymous || !$this->user) {
+        if ($this->is_anonymous || ! $this->user) {
             return 'Ẩn danh';
         }
+
         return $this->user->name;
     }
 
     public function getInitialsAttribute(): string
     {
         $name = $this->display_name;
-        if ($name === 'Ẩn danh')
+        if ($name === 'Ẩn danh') {
             return 'AN';
+        }
         $words = explode(' ', $name);
         $initials = '';
         foreach (array_slice($words, 0, 2) as $word) {
             $initials .= mb_strtoupper(mb_substr($word, 0, 1));
         }
+
         return $initials ?: 'AN';
     }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\Users\Tables;
 
 use App\Models\User;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -13,9 +14,12 @@ use Filament\Actions\SelectAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 
 class UsersTable
@@ -41,13 +45,13 @@ class UsersTable
                 TextColumn::make('role')
                     ->label('Vai trò')
                     ->badge()
-                    ->color(fn($state) => match ($state) {
+                    ->color(fn ($state) => match ($state) {
                         'ADMIN' => 'danger',
                         'MODERATOR' => 'warning',
                         'USER' => 'info',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn($state) => match ($state) {
+                    ->formatStateUsing(fn ($state) => match ($state) {
                         'ADMIN' => 'Quản trị viên',
                         'MODERATOR' => 'Kiểm duyệt viên',
                         'USER' => 'Người dùng',
@@ -57,13 +61,13 @@ class UsersTable
                 TextColumn::make('status')
                     ->label('Trạng thái')
                     ->badge()
-                    ->color(fn($state) => match ($state) {
+                    ->color(fn ($state) => match ($state) {
                         'ACTIVE' => 'success',
                         'BANNED' => 'danger',
                         'PENDING' => 'warning',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn($state) => match ($state) {
+                    ->formatStateUsing(fn ($state) => match ($state) {
                         'ACTIVE' => 'Hoạt động',
                         'BANNED' => 'Bị khóa',
                         'PENDING' => 'Chờ kích hoạt',
@@ -111,6 +115,20 @@ class UsersTable
                         'PENDING' => 'Chờ kích hoạt',
                     ]),
 
+                SelectFilter::make('province_id')
+                    ->label('Tỉnh/Thành')
+                    ->relationship('province', 'name')
+                    ->searchable()
+                    ->preload(),
+
+                Filter::make('email_verified')
+                    ->label('Đã xác minh email')
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('email_verified_at')),
+
+                Filter::make('google_login')
+                    ->label('Đăng nhập Google')
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('google_id')),
+
                 TrashedFilter::make(),
             ])
             ->recordActions([
@@ -120,7 +138,7 @@ class UsersTable
                 Action::make('ban')
                     ->label('Khóa')
                     ->color('danger')
-                    ->visible(fn(User $record): bool => $record->status !== 'BANNED')
+                    ->visible(fn (User $record): bool => $record->status !== 'BANNED')
                     ->form([
                         Textarea::make('ban_reason')
                             ->label('Lý do khóa')
@@ -136,7 +154,7 @@ class UsersTable
                 Action::make('unban')
                     ->label('Mở khóa')
                     ->color('success')
-                    ->visible(fn(User $record): bool => $record->status === 'BANNED')
+                    ->visible(fn (User $record): bool => $record->status === 'BANNED')
                     ->action(function (User $record): void {
                         $record->update([
                             'status' => 'ACTIVE',
@@ -151,7 +169,7 @@ class UsersTable
                         'MODERATOR' => 'Kiểm duyệt viên',
                         'ADMIN' => 'Quản trị viên',
                     ])
-                    ->visible(fn(): bool => Auth::check() && Auth::user()->role === 'ADMIN')
+                    ->visible(fn (): bool => Auth::check() && Auth::user()->role === 'ADMIN')
                     ->action(function (User $record, string $state): void {
                         $record->update([
                             'role' => $state,
@@ -160,6 +178,34 @@ class UsersTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('ban')
+                        ->label('Khóa tài khoản')
+                        ->color('danger')
+                        ->form([
+                            Textarea::make('ban_reason')
+                                ->label('Lý do khóa')
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data): void {
+                            $records->each->update([
+                                'status' => 'BANNED',
+                                'ban_reason' => $data['ban_reason'],
+                            ]);
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    BulkAction::make('unban')
+                        ->label('Mở khóa tài khoản')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->action(function (Collection $records): void {
+                            $records->each->update([
+                                'status' => 'ACTIVE',
+                                'ban_reason' => null,
+                            ]);
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
                     DeleteBulkAction::make(),
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
