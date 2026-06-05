@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use App\Models\FaceMatchResult;
+use App\Models\Clue;
 
 class MissingChild extends Model
 {
