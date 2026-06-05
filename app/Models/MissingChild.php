@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\FaceMatchResult;
 
 class MissingChild extends Model
 {
@@ -103,7 +104,10 @@ class MissingChild extends Model
             ->with(['user', 'replies.user'])
             ->latest();
     }
-
+    public function faceMatchResults()
+    {
+        return $this->hasMany(FaceMatchResult::class, 'missing_id');
+    }
     // Scopes
     public function scopeApproved($query)
     {
@@ -217,5 +221,4 @@ class MissingChild extends Model
 
         return null;
     }
-    
 }
