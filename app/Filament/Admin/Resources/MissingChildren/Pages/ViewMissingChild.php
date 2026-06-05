@@ -10,6 +10,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Auth;
 use App\Filament\Admin\Resources\MissingChildren\RelationManagers\CluesRelationManager;
+use App\Filament\Admin\Resources\MissingChildren\RelationManagers\PhotosRelationManager;
 
 class ViewMissingChild extends ViewRecord
 {
@@ -131,6 +132,7 @@ class ViewMissingChild extends ViewRecord
     {
         return [
             CluesRelationManager::class,
+            PhotosRelationManager::class,
         ];
     }
 }
