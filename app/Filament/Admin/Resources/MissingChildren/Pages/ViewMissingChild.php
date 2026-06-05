@@ -9,6 +9,7 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Auth;
+use App\Filament\Admin\Resources\MissingChildren\RelationManagers\CluesRelationManager;
 
 class ViewMissingChild extends ViewRecord
 {
@@ -34,7 +35,7 @@ class ViewMissingChild extends ViewRecord
             Action::make('approve')
                 ->label('Duyệt')
                 ->color('success')
-                ->visible(fn () => $this->record->status === 'PENDING')
+                ->visible(fn() => $this->record->status === 'PENDING')
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->update([
@@ -58,7 +59,7 @@ class ViewMissingChild extends ViewRecord
             Action::make('reject')
                 ->label('Từ chối')
                 ->color('danger')
-                ->visible(fn () => $this->record->status === 'PENDING')
+                ->visible(fn() => $this->record->status === 'PENDING')
                 ->form([
                     Textarea::make('rejection_reason')
                         ->label('Lý do từ chối')
@@ -84,7 +85,7 @@ class ViewMissingChild extends ViewRecord
             Action::make('mark_found')
                 ->label('Đã tìm thấy')
                 ->color('info')
-                ->visible(fn () => $this->record->status === 'APPROVED')
+                ->visible(fn() => $this->record->status === 'APPROVED')
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->update([
@@ -106,7 +107,7 @@ class ViewMissingChild extends ViewRecord
             Action::make('close')
                 ->label('Đóng hồ sơ')
                 ->color('gray')
-                ->visible(fn () => $this->record->status !== 'CLOSED')
+                ->visible(fn() => $this->record->status !== 'CLOSED')
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->update([
@@ -124,6 +125,12 @@ class ViewMissingChild extends ViewRecord
                 }),
 
             EditAction::make(),
+        ];
+    }
+    public function getRelationManagers(): array
+    {
+        return [
+            CluesRelationManager::class,
         ];
     }
 }

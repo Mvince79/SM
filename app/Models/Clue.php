@@ -23,6 +23,8 @@ class Clue extends Model
         'is_verified',
         'verified_by',
         'is_anonymous',
+        'is_hidden',
+        'verified_at',
     ];
 
     protected $casts = [
@@ -32,6 +34,8 @@ class Clue extends Model
         'is_anonymous' => 'boolean',
         'lat' => 'decimal:7',
         'lng' => 'decimal:7',
+        'is_hidden' => 'boolean',
+        'verified_at' => 'datetime',
     ];
 
     public function missingChild()
