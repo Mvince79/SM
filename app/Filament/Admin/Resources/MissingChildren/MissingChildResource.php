@@ -22,6 +22,7 @@ use App\Filament\Admin\Resources\MissingChildren\RelationManagers\ActivityLogRel
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
+
 class MissingChildResource extends Resource
 {
     protected static ?string $model = MissingChild::class;
@@ -34,6 +35,22 @@ class MissingChildResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return MissingChildForm::configure($schema);
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = Cache::remember('badge_missing_pending', 300, function () {
+            return MissingChild::where('status', 'PENDING')->count();
+        });
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        $count = (int) Cache::get('badge_missing_pending', 0);
+
+        return $count > 10 ? 'danger' : 'warning';
     }
 
     public static function infolist(Schema $schema): Schema
@@ -77,24 +94,7 @@ class MissingChildResource extends Resource
             ->withCount(['clues', 'comments']);
     }
 
-    // ─── Navigation Badge ────────────────────────────────────────────────────
-    public static function getNavigationBadge(): ?string
-    {
-        $count = Cache::remember('badge_missing_pending', 300, function () {
-            return static::getModel()::where('status', 'PENDING')->count();
-        });
 
-        return $count > 0 ? (string) $count : null;
-    }
-
-    public static function getNavigationBadgeColor(): string
-    {
-        $count = Cache::remember('badge_missing_pending', 300, function () {
-            return static::getModel()::where('status', 'PENDING')->count();
-        });
-
-        return $count > 10 ? 'danger' : 'warning';
-    }
 
     // ─── Global Search ───────────────────────────────────────────────────────
     public static function getGloballySearchableAttributes(): array

@@ -2,82 +2,117 @@
 
 namespace App\Filament\Admin\Widgets;
 
-use Filament\Actions\Action;
-use App\Mail\MissingChildApproved;
 use App\Models\MissingChild;
-use Filament\Actions\BulkActionGroup;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Textarea;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Cache;
+
 class RecentMissingWidget extends TableWidget
 {
     protected static ?string $heading = 'Hồ sơ đang chờ duyệt';
 
     protected int|string|array $columnSpan = 'full';
 
+    protected function getTableRecordsPerPageSelectOptions(): array
+    {
+        return [10];
+    }
+
     public function table(Table $table): Table
     {
         return $table
             ->query(
                 fn(): Builder => MissingChild::query()
+                    ->with(['province:id,name'])
                     ->where('status', 'PENDING')
                     ->latest()
                     ->limit(10)
-            )->columns([
-                    Tables\Columns\TextColumn::make('case_code')
-                        ->label('Mã hồ sơ')
-                        ->searchable(),
+            )
+            ->paginated(false)
+            ->columns([
+                Tables\Columns\TextColumn::make('case_code')
+                    ->label('Mã hồ sơ')
+                    ->searchable()
+                    ->fontFamily('mono')
+                    ->color('gray'),
 
-                    Tables\Columns\TextColumn::make('full_name')
-                        ->label('Họ tên')
-                        ->searchable(),
+                Tables\Columns\TextColumn::make('full_name')
+                    ->label('Họ tên')
+                    ->searchable()
+                    ->weight('bold'),
 
-                    Tables\Columns\TextColumn::make('province.name')
-                        ->label('Tỉnh'),
+                Tables\Columns\TextColumn::make('province.name')
+                    ->label('Tỉnh/Thành')
+                    ->badge()
+                    ->color('gray'),
 
-                    Tables\Columns\TextColumn::make('status')
-                        ->label('Trạng thái')
-                        ->badge()
-                        ->color(fn(string $state): string => match ($state) {
-                            'PENDING' => 'warning',
-                            'APPROVED' => 'success',
-                            'REJECTED' => 'danger',
-                            'FOUND' => 'primary',
-                            'CLOSED' => 'gray',
-                            default => 'gray',
-                        }),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Trạng thái')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'PENDING' => 'warning',
+                        'APPROVED' => 'success',
+                        'REJECTED' => 'danger',
+                        'FOUND' => 'primary',
+                        'CLOSED' => 'gray',
+                        default => 'gray',
+                    }),
 
-                    Tables\Columns\TextColumn::make('created_at')
-                        ->label('Ngày tạo')
-                        ->dateTime('d/m/Y H:i'),
-                ])
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Ngày tạo')
+                    ->dateTime('d/m/Y H:i')
+                    ->since()
+                    ->tooltip(fn($record) => $record->created_at->format('d/m/Y H:i:s')),
+            ])
             ->recordActions([
+                // ACTION: Duyệt hồ sơ
+                Action::make('approve')
+                    ->label('Duyệt')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn(MissingChild $record): bool => $record->status === 'PENDING')
+                    ->requiresConfirmation()
+                    ->modalHeading('Xác nhận duyệt hồ sơ')
+                    ->modalDescription(fn(MissingChild $record) => "Duyệt hồ sơ {$record->case_code} — {$record->full_name}?")
+                    ->action(function (MissingChild $record): void {
+                        $record->update([
+                            'status' => 'APPROVED',
+                            'approved_at' => now(),
+                            'approved_by' => Auth::id(),
+                        ]);
+
+                        Cache::forget('dashboard_stats_overview');
+                        Cache::forget('badge_missing_pending');
+                    }),
+
+                // ACTION: Từ chối hồ sơ
                 Action::make('reject')
                     ->label('Từ chối')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->visible(fn(MissingChild $record): bool => $record->status === 'PENDING')
                     ->form([
-                        \Filament\Forms\Components\Textarea::make('rejection_reason')
+                        Textarea::make('rejection_reason')
                             ->label('Lý do từ chối')
                             ->required()
                             ->minLength(10)
-                            ->rows(3),
+                            ->rows(3)
+                            ->placeholder('Nhập lý do từ chối (tối thiểu 10 ký tự)...'),
                     ])
                     ->action(function (MissingChild $record, array $data): void {
                         $record->update([
                             'status' => 'REJECTED',
                             'rejection_reason' => $data['rejection_reason'],
                         ]);
+
+                        Cache::forget('dashboard_stats_overview');
+                        Cache::forget('badge_missing_pending');
                     }),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    //
-                ]),
             ]);
     }
 }
