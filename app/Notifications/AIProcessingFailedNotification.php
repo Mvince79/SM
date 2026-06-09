@@ -28,8 +28,8 @@ class AIProcessingFailedNotification extends Notification
             'type' => 'ai_processing_failed',
             'photo_id' => $this->photoId,
             'job' => $this->jobName,
-            'title' => 'AI processing failed',
-            'message' => "Photo #{$this->photoId} failed in {$this->jobName}: {$this->message}",
+            'title' => 'Xử lý AI thất bại',
+            'message' => "Ảnh #{$this->photoId} bị lỗi trong {$this->jobName}: {$this->message}",
             'url' => url('/admin'),
         ];
     }

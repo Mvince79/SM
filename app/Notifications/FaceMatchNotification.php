@@ -29,8 +29,8 @@ class FaceMatchNotification extends Notification
             'missing_id' => $this->match->missing_id,
             'found_id' => $this->match->found_id,
             'score' => (float) $this->match->score,
-            'title' => 'AI goi y co ho so khop',
-            'message' => 'AI goi y ' . number_format((float) $this->match->score * 100, 2) . '% khop cho ho so ' . $this->match->missingChild?->full_name,
+            'title' => 'AI gợi ý có hồ sơ khớp',
+            'message' => 'AI gợi ý ' . number_format((float) $this->match->score * 100, 2) . '% khớp cho hồ sơ ' . $this->match->missingChild?->full_name,
             'url' => route('missing.detail', ['id' => $this->match->missing_id]),
         ];
     }

@@ -35,8 +35,8 @@ class PostStatusChanged implements ShouldBroadcast
             'missing_id' => $this->missingChild->id,
             'status' => $this->missingChild->status,
             'missing_name' => $this->missingChild->full_name,
-            'title' => 'Trang thai bai dang da thay doi',
-            'message' => 'Ho so ' . $this->missingChild->full_name . ' hien co trang thai ' . $this->missingChild->status,
+            'title' => 'Trạng thái bài đăng đã thay đổi',
+            'message' => 'Hồ sơ ' . $this->missingChild->full_name . ' hiện có trạng thái ' . $this->missingChild->status,
             'url' => route('missing.detail', ['id' => $this->missingChild->id]),
         ];
     }

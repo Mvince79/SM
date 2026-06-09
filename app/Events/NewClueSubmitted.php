@@ -35,8 +35,8 @@ class NewClueSubmitted implements ShouldBroadcast
             'clue_id' => $this->clue->id,
             'missing_id' => $this->clue->missing_id,
             'missing_name' => $this->clue->missingChild?->full_name,
-            'title' => 'Co manh moi moi',
-            'message' => 'Co manh moi moi cho ho so ' . $this->clue->missingChild?->full_name,
+            'title' => 'Có manh mối mới',
+            'message' => 'Có manh mối mới cho hồ sơ ' . $this->clue->missingChild?->full_name,
             'url' => route('missing.detail', ['id' => $this->clue->missing_id]),
         ];
     }
