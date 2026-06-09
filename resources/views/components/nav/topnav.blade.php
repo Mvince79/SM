@@ -115,6 +115,13 @@
         </a>
     </div>
 
+    {{-- ── Mobile Actions ── --}}
+    <div class="ml-auto flex items-center gap-2 md:hidden">
+        @auth
+            <x-notification-bell />
+        @endauth
+    </div>
+
     {{-- ── Mobile Hamburger ── --}}
     <button type="button" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')"
         class="md:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors" aria-label="Toggle menu">

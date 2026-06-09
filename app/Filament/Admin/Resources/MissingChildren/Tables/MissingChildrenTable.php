@@ -311,6 +311,7 @@ class MissingChildrenTable
                                 if ($record->user?->email) {
                                     Mail::to($record->user->email)->queue(new MissingChildApproved($record));
                                 }
+                                PostStatusChanged::dispatch($record->refresh());
                                 $count++;
                             });
                             Cache::forget('badge_missing_pending');
@@ -345,6 +346,7 @@ class MissingChildrenTable
                                 if ($record->user?->email) {
                                     Mail::to($record->user->email)->queue(new MissingChildRejected($record));
                                 }
+                                PostStatusChanged::dispatch($record->refresh());
                                 $count++;
                             });
                             Cache::forget('badge_missing_pending');
