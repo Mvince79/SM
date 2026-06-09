@@ -7,6 +7,7 @@ use App\Models\FoundChild;
 use App\Models\MissingChild;
 use App\Models\Photo;
 use App\Services\FaceMatchService;
+use App\Support\AIJobFailureNotifier;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -72,6 +73,8 @@ class ProcessPhotoJob implements ShouldQueue
             'photo_id' => $this->photoId,
             'message' => $exception->getMessage(),
         ]);
+
+        AIJobFailureNotifier::notifyAdmins($this->photoId, static::class, $exception);
     }
 
     private function generateDerivatives(Photo $photo): void

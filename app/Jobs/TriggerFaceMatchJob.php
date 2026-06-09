@@ -9,6 +9,7 @@ use App\Models\FoundChild;
 use App\Models\MissingChild;
 use App\Models\Photo;
 use App\Services\FaceMatchService;
+use App\Support\AIJobFailureNotifier;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -95,6 +96,8 @@ class TriggerFaceMatchJob implements ShouldQueue
             'tracking_id' => $this->trackingId,
             'message' => $exception->getMessage(),
         ]);
+
+        AIJobFailureNotifier::notifyAdmins($this->photoId, static::class, $exception);
     }
 
     private function targetPhotos(Photo $photo)

@@ -13,16 +13,20 @@ class FaceMatchResult extends Model
         'missing_photo_id',
         'found_photo_id',
         'score',
+        'is_matched',
         'source',
         'model_used',
         'status',
         'confirmed_by',
         'confirmed_at',
+        'notified_at',
     ];
 
     protected $casts = [
         'score' => 'float',
+        'is_matched' => 'boolean',
         'confirmed_at' => 'datetime',
+        'notified_at' => 'datetime',
     ];
 
     // ── Relationships ──────────────────────────────────────────────────────────
@@ -35,6 +39,16 @@ class FaceMatchResult extends Model
     public function foundChild(): BelongsTo
     {
         return $this->belongsTo(FoundChild::class, 'found_id');
+    }
+
+    public function missingPhoto(): BelongsTo
+    {
+        return $this->belongsTo(Photo::class, 'missing_photo_id');
+    }
+
+    public function foundPhoto(): BelongsTo
+    {
+        return $this->belongsTo(Photo::class, 'found_photo_id');
     }
 
     public function confirmedBy(): BelongsTo
