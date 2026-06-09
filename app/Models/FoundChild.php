@@ -72,6 +72,11 @@ class FoundChild extends Model
         return $this->morphMany(Photo::class, 'model');
     }
 
+    public function faceMatchResults()
+    {
+        return $this->hasMany(FaceMatchResult::class, 'found_id');
+    }
+
     public function primaryPhoto()
     {
         return $this->morphOne(Photo::class, 'model')

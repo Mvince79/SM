@@ -69,6 +69,7 @@
                         Quản trị
                     </a>
                 @endif
+                <x-notification-bell />
                 <a href="{{ route('profile.index') }}" class="flex items-center gap-2 group">
                     <div class="w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200">
                         <img src="{{ Auth::user()->avatar_url }}" class="w-full h-full object-cover"

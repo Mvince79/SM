@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
+use App\Events\PostStatusChanged;
 class MissingChildrenTable
 {
     public static function configure(Table $table): Table
@@ -261,6 +262,7 @@ class MissingChildrenTable
                         }
                         Cache::forget('badge_missing_pending');
                         Notification::make()->title('Đã duyệt hồ sơ')->success()->send();
+                        PostStatusChanged::dispatch($record->refresh());
                     }),
 
                 Action::make('reject')
@@ -284,6 +286,7 @@ class MissingChildrenTable
                         }
                         Cache::forget('badge_missing_pending');
                         Notification::make()->title('Đã từ chối hồ sơ')->danger()->send();
+                        PostStatusChanged::dispatch($record->refresh());
                     }),
             ])
             ->toolbarActions([

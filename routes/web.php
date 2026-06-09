@@ -5,6 +5,7 @@ use App\Http\Controllers\Client\MissingController;
 use App\Http\Controllers\Client\ProfileController;
 use App\Http\Controllers\Client\StatsController;
 use App\Http\Controllers\Client\HomeController;
+use App\Http\Controllers\NotificationController;
 use App\Models\Message;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -42,6 +43,9 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
     Route::prefix('/profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
     });
+
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read'])
+        ->name('notifications.read');
 
     Route::prefix('missing')->name('missing.')->group(function () {
         Route::get('/create', [MissingController::class, 'create'])->name('create');

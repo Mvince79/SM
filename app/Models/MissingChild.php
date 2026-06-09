@@ -72,6 +72,11 @@ class MissingChild extends Model
         return $this->morphMany(Photo::class, 'model');
     }
 
+    public function faceMatchResults()
+    {
+        return $this->hasMany(FaceMatchResult::class, 'missing_id');
+    }
+
     public function primaryPhoto()
     {
         return $this->morphOne(Photo::class, 'model')
@@ -101,10 +106,6 @@ class MissingChild extends Model
             ->where('is_approved', 1)
             ->with(['user', 'replies.user'])
             ->latest();
-    }
-    public function faceMatchResults()
-    {
-        return $this->hasMany(FaceMatchResult::class, 'missing_id');
     }
 
     public function allComments()

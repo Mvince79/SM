@@ -2,6 +2,9 @@
 
 namespace App\Filament\Admin\Widgets;
 
+use App\Mail\MissingChildApproved;
+use App\Mail\MissingChildRejected;
+use App\Events\PostStatusChanged;
 use App\Models\MissingChild;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
@@ -11,6 +14,7 @@ use Filament\Widgets\TableWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 
 class RecentMissingWidget extends TableWidget
 {
@@ -88,6 +92,10 @@ class RecentMissingWidget extends TableWidget
 
                         Cache::forget('dashboard_stats_overview');
                         Cache::forget('badge_missing_pending');
+                        if ($record->user?->email) {
+                            Mail::to($record->user->email)->send(new MissingChildApproved($record));
+                        }
+                        PostStatusChanged::dispatch($record->refresh());
                     }),
 
                 // ACTION: Từ chối hồ sơ
@@ -112,6 +120,10 @@ class RecentMissingWidget extends TableWidget
 
                         Cache::forget('dashboard_stats_overview');
                         Cache::forget('badge_missing_pending');
+                        if ($record->user?->email) {
+                            Mail::to($record->user->email)->send(new MissingChildRejected($record));
+                        }
+                        PostStatusChanged::dispatch($record->refresh());
                     }),
             ]);
     }

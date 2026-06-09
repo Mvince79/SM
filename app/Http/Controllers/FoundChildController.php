@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\FoundChildRequest;
-use App\Jobs\TriggerFaceMatchJob;
 use App\Models\FoundChild;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -102,8 +101,6 @@ class FoundChildController extends Controller
                 $first = false;
             }
         }
-
-        TriggerFaceMatchJob::dispatch($found->id);
 
         return redirect()->route('found-children.show', $found)->with('success', 'Đã tạo hồ sơ tìm được trẻ.');
     }

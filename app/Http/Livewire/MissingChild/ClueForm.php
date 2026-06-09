@@ -8,6 +8,7 @@ use App\Models\Clue;
 use App\Models\MissingChild;
 use App\Models\Photo;
 use App\Jobs\ProcessPhotoJob;
+use App\Events\NewClueSubmitted;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
@@ -88,7 +89,7 @@ class ClueForm extends Component
                     'file_size' => Storage::disk('public')->size($imagePath),
                     'mime_type' => Storage::disk('public')->mimeType($imagePath),
                 ]);
-                ProcessPhotoJob::dispatch($clue->id, $imagePath);
+                ProcessPhotoJob::dispatch($photo->id);
             } catch (\Throwable $e) {
                 // ignore
             }
@@ -98,6 +99,7 @@ class ClueForm extends Component
             $missing = MissingChild::find($this->missingId);
             if ($missing && $missing->user) {
                 Notification::send($missing->user, new ClueSubmittedNotification($clue));
+                NewClueSubmitted::dispatch($clue);
             }
         } catch (\Throwable $e) {
             // ignore

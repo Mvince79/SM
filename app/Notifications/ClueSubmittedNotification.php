@@ -45,6 +45,9 @@ class ClueSubmittedNotification extends Notification
             'missing_id' => $this->clue->missing_id,
             'user_id' => $this->clue->user_id,
             'description' => $this->clue->description,
+            'title' => 'Co manh moi moi',
+            'message' => 'Co manh moi moi cho ho so ' . $this->clue->missingChild?->full_name,
+            'url' => route('missing.detail', ['id' => $this->clue->missing_id]),
         ];
     }
 }

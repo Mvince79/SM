@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'email.verified' => EnsureEmailVerified::class,
+            'internal.key' => \App\Http\Middleware\InternalApiKey::class,
         ]);
 
         $middleware->redirectGuestsTo(fn() => route('auth.login'));

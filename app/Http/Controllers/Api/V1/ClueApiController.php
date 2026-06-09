@@ -10,6 +10,7 @@ use App\Models\Clue;
 use App\Models\MissingChild;
 use App\Models\Photo;
 use App\Jobs\ProcessPhotoJob;
+use App\Events\NewClueSubmitted;
 use App\Notifications\ClueSubmittedNotification;
 use Illuminate\Support\Facades\Notification;
 
@@ -65,7 +66,7 @@ class ClueApiController extends Controller
                     'file_size' => Storage::disk('public')->size($imagePath),
                     'mime_type' => Storage::disk('public')->mimeType($imagePath),
                 ]);
-                ProcessPhotoJob::dispatch($clue->id, $imagePath);
+                ProcessPhotoJob::dispatch($photo->id);
             } catch (\Throwable $e) {
                 // ignore
             }
@@ -76,6 +77,7 @@ class ClueApiController extends Controller
             $missing = MissingChild::find($data['missing_id']);
             if ($missing && $missing->user) {
                 Notification::send($missing->user, new ClueSubmittedNotification($clue));
+                NewClueSubmitted::dispatch($clue);
             }
         } catch (\Throwable $e) {
             // ignore notification failures

@@ -27,5 +27,6 @@ class AppServiceProvider extends ServiceProvider
 
         // Register Observer
         \App\Models\MissingChild::observe(\App\Observers\MissingChildObserver::class);
+        \App\Models\Photo::observe(\App\Observers\PhotoObserver::class);
     }
 }

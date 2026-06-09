@@ -23,6 +23,7 @@ class Photo extends Model
         'height',
         'has_face',
         'face_encoding',
+        'ai_status',
         'is_primary',
         'sort_order',
     ];
@@ -36,7 +37,6 @@ class Photo extends Model
             'has_face' => 'integer',
             'is_primary' => 'integer',
             'sort_order' => 'integer',
-            'face_encoding' => 'array',
         ];
     }
 

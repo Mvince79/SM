@@ -2,9 +2,16 @@
 
 use App\Http\Controllers\Api\V1\MissingChildApiController;
 use App\Http\Controllers\Api\V1\MapDataController;
+use App\Http\Controllers\Api\Internal\FaceMatchController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\StatsApiController;
+
+Route::prefix('internal')
+    ->middleware('internal.key')
+    ->group(function () {
+        Route::post('/face-match/trigger', [FaceMatchController::class, 'trigger']);
+    });
 // ────────────────────────────────────────────────────────────────────────────────
 // Public API — 60 requests/minute
 // ────────────────────────────────────────────────────────────────────────────────

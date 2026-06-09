@@ -36,6 +36,23 @@ class PhotosRelationManager extends RelationManager
                 ImageColumn::make('path_original')->label('Ảnh')->disk('public')->circular(false)->toggleable(false),
                 TextColumn::make('file_size')->label('Kích thước'),
                 TextColumn::make('mime_type')->label('MIME'),
+                TextColumn::make('ai_status')
+                    ->label('AI')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'pending' => 'Dang cho AI',
+                        'processing' => 'Dang xu ly',
+                        'done' => 'Da xu ly',
+                        'failed' => 'That bai',
+                        default => $state ?: 'Dang cho AI',
+                    })
+                    ->color(fn ($state) => match ($state) {
+                        'pending' => 'warning',
+                        'processing' => 'info',
+                        'done' => 'success',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    }),
                 TextColumn::make('is_primary')
                     ->label('Chính')
                     ->formatStateUsing(fn ($state) => (int) $state === 1 ? 'Có' : 'Không'),

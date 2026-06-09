@@ -3,7 +3,11 @@
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Clue;
+use App\Models\MissingChild;
+use App\Events\NewClueSubmitted;
+use App\Notifications\ClueSubmittedNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 
 new class extends Component {
     use WithFileUploads;
@@ -66,7 +70,7 @@ new class extends Component {
             ],
         );
 
-        Clue::create([
+        $clue = Clue::create([
             'missing_id'  => $this->missingId,
             'parent_id'   => null,
             'user_id'     => Auth::id(),
@@ -77,6 +81,12 @@ new class extends Component {
             'is_verified' => 0,
             'is_anonymous'=> 0,
         ]);
+
+        $missing = MissingChild::find($this->missingId);
+        if ($missing && $missing->user) {
+            Notification::send($missing->user, new ClueSubmittedNotification($clue));
+            NewClueSubmitted::dispatch($clue);
+        }
 
         $this->reset(['description', 'lat', 'lng']);
         $this->open = false;
