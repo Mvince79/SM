@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Filament\Admin\Resources\FaceMatch\Pages;
+namespace App\Filament\Admin\Resources\FaceMatchResults\Pages;
 
-use App\Filament\Admin\Resources\FaceMatch\FaceMatchResource;
+use App\Filament\Admin\Resources\FaceMatchResults\FaceMatchResultResource;
 use Filament\Resources\Pages\CreateRecord;
 
-class CreateFaceMatch extends CreateRecord
+class CreateFaceMatchResult extends CreateRecord
 {
-    protected static string $resource = FaceMatchResource::class;
+    protected static string $resource = FaceMatchResultResource::class;
 }

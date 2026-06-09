@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Filament\Admin\Resources\FaceMatch\Pages;
+namespace App\Filament\Admin\Resources\FaceMatchResults\Pages;
 
-use App\Filament\Admin\Resources\FaceMatch\FaceMatchResource;
+use App\Filament\Admin\Resources\FaceMatchResults\FaceMatchResultResource;
 use Filament\Resources\Pages\EditRecord;
 
-class EditFaceMatch extends EditRecord
+class EditFaceMatchResult extends EditRecord
 {
-    protected static string $resource = FaceMatchResource::class;
+    protected static string $resource = FaceMatchResultResource::class;
 
     protected function getHeaderActions(): array
     {
