@@ -4,7 +4,7 @@
     @for ($i = 0; $i < 4; $i++)
         <div class="w-full border-b p-4">
             <div class="flex items-center gap-3">
-                <x-ui.skeleton width="56px" height="56px" rounded="rounded-full" class="shrink-0" />
+            <x-ui.skeleton width="48px" height="48px" rounded="rounded-full" class="shrink-0 md:w-14 md:h-14" />
 
                 <div class="flex-1 min-w-0 space-y-2">
                     <div class="flex items-center gap-2">
@@ -36,7 +36,8 @@
             hover:bg-blue-50
             transition
             text-left
-            p-4
+            p-3
+            md:p-4
         "
     >
 
@@ -44,13 +45,13 @@
 
             <img
                 src="{{ $user->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($user->full_name) }}"
-                class="w-14 h-14 rounded-full object-cover"
+                class="h-12 w-12 rounded-full object-cover md:h-14 md:w-14"
             >
 
             <div class="flex-1 min-w-0">
 
                 <div class="flex items-center gap-2">
-                    <div class="font-bold text-slate-800 truncate">
+                    <div class="truncate text-sm font-bold text-slate-800 md:text-base">
                         {{ $user->full_name }}
                     </div>
 
@@ -62,14 +63,14 @@
                     @endif
                 </div>
 
-                <div class="text-sm text-slate-500 truncate">
+                <div class="truncate text-xs text-slate-500 md:text-sm">
                     Nhấn để mở cuộc trò chuyện
                 </div>
 
             </div>
 
             <div
-                class="w-3 h-3 rounded-full bg-green-500"
+                class="h-2.5 w-2.5 rounded-full bg-green-500 md:h-3 md:w-3"
             ></div>
 
         </div>

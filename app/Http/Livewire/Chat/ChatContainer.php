@@ -12,12 +12,19 @@ class ChatContainer extends Component
 
     protected $listeners = [
         'openChat' => 'openChat',
+        'closeChatThread' => 'closeChatThread',
     ];
 
     public function openChat($userId, $missingId = null)
     {
         $this->selectedUserId = $userId;
         $this->selectedMissingId = $missingId;
+    }
+
+    public function closeChatThread(): void
+    {
+        $this->selectedUserId = null;
+        $this->selectedMissingId = null;
     }
 
     public function render()

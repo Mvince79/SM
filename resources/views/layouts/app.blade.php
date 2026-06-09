@@ -183,11 +183,9 @@
 
     {{-- ── Chat FAB ── --}}
     @auth
-        <div class="fixed bottom-10 right-10 z-50">
+        <div class="fixed bottom-24 right-4 z-50 sm:bottom-10 sm:right-10">
             <button type="button" onclick="openChat()"
-                class="w-20 h-20 bg-blue-600 text-white rounded-full
-               shadow-xl flex items-center justify-center
-               hover:bg-blue-700 transition">
+                class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-xl transition hover:bg-blue-700 sm:h-20 sm:w-20">
                 Chat
             </button>
         </div>
@@ -202,7 +200,7 @@
 
     {{-- Chat Modal --}}
     @auth
-        <div id="chat-modal" class="hidden fixed inset-0 z-[9999] flex justify-end items-end p-6">
+        <div id="chat-modal" class="hidden fixed inset-0 z-[9999] flex items-stretch justify-center sm:items-end sm:justify-end sm:p-6">
 
             {{-- Overlay --}}
             <div class="absolute inset-0 bg-black/40" onclick="closeChat()"></div>
@@ -212,15 +210,26 @@
                 class="
     relative
     z-10
-    w-[900px]
-    h-[650px]
+    w-full
+    h-[100dvh]
+    sm:w-[min(900px,calc(100vw-3rem))]
+    sm:h-[min(650px,calc(100vh-3rem))]
     bg-white
-    rounded-[32px]
+    sm:rounded-[28px]
     shadow-2xl
     overflow-hidden
     flex
     flex-col
     ">
+                <button type="button" onclick="closeChat()"
+                    class="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
+                    aria-label="Đóng khung chat" title="Đóng khung chat">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 6 6 18" />
+                        <path d="m6 6 12 12" />
+                    </svg>
+                </button>
                 @livewire('chat.chat-container')
             </div>
 
@@ -229,16 +238,22 @@
 
     <script>
         function openChat() {
-            document.getElementById('chat-modal').classList.remove('hidden');
+            document.getElementById('chat-modal')?.classList.remove('hidden');
 
             document.body.style.overflow = 'hidden';
         }
 
         function closeChat() {
-            document.getElementById('chat-modal').classList.add('hidden');
+            document.getElementById('chat-modal')?.classList.add('hidden');
 
             document.body.style.overflow = 'auto';
         }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeChat();
+            }
+        });
     </script>
 
     @livewireScripts
