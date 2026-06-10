@@ -28,6 +28,7 @@ Route::prefix('missing')->name('missing.')->group(function () {
     Route::get('/{case_code}', [MissingController::class, 'detailByCaseCode'])
         ->where('case_code', '^MC-\d{4}-\d{5}$')
         ->name('by_case_code');
+    Route::get('/found/{id}', [MissingController::class, 'resolvedShow'])->name('found');
 });
 
 Route::prefix('map')->name('map.')->group(function () {

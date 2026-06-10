@@ -31,12 +31,3 @@ auth.json
 ai-service/venv/
 __pycache__/
 *.py[cod]
-<<<<<<< HEAD
-<<<<<<< HEAD
-benchmark/ 
-=======
-benchmark/test_images/lfw-deepfunneled/ 
->>>>>>> 68a94d05 (feat(t32): AI benchmark 20 pairs LFW - ArcFace accuracy 70%, precision 100%, avg 0.73s/pair)
-=======
-benchmark/test_images/lfw-deepfunneled/
->>>>>>> 31153749 (chore: ignore lfw-deepfunneled dataset)

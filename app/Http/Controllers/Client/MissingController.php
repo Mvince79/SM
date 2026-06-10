@@ -46,6 +46,7 @@ class MissingController extends Controller
             'Cache-Control' => 'public, max-age=3600',
         ]);
     }
+
     public function detailByCaseCode(string $caseCode)
     {
         $data = $this->missingChildService->getDetailForPublicByCaseCode($caseCode);
@@ -73,5 +74,12 @@ class MissingController extends Controller
         }
 
         return view('missing.detail', $data);
+    }
+
+    public function resolvedShow(int $id)
+    {
+        $data = $this->missingChildService->getResolvedForPublic($id);
+
+        return view('missing.resolved', $data);
     }
 }

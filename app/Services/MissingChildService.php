@@ -5,6 +5,9 @@ namespace App\Services;
 use App\Models\Province;
 use App\Repositories\MissingChildRepository;
 use App\Services\MissingChildViewCountService;
+use App\Models\FaceMatchResult;
+use App\Models\MissingChild;
+use Carbon\Carbon;
 
 class MissingChildService
 {
@@ -88,5 +91,40 @@ class MissingChildService
         }
 
         return ['badge' => 'bg-slate-500', 'badgeText' => null];
+    }
+
+    public function getResolvedForPublic(int $id): array
+    {
+        $case = MissingChild::with([
+            'photos' => fn($q) => $q->orderBy('sort_order'),
+            'primaryPhoto',
+        ])->findOrFail($id);
+
+        if (!in_array($case->status, ['FOUND', 'CLOSED'])) {
+            abort(404);
+        }
+
+        $matchResult = FaceMatchResult::where('missing_id', $id)
+            ->where('status', 'CONFIRMED')
+            ->with([
+                'foundChild.photos' => fn($q) => $q->orderBy('sort_order'),
+                'foundChild.primaryPhoto',
+            ])
+            ->orderBy('score', 'desc')
+            ->first();
+
+        $foundChild = $matchResult?->foundChild;
+
+        $daysCount = null;
+        if ($case->missing_date && $case->found_at) {
+            $daysCount = (int) Carbon::parse($case->missing_date)
+                ->diffInDays(Carbon::parse($case->found_at));
+        }
+
+        $ogImage = $case->detail_primary_photo_url
+            ?? $foundChild?->primary_photo_url
+            ?? null;
+
+        return compact('case', 'matchResult', 'foundChild', 'daysCount', 'ogImage');
     }
 }
