@@ -18,7 +18,11 @@ class MissingChildRepository
         $sort = $filters['sort'] ?? 'latest';
         $status = $filters['status'] ?? '';
 
-        $query = MissingChild::with(['primaryPhoto', 'province'])
+        $query = MissingChild::with([
+            'primaryPhoto:id,model_id,model_type,path_original,path_thumb,path_blurred,is_primary,sort_order',  // ✅ select columns cần thiết
+            'province:id,name',                                       // ✅ chỉ lấy id,name
+        ])
+            ->withCount(['clues', 'comments'])                            // ✅ fix N+1 count
             ->when(
                 $status,
                 fn($q) => $q->where('status', $status),
@@ -51,7 +55,15 @@ class MissingChildRepository
 
     public function findPublicById(int $id): MissingChild
     {
-        $case = MissingChild::with(['photos', 'primaryPhoto', 'province', 'clues.user'])
+        $case = MissingChild::with([
+            'primaryPhoto:id,model_id,model_type,path_original,path_thumb,path_blurred,is_primary,sort_order',  // ✅ bỏ 'photos' thừa
+            'province:id,name',
+            'clues' => fn($q) => $q->where('is_hidden', false)      // ✅ chỉ load clues không bị ẩn
+                ->with(['user:id,full_name'])             // ✅ chỉ lấy id,full_name
+                ->latest(),
+            'comments' => fn($q) => $q->with(['user:id,full_name']) // ✅ eager load comments
+                ->latest(),
+        ])
             ->findOrFail($id);
 
         $authId = Auth::id();
@@ -67,7 +79,15 @@ class MissingChildRepository
 
     public function findPublicByCaseCode(string $caseCode): MissingChild
     {
-        $case = MissingChild::with(['photos', 'primaryPhoto', 'province', 'clues.user'])
+        $case = MissingChild::with([
+            'primaryPhoto:id,model_id,model_type,path_original,path_thumb,path_blurred,is_primary,sort_order',
+            'province:id,name',
+            'clues' => fn($q) => $q->where('is_hidden', false)
+                ->with(['user:id,full_name'])
+                ->latest(),
+            'comments' => fn($q) => $q->with(['user:id,full_name'])
+                ->latest(),
+        ])
             ->where('case_code', $caseCode)
             ->firstOrFail();
 
