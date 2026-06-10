@@ -26,6 +26,16 @@ class MissingChildService
     public function getDetailForPublic(int $id): array
     {
         $case = $this->missingChildRepository->findPublicById($id);
+        $aiMatches = $case->faceMatchResults()
+            ->where('score', '>=', config('face_match.score_threshold', 0.7))
+            ->with([
+                'foundChild.province',
+                'foundChild.photos' => fn($q) => $q->orderBy('sort_order')->limit(1),
+            ])
+            ->orderBy('score', 'desc')
+            ->take(3)
+            ->get();
+
         $this->missingChildViewCountService->hit($case->id);
 
         $pending = $this->missingChildViewCountService->getPendingCount($case->id);
@@ -35,16 +45,26 @@ class MissingChildService
 
         $bannerConfig = $this->buildBannerConfig($case);
 
-        return compact('case', 'bannerConfig');
+        return compact('case', 'bannerConfig', 'aiMatches');
     }
     public function getDetailForPublicByCaseCode(string $caseCode): array
     {
         $case = $this->missingChildRepository->findPublicByCaseCode($caseCode);
+        $aiMatches = $case->faceMatchResults()
+            ->where('score', '>=', config('face_match.score_threshold', 0.7))
+            ->with([
+                'foundChild.province',
+                'foundChild.photos' => fn($q) => $q->orderBy('sort_order')->limit(1),
+            ])
+            ->orderBy('score', 'desc')
+            ->take(3)
+            ->get();
+
         $case->increment('view_count');
 
         $bannerConfig = $this->buildBannerConfig($case);
 
-        return compact('case', 'bannerConfig');
+        return compact('case', 'bannerConfig', 'aiMatches');
     }
 
     private function buildBannerConfig($case): array

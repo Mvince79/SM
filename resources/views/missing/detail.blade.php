@@ -70,6 +70,14 @@
                                     <img src="{{ $case->detail_primary_photo_url ?? $case->thumb_url }}"
                                         class="w-full h-full object-cover transform group-hover:scale-105 transition-premium"
                                         alt="{{ $case->full_name }}" />
+                                    @auth
+                                        @if (isset($aiMatches) && $aiMatches->isNotEmpty() && $aiMatches->first()->score >= 0.7)
+                                            <div class="absolute top-2 left-2 z-10">
+                                                <x-missing.ai-match-badge :score="$aiMatches->first()->score" />
+                                            </div>
+                                        @endif
+                                    @endauth
+
                                     @if (count($case->detail_photo_urls) > 1)
                                         <div
                                             class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -95,7 +103,7 @@
                                 @if ($case->primaryPhoto)
                                     <p class="text-center text-[10px] text-slate-400 font-bold mt-2.5">
                                         Ảnh chụp rõ nhất
-                                        {{ $case->primaryPhoto->updated_at?->format('n/Y') ?? $case->primaryPhoto->created_at->format('n/Y') }}
+                                        {{ $case->primaryPhoto?->updated_at?->format('n/Y') ?? $case->primaryPhoto?->created_at?->format('n/Y') ?? '' }}
                                     </p>
                                 @endif
 
@@ -308,7 +316,8 @@
                         <!-- Detailed Description Box -->
                         @if ($case->circumstances || $case->special_marks)
                             <div class="border-t border-slate-100 pt-6 space-y-3">
-                                <h4 class="font-extrabold text-slate-900 text-sm uppercase tracking-wider">Mô tả đặc điểm cụ
+                                <h4 class="font-extrabold text-slate-900 text-sm uppercase tracking-wider">Mô tả đặc điểm
+                                    cụ
                                     thể
                                 </h4>
                                 <p
@@ -344,31 +353,76 @@
                     </button>
                 </div>
 
-                <!-- AI FACE SCANNER WIDGET -->
-                <div
-                    class="bg-gradient-to-br from-brand/5 via-brand/10 to-brand-light border border-brand/20 rounded-2xl sm:rounded-3xl p-3 sm:p-6 lg:p-8 space-y-3 sm:space-y-6 shadow-sm relative overflow-hidden">
-                    <div
-                        class="absolute right-[-5%] bottom-[-5%] w-48 h-48 bg-brand/10 rounded-full blur-3xl pointer-events-none">
-                    </div>
-
-                    <div class="flex items-start gap-4">
+                <!-- AI MATCH SECTION -->
+                @auth
+                    @if (isset($aiMatches) && $aiMatches->isNotEmpty())
                         <div
-                            class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow border border-brand/20 flex-shrink-0 animate-pulse">
-                            🤖</div>
-                        <div class="space-y-1">
-                            <h3 class="font-black text-brand text-lg tracking-tight">AI Nhận Diện & Đối Chiếu Gương Mặt
-                            </h3>
-                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">Hệ thống phân tích tự động
-                                · Cập nhật: {{ now()->format('H:i') }} hôm nay</p>
+                            class="bg-gradient-to-br from-brand/5 via-brand/10 to-brand-light border border-brand/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-4 shadow-sm relative overflow-hidden">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl shadow border border-brand/20 flex-shrink-0">
+                                    🤖</div>
+                                <div>
+                                    <h3 class="font-black text-brand text-base tracking-tight">Có thể là</h3>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">AI gợi ý ·
+                                        {{ $aiMatches->count() }} hồ sơ tương đồng</p>
+                                </div>
+                            </div>
+                            <p
+                                class="text-[10px] text-slate-500 font-bold leading-relaxed flex items-start gap-1.5 bg-white/50 p-3 rounded-xl border border-brand/10">
+                                <span>⚠️</span>
+                                <span>Kết quả AI chỉ mang tính định hướng, cần xác thực của gia đình và cơ quan chức
+                                    năng.</span>
+                            </p>
+                            <div class="space-y-2">
+                                @foreach ($aiMatches as $match)
+                                    <x-missing.ai-match-card :match="$match" />
+                                @endforeach
+                            </div>
                         </div>
+                    @elseif($case->primaryPhoto?->ai_status === 'processing')
+                        {{-- Skeleton loading --}}
+                        <div class="border border-brand/20 rounded-2xl p-4 space-y-3 bg-brand/5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-slate-200 animate-pulse"></div>
+                                <div class="space-y-1 flex-1">
+                                    <div class="h-3 bg-slate-200 rounded animate-pulse w-1/2"></div>
+                                    <div class="h-2 bg-slate-200 rounded animate-pulse w-1/3"></div>
+                                </div>
+                            </div>
+                            @foreach (range(1, 2) as $_)
+                                <div class="flex gap-3 bg-white rounded-xl p-3">
+                                    <div class="w-14 h-14 rounded-lg bg-slate-200 animate-pulse flex-shrink-0"></div>
+                                    <div class="flex-1 space-y-2 pt-1">
+                                        <div class="h-2.5 bg-slate-200 rounded animate-pulse w-1/3"></div>
+                                        <div class="h-2 bg-slate-200 rounded animate-pulse w-1/2"></div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @elseif($case->primaryPhoto?->ai_status === 'failed')
+                        <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50 text-center space-y-2">
+                            <p class="text-2xl">⏳</p>
+                            <p class="text-xs font-bold text-slate-500">Đang chờ xử lý AI</p>
+                        </div>
+                    @else
+                        {{-- Empty state: done nhưng không có match --}}
+                        <div class="border border-brand/20 rounded-2xl p-5 bg-brand/5 text-center space-y-2">
+                            <p class="text-2xl">🤖</p>
+                            <p class="text-xs font-bold text-slate-500">Chưa có gợi ý AI nào cho hồ sơ này</p>
+                        </div>
+                    @endif
+                @else
+                    {{-- Guest CTA --}}
+                    <div class="border border-brand/20 rounded-2xl p-5 bg-brand/5 text-center space-y-3">
+                        <p class="text-2xl">🔒</p>
+                        <p class="text-sm font-bold text-slate-700">Đăng nhập để xem gợi ý AI</p>
+                        <a href="{{ route('auth.login') }}"
+                            class="inline-block bg-brand text-white text-xs font-black px-5 py-2.5 rounded-xl hover:bg-brand-dark transition-colors">
+                            Đăng nhập ngay
+                        </a>
                     </div>
-                    <p
-                        class="text-[10px] text-slate-500 font-bold leading-relaxed flex items-start gap-1.5 bg-white/50 p-3.5 rounded-xl border border-brand/10">
-                        <span>⚠️</span>
-                        <span>LƯU Ý PHÁP LÝ: Kết quả phân tích AI chỉ mang tính định hướng. Quyết định cuối cùng cần có sự
-                            xác thực của gia đình và cơ quan chức năng.</span>
-                    </p>
-                </div>
+                @endauth
 
                 <!-- CLUES SECTION -->
                 <div class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-premium">
@@ -518,7 +572,8 @@
                                 <p class="text-xs text-slate-400 leading-relaxed font-semibold">Liên hệ nội bộ sẽ được mở cho
                                     tài khoản đã đăng nhập.</p>
                             @endif
-                            <button type="button" onclick="Livewire.dispatch('openChat', { userId: {{ $case->user_id }}, missingId: {{ $case->id }} }); openChat();"
+                            <button type="button"
+                                onclick="Livewire.dispatch('openChat', { userId: {{ $case->user_id }}, missingId: {{ $case->id }} }); openChat();"
                                 class="block w-full mt-3 bg-primary text-white text-center font-extrabold py-3 rounded-2xl hover:bg-primary-dark transition">
                                 💬 Chat với người đăng tin
                             </button>
@@ -913,7 +968,8 @@
                         } catch (e) {}
                     }
                     alert(
-                        'Quyền vị trí đã bị chặn cho trang này. Vui lòng cho phép vị trí trong cài đặt trình duyệt và thử lại.');
+                        'Quyền vị trí đã bị chặn cho trang này. Vui lòng cho phép vị trí trong cài đặt trình duyệt và thử lại.'
+                        );
                     return;
                 }
                 // allow next geolocation call (user gesture)

@@ -14,6 +14,7 @@
         "laravel/framework": "^13.0",
         "laravel/reverb": "^1.10",
         "laravel/socialite": "^5.27",
+        "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.3",
         "predis/predis": "^3.4",
         "pusher/pusher-php-server": "*",
@@ -53,7 +54,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fca5a5\" --names=\"server,queue,vite\" \"php artisan serve\" \"php artisan queue:work\" \"npm run dev\" \"php artisan reverb:start\""
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fca5a5,#86efac\" --names=\"server,queue,vite,ai\" \"php artisan serve\" \"php artisan queue:work --queue=face-match,default\" \"npm run dev\" \"php artisan reverb:start\" \"cd ai-service && .\\\\venv\\\\Scripts\\\\python main.py\""
         ]
     },
     "extra": {
