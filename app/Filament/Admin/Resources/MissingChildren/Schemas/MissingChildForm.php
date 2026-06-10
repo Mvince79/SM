@@ -2,83 +2,222 @@
 
 namespace App\Filament\Admin\Resources\MissingChildren\Schemas;
 
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TimePicker;
+use Filament\Schemas\Components\Flex;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class MissingChildForm
 {
     public static function configure(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                Section::make('Thông tin cơ bản')
+        return $schema->components([
+
+            // ══════════════════════════════════════════════════════════════
+            // BLOCK 1 — Thông tin cơ bản (full width)
+            // ══════════════════════════════════════════════════════════════
+            Section::make('Thông tin cơ bản')
+                ->icon('heroicon-o-identification')
+                ->schema([
+
+                    // Họ tên (2/3) + Trạng thái (1/3)
+                    Grid::make(3)->schema([
+                        TextInput::make('full_name')
+                            ->label('Họ và tên trẻ')
+                            ->required()
+                            ->maxLength(100)
+                            ->placeholder('Nhập họ tên đầy đủ...')
+                            ->columnSpan(2),
+
+                        Select::make('status')
+                            ->label('Trạng thái hồ sơ')
+                            ->required()
+                            ->options([
+                                'PENDING' => 'Chờ duyệt',
+                                'APPROVED' => 'Đã duyệt',
+                                'FOUND' => 'Đã tìm thấy',
+                                'CLOSED' => 'Đã đóng',
+                                'REJECTED' => 'Từ chối',
+                            ])
+                            ->columnSpan(1),
+                    ]),
+
+                    // Mã hồ sơ + Giới tính + Màu da — 3 cột đều nhau
+                    Grid::make(3)->schema([
+                        TextInput::make('case_code')
+                            ->label('Mã hồ sơ')
+                            ->maxLength(20)
+                            ->placeholder('Tự động sinh nếu để trống')
+                            ->disabled(fn($record) => $record !== null)
+                            ->helperText('Không thể thay đổi sau khi tạo'),
+
+                        Select::make('gender')
+                            ->label('Giới tính')
+                            ->required()
+                            ->options([
+                                'MALE' => 'Nam',
+                                'FEMALE' => 'Nữ',
+                                'UNKNOWN' => 'Không rõ',
+                            ]),
+
+                        Select::make('skin_tone')
+                            ->label('Màu da')
+                            ->options([
+                                'LIGHT' => 'Sáng',
+                                'MEDIUM' => 'Trung bình',
+                                'DARK' => 'Ngăm',
+                            ])
+                            ->placeholder('Chọn màu da'),
+                    ]),
+
+                    // Tuổi / Chiều cao / Cân nặng — 3 cột, đủ rộng nhập số
+                    Grid::make(3)->schema([
+                        TextInput::make('age_estimate')
+                            ->label('Tuổi ước tính')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(18)
+                            ->suffix('tuổi')
+                            ->placeholder('Ví dụ: 7'),
+
+                        TextInput::make('height_cm')
+                            ->label('Chiều cao')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(250)
+                            ->suffix('cm')
+                            ->placeholder('Ví dụ: 120'),
+
+                        TextInput::make('weight_kg')
+                            ->label('Cân nặng')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(150)
+                            ->suffix('kg')
+                            ->placeholder('Ví dụ: 22'),
+                    ]),
+
+                ]),
+
+            // ══════════════════════════════════════════════════════════════
+            // BLOCK 2 — Đặc điểm nhận dạng (full width, textarea lớn)
+            // ══════════════════════════════════════════════════════════════
+            Section::make('Đặc điểm nhận dạng')
+                ->icon('heroicon-o-eye')
+                ->description('Mô tả càng chi tiết càng tốt — giúp cộng đồng nhận ra trẻ')
+                ->schema([
+                    Grid::make(3)->schema([
+                        Textarea::make('clothes_desc')
+                            ->label('Trang phục khi mất tích')
+                            ->rows(4)
+                            ->placeholder("Ví dụ:\nÁo thun đỏ in logo bóng đá\nQuần jean xanh đậm\nGiày thể thao trắng Nike")
+                            ->maxLength(500),
+
+                        Textarea::make('special_marks')
+                            ->label('Dấu hiệu đặc biệt')
+                            ->rows(4)
+                            ->placeholder("Ví dụ:\nSẹo nhỏ ở cằm trái\nNốt ruồi ở má phải\nHay cười lộ răng")
+                            ->maxLength(500),
+
+                        Textarea::make('circumstances')
+                            ->label('Hoàn cảnh mất tích')
+                            ->rows(4)
+                            ->placeholder("Ví dụ:\nBé đi học về lúc 16h\nKhông thấy về nhà từ 17h\nLần cuối thấy ở gần trường")
+                            ->maxLength(1000),
+                    ]),
+                ]),
+
+            // ══════════════════════════════════════════════════════════════
+            // BLOCK 3 — Người liên hệ (sidebar) | Địa điểm & Thời gian
+            // Flex để sidebar co đúng, không bị flatten
+            // ══════════════════════════════════════════════════════════════
+            Flex::make([
+
+                Section::make('Người liên hệ')
+                    ->icon('heroicon-o-phone')
+                    ->grow(false)
                     ->schema([
-                        Grid::make(2)->schema([
-                            TextInput::make('full_name')->label('Họ và tên')->required()->maxLength(100),
-                            TextInput::make('case_code')->label('Mã hồ sơ')->maxLength(20),
-                        ]),
-                        Grid::make(3)->schema([
-                            Select::make('gender')->label('Giới tính')
-                                ->options(['MALE' => 'Nam', 'FEMALE' => 'Nữ', 'UNKNOWN' => 'Không rõ'])
-                                ->required(),
-                            TextInput::make('age_estimate')->label('Tuổi ước tính')->numeric()->minValue(0)->maxValue(18),
-                            Select::make('status')->label('Trạng thái')
-                                ->options([
-                                    'PENDING' => 'Chờ duyệt',
-                                    'APPROVED' => 'Đã duyệt',
-                                    'FOUND' => 'Đã tìm thấy',
-                                    'CLOSED' => 'Đóng',
-                                    'REJECTED' => 'Từ chối',
-                                ])->required(),
-                        ]),
-                        Grid::make(2)->schema([
-                            TextInput::make('height_cm')->label('Chiều cao (cm)')->numeric(),
-                            TextInput::make('weight_kg')->label('Cân nặng (kg)')->numeric(),
-                        ]),
+                        TextInput::make('contact_name')
+                            ->label('Họ tên người liên hệ')
+                            ->required()
+                            ->placeholder('Nguyễn Thị Mai'),
+
+                        TextInput::make('contact_phone')
+                            ->label('Số điện thoại')
+                            ->required()
+                            ->tel()
+                            ->placeholder('0912 345 678'),
+
+                        TextInput::make('contact_relation')
+                            ->label('Quan hệ với bé')
+                            ->placeholder('Cha / Mẹ / Ông / Bà...'),
                     ]),
 
                 Section::make('Địa điểm & thời gian mất tích')
+                    ->icon('heroicon-o-map-pin')
                     ->schema([
+
+                        Select::make('province_id')
+                            ->label('Tỉnh / Thành phố')
+                            ->required()
+                            ->relationship('province', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->placeholder('Tìm tỉnh thành...'),
+
                         Grid::make(2)->schema([
-                            Select::make('province_id')->label('Tỉnh thành')
-                                ->relationship('province', 'name')->searchable()->required(),
-                            TextInput::make('district')->label('Quận/Huyện'),
+                            TextInput::make('district')
+                                ->label('Quận / Huyện')
+                                ->placeholder('Biên Hòa'),
+
+                            TextInput::make('ward')
+                                ->label('Phường / Xã')
+                                ->placeholder('Phường Tam Hòa'),
                         ]),
+
+                        TextInput::make('address_detail')
+                            ->label('Địa chỉ chi tiết')
+                            ->placeholder('Số nhà, tên đường, địa danh gần nhất...'),
+
+                        // Ngày + Giờ trên 1 row — label ngắn, không bị squeeze
                         Grid::make(2)->schema([
-                            TextInput::make('ward')->label('Phường/Xã'),
-                            TextInput::make('address_detail')->label('Địa chỉ chi tiết'),
+                            DatePicker::make('missing_date')
+                                ->label('Ngày mất tích')
+                                ->required()
+                                ->native(false)
+                                ->displayFormat('d/m/Y'),
+
+                            TimePicker::make('missing_time')
+                                ->label('Giờ mất tích')
+                                ->seconds(false)
+                                ->placeholder('Không rõ'),
                         ]),
+
+                        // GPS trên row riêng — tách ra để label không bị cắt
                         Grid::make(2)->schema([
-                            DatePicker::make('missing_date')->label('Ngày mất tích')->required(),
-                            TimePicker::make('missing_time')->label('Giờ mất tích'),
+                            TextInput::make('lat')
+                                ->label('Vĩ độ')
+                                ->numeric()
+                                ->step(0.0000001)
+                                ->placeholder('10.7769')
+                                ->helperText('Lấy từ Google Maps'),
+
+                            TextInput::make('lng')
+                                ->label('Kinh độ')
+                                ->numeric()
+                                ->step(0.0000001)
+                                ->placeholder('106.7009'),
                         ]),
-                        Grid::make(2)->schema([
-                            TextInput::make('lat')->label('Vĩ độ')->numeric(),
-                            TextInput::make('lng')->label('Kinh độ')->numeric(),
-                        ]),
+
                     ]),
 
-                Section::make('Đặc điểm nhận dạng')
-                    ->schema([
-                        Textarea::make('clothes_desc')->label('Trang phục khi mất tích')->rows(2),
-                        Textarea::make('special_marks')->label('Dấu hiệu đặc biệt')->rows(2),
-                        Textarea::make('circumstances')->label('Hoàn cảnh mất tích')->rows(3),
-                    ]),
+            ])->from('md'),
 
-                Section::make('Thông tin liên hệ')
-                    ->schema([
-                        Grid::make(3)->schema([
-                            TextInput::make('contact_name')->label('Người liên hệ')->required(),
-                            TextInput::make('contact_phone')->label('Số điện thoại')->required(),
-                            TextInput::make('contact_relation')->label('Quan hệ với bé'),
-                        ]),
-                    ]),
-            ]);
+        ]);
     }
 }

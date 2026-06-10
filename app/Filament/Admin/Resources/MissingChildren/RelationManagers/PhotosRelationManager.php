@@ -16,27 +16,31 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PhotosRelationManager extends RelationManager
 {
     protected static string $relationship = 'photos';
+
+    protected static ?string $title = 'Ảnh';
+
     public function isReadOnly(): bool
     {
         return false;
     }
-    protected static ?string $title = 'Ảnh';
 
     public function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                FileUpload::make('path_original')
-                    ->label('Ảnh')
-                    ->disk('public')
-                    ->directory(fn() => 'missing/' . $this->ownerRecord->id)
-                    ->image()
-                    ->required(),
-            ]);
+        return $schema->components([
+            FileUpload::make('path_original')
+                ->label('Ảnh')
+                ->disk('public')
+                ->directory(fn() => 'missing/' . $this->ownerRecord->id)
+                ->image()
+                ->imagePreviewHeight('160')
+                ->maxSize(5120) // 5MB
+                ->required(),
+        ]);
     }
 
     public function table(Table $table): Table
@@ -44,32 +48,42 @@ class PhotosRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('path_original')
             ->columns([
-                ImageColumn::make('photo_preview')
+                ImageColumn::make('preview')
                     ->label('Ảnh')
-                    ->state(function ($record) {
-                        return $record->path_thumb
+                    ->getStateUsing(function ($record): ?string {
+                        $path = $record->path_thumb
                             ?: $record->path_original
                             ?: $record->path_blurred;
+
+                        if (!$path) {
+                            return null;
+                        }
+
+                        return asset('storage/' . $path);  
                     })
-                    ->disk('public')
-                    ->height(120)
-                    ->width(120),
+                    ->imageHeight(80)   
+                    ->width(80)
+                    ->defaultImageUrl(
+                        fn($record) => 'https://ui-avatars.com/api/?name=Photo&size=80&background=e2e8f0&color=64748b'
+                    ),
 
                 TextColumn::make('path_original')
-                    ->label('Đường dẫn ảnh')
-                    ->limit(40)
+                    ->label('Tên file')
+                    ->formatStateUsing(fn($state) => $state ? basename($state) : '—')
+                    ->limit(35)
                     ->tooltip(fn($record) => $record->path_original)
                     ->searchable(),
 
                 TextColumn::make('is_primary')
-                    ->label('Ảnh chính')
+                    ->label('Loại')
                     ->badge()
                     ->color(fn($state) => $state ? 'success' : 'gray')
-                    ->formatStateUsing(fn($state) => $state ? 'Ảnh chính' : 'Ảnh phụ'),
+                    ->formatStateUsing(fn($state) => $state ? '★ Ảnh chính' : 'Ảnh phụ'),
 
                 TextColumn::make('sort_order')
                     ->label('Thứ tự')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignCenter(),
             ])
             ->headerActions([
                 CreateAction::make()
@@ -89,8 +103,10 @@ class PhotosRelationManager extends RelationManager
                     ->label('Đặt làm ảnh chính')
                     ->icon('heroicon-o-star')
                     ->color('success')
-                    ->visible(fn($record) => ! $record->is_primary)
+                    ->visible(fn($record) => !$record->is_primary)
                     ->requiresConfirmation()
+                    ->modalHeading('Đặt làm ảnh chính?')
+                    ->modalDescription('Ảnh hiện tại làm chính sẽ chuyển thành ảnh phụ.')
                     ->action(function ($record) {
                         DB::transaction(function () use ($record) {
                             Photo::where('model_type', MissingChild::class)
@@ -101,17 +117,18 @@ class PhotosRelationManager extends RelationManager
                         });
                     }),
 
-                DeleteAction::make(),
+                DeleteAction::make()->label('Xóa'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()->label('Xóa đã chọn'),
                 ]),
             ])
             ->reorderable('sort_order')
             ->reorderRecordsTriggerAction(
                 fn($action) => $action->button()->label('Sắp xếp ảnh')
             )
-            ->defaultSort('sort_order');
+            ->defaultSort('sort_order')
+            ->striped();
     }
 }

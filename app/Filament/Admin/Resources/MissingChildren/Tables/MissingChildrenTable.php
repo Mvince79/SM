@@ -25,9 +25,10 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
 use App\Events\PostStatusChanged;
+use Illuminate\Support\Facades\Mail;
+
 class MissingChildrenTable
 {
     public static function configure(Table $table): Table
@@ -38,7 +39,8 @@ class MissingChildrenTable
                     ->label('')
                     ->defaultImageUrl(
                         fn(MissingChild $record) =>
-                        'https://ui-avatars.com/api/?name=' . urlencode($record->case_code) . '&size=48&background=e2e8f0&color=64748b&bold=true'
+                        'https://ui-avatars.com/api/?name=' . urlencode($record->case_code)
+                        . '&size=48&background=e2e8f0&color=64748b&bold=true'
                     )
                     ->circular()
                     ->imageSize(48)
@@ -163,13 +165,7 @@ class MissingChildrenTable
 
                 Filter::make('missing_date')
                     ->label('Ngày mất tích')
-                    ->columnSpan([
-                        'default' => 2,
-                        'sm' => 2,
-                        'md' => 2,
-                        'lg' => 2,
-                        'xl' => 2,
-                    ])
+                    ->columnSpan(2)
                     ->columns(2)
                     ->schema([
                         \Filament\Forms\Components\DatePicker::make('from')
@@ -195,13 +191,7 @@ class MissingChildrenTable
 
                 Filter::make('age_estimate')
                     ->label('Tuổi ước tính')
-                    ->columnSpan([
-                        'default' => 2,
-                        'sm' => 2,
-                        'md' => 2,
-                        'lg' => 2,
-                        'xl' => 2,
-                    ])
+                    ->columnSpan(2)
                     ->columns(2)
                     ->schema([
                         \Filament\Forms\Components\TextInput::make('age_min')
@@ -315,10 +305,7 @@ class MissingChildrenTable
                                 $count++;
                             });
                             Cache::forget('badge_missing_pending');
-                            Notification::make()
-                                ->title("Đã duyệt {$count} hồ sơ")
-                                ->success()
-                                ->send();
+                            Notification::make()->title("Đã duyệt {$count} hồ sơ")->success()->send();
                         })
                         ->deselectRecordsAfterCompletion(),
 
@@ -350,10 +337,7 @@ class MissingChildrenTable
                                 $count++;
                             });
                             Cache::forget('badge_missing_pending');
-                            Notification::make()
-                                ->title("Đã từ chối {$count} hồ sơ")
-                                ->danger()
-                                ->send();
+                            Notification::make()->title("Đã từ chối {$count} hồ sơ")->danger()->send();
                         })
                         ->deselectRecordsAfterCompletion(),
 

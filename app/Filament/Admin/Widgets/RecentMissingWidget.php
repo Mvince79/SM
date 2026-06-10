@@ -22,11 +22,6 @@ class RecentMissingWidget extends TableWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected function getTableRecordsPerPageSelectOptions(): array
-    {
-        return [10];
-    }
-
     public function table(Table $table): Table
     {
         return $table
@@ -51,7 +46,7 @@ class RecentMissingWidget extends TableWidget
                     ->weight('bold'),
 
                 Tables\Columns\TextColumn::make('province.name')
-                    ->label('Tỉnh/Thành')
+                    ->label('Tỉnh / Thành')
                     ->badge()
                     ->color('gray'),
 
@@ -65,6 +60,14 @@ class RecentMissingWidget extends TableWidget
                         'FOUND' => 'primary',
                         'CLOSED' => 'gray',
                         default => 'gray',
+                    })
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                        'PENDING' => 'Chờ duyệt',
+                        'APPROVED' => 'Đã duyệt',
+                        'REJECTED' => 'Từ chối',
+                        'FOUND' => 'Đã tìm thấy',
+                        'CLOSED' => 'Đóng',
+                        default => $state,
                     }),
 
                 Tables\Columns\TextColumn::make('created_at')
@@ -74,7 +77,6 @@ class RecentMissingWidget extends TableWidget
                     ->tooltip(fn($record) => $record->created_at->format('d/m/Y H:i:s')),
             ])
             ->recordActions([
-                // ACTION: Duyệt hồ sơ
                 Action::make('approve')
                     ->label('Duyệt')
                     ->icon('heroicon-o-check-circle')
@@ -89,7 +91,6 @@ class RecentMissingWidget extends TableWidget
                             'approved_at' => now(),
                             'approved_by' => Auth::id(),
                         ]);
-
                         Cache::forget('dashboard_stats_overview');
                         Cache::forget('badge_missing_pending');
                         if ($record->user?->email) {
@@ -98,7 +99,6 @@ class RecentMissingWidget extends TableWidget
                         PostStatusChanged::dispatch($record->refresh());
                     }),
 
-                // ACTION: Từ chối hồ sơ
                 Action::make('reject')
                     ->label('Từ chối')
                     ->icon('heroicon-o-x-circle')
@@ -117,7 +117,6 @@ class RecentMissingWidget extends TableWidget
                             'status' => 'REJECTED',
                             'rejection_reason' => $data['rejection_reason'],
                         ]);
-
                         Cache::forget('dashboard_stats_overview');
                         Cache::forget('badge_missing_pending');
                         if ($record->user?->email) {

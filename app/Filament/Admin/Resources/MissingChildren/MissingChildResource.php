@@ -19,9 +19,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Admin\Resources\MissingChildren\RelationManagers\CommentsRelationManager;
 use App\Filament\Admin\Resources\MissingChildren\RelationManagers\ActivityLogRelationManager;
+use App\Filament\Admin\Resources\MissingChildren\RelationManagers\CluesRelationManager;
+use App\Filament\Admin\Resources\MissingChildren\RelationManagers\PhotosRelationManager;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
-
 
 class MissingChildResource extends Resource
 {
@@ -66,8 +67,10 @@ class MissingChildResource extends Resource
     public static function getRelations(): array
     {
         return [
+            CluesRelationManager::class,
+            PhotosRelationManager::class,
             CommentsRelationManager::class,
-            ActivityLogRelationManager::class
+            ActivityLogRelationManager::class,
         ];
     }
 
@@ -94,9 +97,8 @@ class MissingChildResource extends Resource
             ->withCount(['clues', 'comments']);
     }
 
+    // ─── Global Search ────────────────────────────────────────────────────────
 
-
-    // ─── Global Search ───────────────────────────────────────────────────────
     public static function getGloballySearchableAttributes(): array
     {
         return ['full_name', 'case_code'];
