@@ -1,0 +1,196 @@
+{
+  "model": "ArcFace",
+  "threshold": 0.7,
+  "total": 20,
+  "tp": 4,
+  "tn": 10,
+  "fp": 0,
+  "fn": 6,
+  "accuracy": 70.0,
+  "precision": 100.0,
+  "recall": 40.0,
+  "f1_score": 57.1,
+  "avg_time_s": 0.73,
+  "pairs": [
+    {
+      "pair_id": 1,
+      "name": "Abdullah_Gul",
+      "label": true,
+      "score": 0.7708,
+      "predicted": true,
+      "correct": true,
+      "time_s": 7.2
+    },
+    {
+      "pair_id": 2,
+      "name": "Abdullah_Gul",
+      "label": true,
+      "score": 0.1765,
+      "predicted": false,
+      "correct": false,
+      "time_s": 0.91
+    },
+    {
+      "pair_id": 3,
+      "name": "Abdullatif_Sener",
+      "label": true,
+      "score": 0.1346,
+      "predicted": false,
+      "correct": false,
+      "time_s": 0.31
+    },
+    {
+      "pair_id": 4,
+      "name": "Adel_Al-Jubeir",
+      "label": true,
+      "score": 0.7334,
+      "predicted": true,
+      "correct": true,
+      "time_s": 0.38
+    },
+    {
+      "pair_id": 5,
+      "name": "Al_Pacino",
+      "label": true,
+      "score": 0.6377,
+      "predicted": false,
+      "correct": false,
+      "time_s": 0.41
+    },
+    {
+      "pair_id": 6,
+      "name": "Alan_Greenspan",
+      "label": true,
+      "score": 0.0,
+      "predicted": false,
+      "correct": false,
+      "time_s": 0.31
+    },
+    {
+      "pair_id": 7,
+      "name": "Albert_Costa",
+      "label": true,
+      "score": 0.7419,
+      "predicted": true,
+      "correct": true,
+      "time_s": 0.39
+    },
+    {
+      "pair_id": 8,
+      "name": "Albert_Costa",
+      "label": true,
+      "score": 0.6155,
+      "predicted": false,
+      "correct": false,
+      "time_s": 0.38
+    },
+    {
+      "pair_id": 9,
+      "name": "Albert_Costa",
+      "label": true,
+      "score": 0.7366,
+      "predicted": true,
+      "correct": true,
+      "time_s": 0.35
+    },
+    {
+      "pair_id": 10,
+      "name": "Alejandro_Atchugarry",
+      "label": true,
+      "score": 0.0,
+      "predicted": false,
+      "correct": false,
+      "time_s": 0.32
+    },
+    {
+      "pair_id": 11,
+      "name": "AJ_Lamas vs Zach_Safrin",
+      "label": false,
+      "score": 0.0436,
+      "predicted": false,
+      "correct": true,
+      "time_s": 0.38
+    },
+    {
+      "pair_id": 12,
+      "name": "Aaron_Guiel vs Reese_Witherspoon",
+      "label": false,
+      "score": 0.0846,
+      "predicted": false,
+      "correct": true,
+      "time_s": 0.38
+    },
+    {
+      "pair_id": 13,
+      "name": "Aaron_Tippin vs Jose_Luis_Rodriguez_Zapatero",
+      "label": false,
+      "score": 0.0812,
+      "predicted": false,
+      "correct": true,
+      "time_s": 0.39
+    },
+    {
+      "pair_id": 14,
+      "name": "Abdul_Majeed_Shobokshi vs Charles_Cope",
+      "label": false,
+      "score": 0.0219,
+      "predicted": false,
+      "correct": true,
+      "time_s": 0.38
+    },
+    {
+      "pair_id": 15,
+      "name": "Abdullah_Gul vs Steve_Cox",
+      "label": false,
+      "score": 0.1574,
+      "predicted": false,
+      "correct": true,
+      "time_s": 0.34
+    },
+    {
+      "pair_id": 16,
+      "name": "Abid_Hamid_Mahmud_Al-Tikriti vs Eli_Broad",
+      "label": false,
+      "score": 0.0336,
+      "predicted": false,
+      "correct": true,
+      "time_s": 0.32
+    },
+    {
+      "pair_id": 17,
+      "name": "Adam_Kennedy vs Amelie_Mauresmo",
+      "label": false,
+      "score": 0.0079,
+      "predicted": false,
+      "correct": true,
+      "time_s": 0.37
+    },
+    {
+      "pair_id": 18,
+      "name": "Adel_Al-Jubeir vs Elisabeth_Welch",
+      "label": false,
+      "score": 0.0483,
+      "predicted": false,
+      "correct": true,
+      "time_s": 0.37
+    },
+    {
+      "pair_id": 19,
+      "name": "Adrian_Murrell vs Tommy_Franks",
+      "label": false,
+      "score": 0.0965,
+      "predicted": false,
+      "correct": true,
+      "time_s": 0.37
+    },
+    {
+      "pair_id": 20,
+      "name": "Adriana_Lima vs Terrence_Trammell",
+      "label": false,
+      "score": 0.0039,
+      "predicted": false,
+      "correct": true,
+      "time_s": 0.37
+    }
+  ]
+}
