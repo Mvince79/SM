@@ -31,3 +31,4 @@ auth.json
 ai-service/venv/
 __pycache__/
 *.py[cod]
+benchmark/ 
