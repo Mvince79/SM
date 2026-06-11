@@ -18,7 +18,7 @@ class FaceMatchResult extends Model
         'model_used',
         'status',
         'confirmed_by',
-        'confirmed_at',
+        'confirmed_at', 
         'notified_at',
     ];
 

@@ -7,6 +7,7 @@ use App\Filament\Admin\Resources\FaceMatchResults\Pages\ListFaceMatchResults;
 use App\Filament\Admin\Resources\FaceMatchResults\Pages\ViewFaceMatchResult;
 use App\Filament\Admin\Resources\FaceMatchResults\Schemas\FaceMatchResultForm;
 use App\Filament\Admin\Resources\FaceMatchResults\Tables\FaceMatchResultsTable;
+use App\Filament\Admin\Resources\FaceMatchResults\Schemas\FaceMatchResultInfolist;
 use App\Models\FaceMatchResult;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -34,7 +35,7 @@ class FaceMatchResultResource extends Resource
     // ── Navigation Badge: đếm PENDING ─────────────────────────────────────────
     public static function getNavigationBadge(): ?string
     {
-        $count = Cache::remember('badge_facematch_pending', 300, function () {
+        $count = Cache::remember('badge_face_match_pending', 300, function () {
             return FaceMatchResult::where('status', 'PENDING')->count();
         });
 
@@ -53,6 +54,9 @@ class FaceMatchResultResource extends Resource
             ->with([
                 'missingChild:id,full_name,case_code',
                 'foundChild:id,province_id',
+                'missingPhoto:id,path_thumb,path_original',
+                'foundPhoto:id,path_thumb,path_original',
+                'confirmedBy:id,full_name',
             ]);
     }
 
@@ -81,5 +85,9 @@ class FaceMatchResultResource extends Resource
             'index' => ListFaceMatchResults::route('/'),
             'view' => ViewFaceMatchResult::route('/{record}'),
         ];
+    }
+    public static function infolist(Schema $schema): Schema
+    {
+        return FaceMatchResultInfolist::configure($schema);
     }
 }
