@@ -103,7 +103,7 @@
                                 @if ($case->primaryPhoto)
                                     <p class="text-center text-[10px] text-slate-400 font-bold mt-2.5">
                                         Ảnh chụp rõ nhất
-                                        {{ $case->primaryPhoto?->updated_at?->format('n/Y') ?? $case->primaryPhoto?->created_at?->format('n/Y') ?? '' }}
+                                        {{ $case->primaryPhoto->updated_at?->format('n/Y') ?? $case->primaryPhoto->created_at?->format('n/Y') ?? 'Chưa rõ' }}
                                     </p>
                                 @endif
 

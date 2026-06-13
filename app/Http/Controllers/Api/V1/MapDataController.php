@@ -69,6 +69,7 @@ class MapDataController
                 'case_code',
                 'full_name',
                 'age_estimate',
+                'province_id',
                 'lat',
                 'lng',
                 'missing_date',
@@ -85,9 +86,9 @@ class MapDataController
                 min($filters['sw_lat'], $filters['ne_lat']),
                 max($filters['sw_lat'], $filters['ne_lat']),
             ])->whereBetween('lng', [
-                        min($filters['sw_lng'], $filters['ne_lng']),
-                        max($filters['sw_lng'], $filters['ne_lng']),
-                    ]);
+                min($filters['sw_lng'], $filters['ne_lng']),
+                max($filters['sw_lng'], $filters['ne_lng']),
+            ]);
         }
 
         $results = $query->get();
@@ -102,8 +103,13 @@ class MapDataController
                 'lng' => (float) $child->lng,
                 'name' => $child->full_name,
                 'age' => $child->age_estimate,
+                'province_name' => $child->province?->name,
                 'missing_date' => $child->missing_date?->format('d/m/Y'),
-                'photo_thumb_url' => $child->primaryPhoto?->path_thumb,
+
+                'thumb_url' => 'https://api.dicebear.com/7.x/initials/svg?seed=' . urlencode($child->full_name),
+
+                'photo_thumb_url' => 'https://api.dicebear.com/7.x/initials/svg?seed=' . urlencode($child->full_name),
+
                 'url' => route('missing.detail', ['id' => $child->id]),
             ];
         })->values()->all();
