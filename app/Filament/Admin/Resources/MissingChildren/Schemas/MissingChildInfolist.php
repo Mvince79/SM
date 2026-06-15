@@ -256,8 +256,9 @@ class MissingChildInfolist
                             TextEntry::make('user.full_name')
                                 ->label('Người đăng'),
 
-                            TextEntry::make('user.email')
+                            TextEntry::make('user_email_display')
                                 ->label('Email')
+                                ->state(fn (MissingChild $record) => $record->user()->withTrashed()->first()?->email)
                                 ->icon('heroicon-o-envelope')
                                 ->color('info')
                                 ->placeholder('—'),
