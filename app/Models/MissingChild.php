@@ -10,6 +10,7 @@ use Spatie\Activitylog\Models\Activity;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use App\Models\FaceMatchResult;
 use App\Models\Clue;
+use Illuminate\Support\Str;
 
 class MissingChild extends Model
 {
@@ -50,6 +51,10 @@ class MissingChild extends Model
         'view_count',
         'share_count',
         'rejection_reason',
+        'slug',
+        'meta_title',
+        'meta_description',
+        'og_image_url',
     ];
 
     protected $casts = [
@@ -60,6 +65,37 @@ class MissingChild extends Model
         'lat' => 'decimal:7',
         'lng' => 'decimal:7',
     ];
+    protected static function booted(): void
+    {
+        static::saving(function (MissingChild $missingChild) {
+            if (blank($missingChild->slug)) {
+                $missingChild->slug = static::generateUniqueSlug($missingChild);
+            }
+        });
+    }
+
+    protected static function generateUniqueSlug(MissingChild $missingChild): string
+    {
+        $baseSlug = Str::slug($missingChild->full_name) ?: 'missing-child';
+
+        $caseCode = $missingChild->case_code
+            ? strtolower($missingChild->case_code)
+            : strtolower(Str::random(6));
+
+        $slug = $baseSlug . '-' . $caseCode;
+        $originalSlug = $slug;
+        $counter = 2;
+
+        while (static::where('slug', $slug)
+            ->when($missingChild->exists, fn($query) => $query->where('id', '!=', $missingChild->id))
+            ->exists()
+        ) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
 
     // Relationships
     public function clues()

@@ -13,8 +13,7 @@ class MissingController extends Controller
 {
     public function __construct(
         private MissingChildService $missingChildService
-    ) {
-    }
+    ) {}
 
     public function index(SearchMissingRequest $request)
     {
@@ -53,15 +52,22 @@ class MissingController extends Controller
 
         return view('missing.detail', $data);
     }
+    public function detailBySlug(string $slug)
+    {
+        $missingChild = MissingChild::query()
+            ->where('slug', $slug)
+            ->firstOrFail();
 
+        $data = $this->missingChildService->getDetailForPublic($missingChild->id);
+
+        return view('missing.detail', $data);
+    }
     public function create()
     {
         return view('missing.create');
     }
 
-    public function store(StoreMissingChildRequest $request)
-    {
-    }
+    public function store(StoreMissingChildRequest $request) {}
 
     public function detailByQuery(\Illuminate\Http\Request $request)
     {

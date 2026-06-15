@@ -20,15 +20,23 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::prefix('missing')->name('missing.')->group(function () {
     Route::get('/', [MissingController::class, 'index'])->name('index');
+
+    // Backward compat: route cũ theo id vẫn chạy
     Route::get('/detail/{id}', [MissingController::class, 'detail'])->name('detail');
+
     Route::get('/detail', [MissingController::class, 'detailByQuery'])->name('detail.query');
     Route::get('/detail/{id}/qr.svg', [MissingController::class, 'qr'])->name('qr');
-    // Public detail by case_code for QR scan (e.g. /missing/MC-2026-00001)
-    // Restrict pattern so it doesn't catch other routes like /create
+
+    // Public detail by case_code for QR scan
     Route::get('/{case_code}', [MissingController::class, 'detailByCaseCode'])
         ->where('case_code', '^MC-\d{4}-\d{5}$')
         ->name('by_case_code');
     Route::get('/found/{id}', [MissingController::class, 'resolvedShow'])->name('found');
+
+    // T-42: Public detail by slug
+    Route::get('/{slug}', [MissingController::class, 'detailBySlug'])
+        ->where('slug', '[a-z0-9-]+')
+        ->name('by_slug');
 });
 
 Route::prefix('map')->name('map.')->group(function () {

@@ -1,6 +1,17 @@
 @extends('layouts.app')
 @section('title', $case->full_name . ' — Chi tiết hồ sơ')
 
+@push('head')
+    <meta name="description"
+        content="{{ $case->meta_description ?: 'Thông tin tìm kiếm trẻ mất tích ' . $case->full_name }}">
+    <meta property="og:title" content="{{ $case->meta_title ?: $case->full_name . ' - Hồ sơ mất tích' }}">
+    <meta property="og:description"
+        content="{{ $case->meta_description ?: 'Thông tin tìm kiếm trẻ mất tích ' . $case->full_name }}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ $case->og_image_url ?: $case->detail_primary_photo_url ?: $case->thumb_url }}">
+@endpush
+
 @section('content')
 
     <!-- BREADCRUMB -->
@@ -56,13 +67,12 @@
 
                             <!-- Avatar photo container + Gallery -->
                             <div class="w-full sm:w-44 flex-shrink-0" x-data="{
-                                open: false,
-                                current: 0,
-                                photos: {{ Js::from($case->detail_photo_urls) }},
-                                prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length },
-                                next() { this.current = (this.current + 1) % this.photos.length }
-                            }"
-                                @keydown.left.window="if(open) prev()" @keydown.right.window="if(open) next()"
+                                    open: false,
+                                    current: 0,
+                                    photos: {{ Js::from($case->detail_photo_urls) }},
+                                    prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length },
+                                    next() { this.current = (this.current + 1) % this.photos.length }
+                                }" @keydown.left.window="if(open) prev()" @keydown.right.window="if(open) next()"
                                 @keydown.escape.window="open = false">
 
                                 <div class="relative overflow-hidden rounded-xl sm:rounded-2xl border-2 border-slate-100 shadow bg-slate-900 group aspect-square cursor-pointer"
@@ -94,8 +104,7 @@
                                         @foreach ($case->detail_photo_urls as $i => $photoUrl)
                                             <img src="{{ $photoUrl }}"
                                                 class="w-12 h-12 object-cover rounded-lg border-2 border-slate-200 cursor-pointer hover:border-red-400 flex-shrink-0"
-                                                @click="open = true; current = {{ $i }}"
-                                                alt="Ảnh {{ $i + 1 }}" />
+                                                @click="open = true; current = {{ $i }}" alt="Ảnh {{ $i + 1 }}" />
                                         @endforeach
                                     </div>
                                 @endif
@@ -136,9 +145,8 @@
                                             class="absolute right-4 text-white bg-white/20 hover:bg-white/40 rounded-full w-10 h-10 flex items-center justify-center text-xl z-10">›</button>
                                         <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                                             <template x-for="(photo, i) in photos" :key="i">
-                                                <img :src="photo"
-                                                    :class="current === i ? 'border-white scale-110' :
-                                                        'border-transparent opacity-60'"
+                                                <img :src="photo" :class="current === i ? 'border-white scale-110' :
+                                                            'border-transparent opacity-60'"
                                                     class="w-12 h-12 object-cover rounded-lg border-2 cursor-pointer transition-all"
                                                     @click="current = i" />
                                             </template>
@@ -152,7 +160,8 @@
                                     <div class="min-w-0 flex-1">
                                         <h1
                                             class="text-base font-black text-slate-900 tracking-tight leading-tight break-words">
-                                            {{ $case->full_name }}</h1>
+                                            {{ $case->full_name }}
+                                        </h1>
                                         <p class="text-[10px] text-slate-400 font-bold mt-1">Mã: <span
                                                 class="font-mono text-slate-700">#{{ $case->case_code }}</span></p>
                                         <div
@@ -200,7 +209,7 @@
                                         <span class="text-slate-400 font-bold text-xs uppercase tracking-wider">Khu vực lạc
                                             mất</span>
                                         <div class="font-extrabold text-slate-800 mt-0.5">
-                                            {{ collect([$case->address_detail, $case->ward, $case->district, $case->province?->name])->filter()->implode(', ') ?:'—' }}
+                                            {{ collect([$case->address_detail, $case->ward, $case->district, $case->province?->name])->filter()->implode(', ') ?: '—' }}
                                         </div>
                                     </div>
                                     <div class="col-span-full min-w-0">
@@ -272,7 +281,7 @@
                                 <span class="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Khu vực lạc
                                     mất</span>
                                 <div class="font-extrabold text-slate-800 text-xs mt-0.5 break-words">
-                                    {{ collect([$case->address_detail, $case->ward, $case->district, $case->province?->name])->filter()->implode(', ') ?:'—' }}
+                                    {{ collect([$case->address_detail, $case->ward, $case->district, $case->province?->name])->filter()->implode(', ') ?: '—' }}
                                 </div>
                             </div>
                             <div class="col-span-full min-w-0">
@@ -461,8 +470,7 @@
                                     <div
                                         class="bg-slate-100 p-4 rounded-2xl inline-block max-w-full {{ $clue->is_verified ? 'border-l-4 border-success' : '' }}">
                                         <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                            <span
-                                                class="text-xs font-extrabold text-slate-900">{{ $clue->display_name }}</span>
+                                            <span class="text-xs font-extrabold text-slate-900">{{ $clue->display_name }}</span>
                                             @if ($clue->is_verified)
                                                 <span
                                                     class="bg-success-light text-success border border-success/35 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">Đã
@@ -561,8 +569,7 @@
                             <p class="text-xs text-slate-500">{{ $case->contact_relation }}</p>
                             @if (Auth::check())
                                 @if ($case->contact_phone)
-                                    <p class="text-sm font-extrabold text-slate-800">SĐT: <a
-                                            href="tel:{{ $case->contact_phone }}"
+                                    <p class="text-sm font-extrabold text-slate-800">SĐT: <a href="tel:{{ $case->contact_phone }}"
                                             class="text-primary">{{ $case->contact_phone }}</a></p>
                                 @else
                                     <p class="text-xs text-slate-400 leading-relaxed font-semibold">Số điện thoại chưa được
@@ -601,8 +608,7 @@
 
                     <div class="space-y-2">
                         <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Đường dẫn QR</label>
-                        <input id="qr-link" type="text" readonly
-                            value="{{ route('missing.qr', ['id' => $case->id]) }}"
+                        <input id="qr-link" type="text" readonly value="{{ route('missing.qr', ['id' => $case->id]) }}"
                             class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-medium text-slate-600 focus:outline-none" />
                     </div>
 
@@ -630,11 +636,10 @@
                 @if ($case->lat && $case->lng)
                     <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
                         <h4 class="font-extrabold text-slate-900 text-sm uppercase tracking-wider">Vị trí mất tích</h4>
-                        <div id="mini-map"
-                            class="h-44 bg-slate-150 rounded-2xl overflow-hidden border border-slate-200 z-10"
+                        <div id="mini-map" class="h-44 bg-slate-150 rounded-2xl overflow-hidden border border-slate-200 z-10"
                             data-lat="{{ $case->lat }}" data-lng="{{ $case->lng }}"></div>
                         <script>
-                            (function() {
+                            (function () {
                                 var el = document.getElementById('mini-map');
                                 if (!el) return;
                                 var lat = parseFloat(el.dataset.lat);
@@ -730,7 +735,7 @@
             // mark a user gesture now (inline onclick may not update the capture listener early enough)
             try {
                 window.__lastUserGestureAt = Date.now();
-            } catch (e) {}
+            } catch (e) { }
 
             if (navigator.geolocation) {
                 var btn = document.getElementById('btn-share-gps');
@@ -740,13 +745,13 @@
                         oldHtml = btn.innerHTML;
                         btn.disabled = true;
                         btn.innerHTML = 'Đang lấy…';
-                    } catch (e) {}
+                    } catch (e) { }
                 }
 
                 // Prefer calling the browser's native API exposed by the layout (avoids guard races)
                 if (window.__nativeGeolocationGet) {
                     try {
-                        window.__nativeGeolocationGet(function(pos) {
+                        window.__nativeGeolocationGet(function (pos) {
                             var lat = pos.coords.latitude;
                             var lng = pos.coords.longitude;
                             var box = document.getElementById('clue-box-form');
@@ -763,7 +768,7 @@
                                         lng: lng
                                     });
                                 }
-                            } catch (e) {}
+                            } catch (e) { }
                             try {
                                 var latInput = document.getElementById('clue-lat-input');
                                 var lngInput = document.getElementById('clue-lng-input');
@@ -779,7 +784,7 @@
                                         bubbles: true
                                     }));
                                 }
-                            } catch (e) {}
+                            } catch (e) { }
                             if (box) box.scrollIntoView({
                                 behavior: 'smooth',
                                 block: 'center'
@@ -788,22 +793,22 @@
                             try {
                                 alert('Đã lấy tọa độ: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) +
                                     '\nBạn có thể chỉnh mô tả và gửi manh mối.');
-                            } catch (e) {}
+                            } catch (e) { }
 
                             // Removed automatic immediate POST sharing — only populate form and emit Livewire.
                             if (btn) {
                                 try {
                                     btn.disabled = false;
                                     if (oldHtml !== null) btn.innerHTML = oldHtml;
-                                } catch (e) {}
+                                } catch (e) { }
                             }
-                        }, function(err) {
+                        }, function (err) {
                             alert('Không thể lấy vị trí GPS: ' + (err.message || 'Lỗi không xác định'));
                             if (btn) {
                                 try {
                                     btn.disabled = false;
                                     if (oldHtml !== null) btn.innerHTML = oldHtml;
-                                } catch (e) {}
+                                } catch (e) { }
                             }
                         }, {
                             enableHighAccuracy: true,
@@ -816,7 +821,7 @@
                 }
 
                 // fallback: normal permission-based flow
-                navigator.geolocation.getCurrentPosition(function(pos) {
+                navigator.geolocation.getCurrentPosition(function (pos) {
                     var lat = pos.coords.latitude;
                     var lng = pos.coords.longitude;
 
@@ -835,7 +840,7 @@
                                 lng: lng
                             });
                         }
-                    } catch (e) {}
+                    } catch (e) { }
 
                     try {
                         var latInput = document.getElementById('clue-lat-input');
@@ -852,7 +857,7 @@
                                 bubbles: true
                             }));
                         }
-                    } catch (e) {}
+                    } catch (e) { }
 
                     if (box) box.scrollIntoView({
                         behavior: 'smooth',
@@ -860,25 +865,25 @@
                     });
                     alert('Đã lấy tọa độ: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) +
                         '\nBạn có thể chỉnh mô tả và gửi manh mối.');
-                }, function(err) {
+                }, function (err) {
                     alert('Không thể lấy vị trí GPS: ' + (err.message || 'Lỗi không xác định'));
                     if (btn) {
                         try {
                             btn.disabled = false;
                             if (oldHtml !== null) btn.innerHTML = oldHtml;
-                        } catch (e) {}
+                        } catch (e) { }
                     }
                 }, {
                     enableHighAccuracy: true,
                     timeout: 10000
                 });
 
-                setTimeout(function() {
+                setTimeout(function () {
                     if (btn) {
                         try {
                             btn.disabled = false;
                             if (oldHtml !== null) btn.innerHTML = oldHtml;
-                        } catch (e) {}
+                        } catch (e) { }
                     }
                 }, 12000);
             } else {
@@ -887,7 +892,7 @@
         }
 
         function doGetPosition() {
-            navigator.geolocation.getCurrentPosition(function(pos) {
+            navigator.geolocation.getCurrentPosition(function (pos) {
                 var lat = pos.coords.latitude;
                 var lng = pos.coords.longitude;
 
@@ -941,13 +946,13 @@
                 // Brief confirmation
                 alert('Đã lấy tọa độ: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) +
                     '\nBạn có thể chỉnh mô tả và gửi manh mối.');
-            }, function(err) {
+            }, function (err) {
                 alert('Không thể lấy vị trí GPS: ' + (err.message || 'Lỗi không xác định'));
                 if (btn) {
                     try {
                         btn.disabled = false;
                         if (oldHtml !== null) btn.innerHTML = oldHtml;
-                    } catch (e) {}
+                    } catch (e) { }
                 }
             }, {
                 enableHighAccuracy: true,
@@ -959,13 +964,13 @@
         if (navigator.permissions && navigator.permissions.query) {
             navigator.permissions.query({
                 name: 'geolocation'
-            }).then(function(result) {
+            }).then(function (result) {
                 if (result.state === 'denied') {
                     if (btn) {
                         try {
                             btn.disabled = false;
                             if (oldHtml !== null) btn.innerHTML = oldHtml;
-                        } catch (e) {}
+                        } catch (e) { }
                     }
                     alert(
                         'Quyền vị trí đã bị chặn cho trang này. Vui lòng cho phép vị trí trong cài đặt trình duyệt và thử lại.'
@@ -975,7 +980,7 @@
                 // allow next geolocation call (user gesture)
                 if (window.allowGeolocationForNextCall) window.allowGeolocationForNextCall();
                 doGetPosition();
-            }).catch(function() {
+            }).catch(function () {
                 doGetPosition();
             });
         } else {
@@ -1006,7 +1011,7 @@
     </div>
 
     <script>
-        (function() {
+        (function () {
             function openLightbox(src, alt) {
                 var modal = document.getElementById('lightbox-modal');
                 var img = document.getElementById('lightbox-img');
@@ -1022,7 +1027,7 @@
                 modal.classList.add('hidden');
             }
 
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', function (e) {
                 var el = e.target.closest('.js-lightbox');
                 if (el) {
                     e.preventDefault();
@@ -1033,7 +1038,7 @@
             });
 
             document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
-            document.getElementById('lightbox-backdrop').addEventListener('click', function(e) {
+            document.getElementById('lightbox-backdrop').addEventListener('click', function (e) {
                 // close if clicking outside the image area (backdrop)
                 closeLightbox();
             });
@@ -1053,11 +1058,11 @@
                 lbImg.style.transform = 'translate(' + originX + 'px,' + originY + 'px) scale(' + scale + ')';
             }
 
-            document.getElementById('lb-zoom-in').addEventListener('click', function() {
+            document.getElementById('lb-zoom-in').addEventListener('click', function () {
                 scale = Math.min(maxScale, +(scale + 0.25).toFixed(2));
                 applyTransform();
             });
-            document.getElementById('lb-zoom-out').addEventListener('click', function() {
+            document.getElementById('lb-zoom-out').addEventListener('click', function () {
                 scale = Math.max(minScale, +(scale - 0.25).toFixed(2));
                 if (scale === 1) {
                     originX = 0;
@@ -1065,7 +1070,7 @@
                 }
                 applyTransform();
             });
-            document.getElementById('lb-zoom-reset').addEventListener('click', function() {
+            document.getElementById('lb-zoom-reset').addEventListener('click', function () {
                 scale = 1;
                 originX = 0;
                 originY = 0;
@@ -1073,7 +1078,7 @@
             });
 
             // wheel zoom
-            lbImg.addEventListener('wheel', function(e) {
+            lbImg.addEventListener('wheel', function (e) {
                 if (!e.deltaY) return;
                 e.preventDefault();
                 var delta = e.deltaY > 0 ? -0.15 : 0.15;
@@ -1084,7 +1089,7 @@
             });
 
             // double click toggle
-            lbImg.addEventListener('dblclick', function(e) {
+            lbImg.addEventListener('dblclick', function (e) {
                 if (scale === 1) {
                     scale = 2;
                 } else {
@@ -1096,14 +1101,14 @@
             });
 
             // pointer drag for panning when zoomed
-            lbImg.addEventListener('pointerdown', function(e) {
+            lbImg.addEventListener('pointerdown', function (e) {
                 if (scale <= 1) return;
                 isPanning = true;
                 lbImg.setPointerCapture(e.pointerId);
                 startX = e.clientX;
                 startY = e.clientY;
             });
-            lbImg.addEventListener('pointermove', function(e) {
+            lbImg.addEventListener('pointermove', function (e) {
                 if (!isPanning) return;
                 var dx = e.clientX - startX;
                 var dy = e.clientY - startY;
@@ -1113,19 +1118,19 @@
                 originY += dy;
                 applyTransform();
             });
-            lbImg.addEventListener('pointerup', function(e) {
+            lbImg.addEventListener('pointerup', function (e) {
                 if (isPanning) {
                     isPanning = false;
                     try {
                         lbImg.releasePointerCapture(e.pointerId);
-                    } catch (e) {}
+                    } catch (e) { }
                 }
             });
-            lbImg.addEventListener('pointercancel', function() {
+            lbImg.addEventListener('pointercancel', function () {
                 isPanning = false;
             });
 
-            document.addEventListener('keydown', function(e) {
+            document.addEventListener('keydown', function (e) {
                 if (!document.getElementById('lightbox-modal')) return;
                 if (e.key === 'Escape') closeLightbox();
             });
@@ -1133,10 +1138,10 @@
     </script>
     <script>
         // Debug helper: ensure GPS button clicks are detected and surface errors
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             var btn = document.getElementById('btn-share-gps');
             if (!btn) return;
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 try {
                     console.log('[DEBUG] GPS button clicked');
                 } catch (e) {
@@ -1151,7 +1156,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const mapEl = document.getElementById('mini-map');
             if (!mapEl) return;
             const lat = parseFloat(mapEl.dataset.lat);
