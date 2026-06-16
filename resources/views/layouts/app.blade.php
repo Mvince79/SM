@@ -12,103 +12,78 @@
         rel="stylesheet">
 
     <script>
-        // Guard: prevent non-user-gesture scripts from triggering geolocation prompts.
-        (function() {
+        (function () {
             try {
                 if (!navigator.geolocation) return;
 
                 var nativeGet = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
-                var nativeWatch = navigator.geolocation.watchPosition && navigator.geolocation.watchPosition.bind(
-                    navigator.geolocation);
-                var nativeClear = navigator.geolocation.clearWatch && navigator.geolocation.clearWatch.bind(navigator
-                    .geolocation);
-                // expose native methods for explicit user-gesture calls
+                var nativeWatch = navigator.geolocation.watchPosition && navigator.geolocation.watchPosition.bind(navigator.geolocation);
+                var nativeClear = navigator.geolocation.clearWatch && navigator.geolocation.clearWatch.bind(navigator.geolocation);
+
                 try {
                     window.__nativeGeolocationGet = nativeGet;
                     window.__nativeGeolocationWatch = nativeWatch;
                     window.__nativeGeolocationClear = nativeClear;
-                } catch (e) {}
+                } catch (e) { }
 
-                navigator.geolocation.getCurrentPosition = function(success, error, options) {
-                    if (window.__allowGeolocation__) {
-                        return nativeGet(success, error, options);
-                    }
-                    // log stack to help identify callers, but do NOT call their error handler
+                navigator.geolocation.getCurrentPosition = function (success, error, options) {
+                    if (window.__allowGeolocation__) return nativeGet(success, error, options);
                     try {
-                        var stack = new Error().stack;
-                        console.warn('[gps-guard] Blocked getCurrentPosition call (no user gesture). Stack:',
-                            stack);
-                    } catch (e) {}
-                    // intentionally do not call error callback to avoid alerts on page load
+                        console.warn('[gps-guard] Blocked getCurrentPosition call (no user gesture). Stack:', new Error().stack);
+                    } catch (e) { }
                 };
 
                 if (nativeWatch) {
-                    // track fake watch ids
                     var _nextWatchId = 1;
                     var _activeWatches = {};
-                    navigator.geolocation.watchPosition = function(success, error, options) {
-                        if (window.__allowGeolocation__) {
-                            return nativeWatch(success, error, options);
-                        }
-                        // do not call error callback when blocked
+                    navigator.geolocation.watchPosition = function (success, error, options) {
+                        if (window.__allowGeolocation__) return nativeWatch(success, error, options);
                         var id = _nextWatchId++;
                         _activeWatches[id] = true;
                         return id;
                     };
-
-                    navigator.geolocation.clearWatch = function(id) {
+                    navigator.geolocation.clearWatch = function (id) {
                         if (_activeWatches[id]) delete _activeWatches[id];
                         if (nativeClear) return nativeClear(id);
                     };
                 }
 
-                window.allowGeolocationForNextCall = function() {
+                window.allowGeolocationForNextCall = function () {
                     var now = Date.now();
-                    // require a recent real user gesture (click/keydown/touchstart) to permit
                     if (!window.__lastUserGestureAt || (now - window.__lastUserGestureAt) > 3000) {
                         console.warn('[gps-guard] allowGeolocationForNextCall ignored: no recent user gesture');
                         return false;
                     }
                     window.__allowGeolocation__ = true;
-                    console.log('[gps-guard] allowGeolocationForNextCall set');
-                    setTimeout(function() {
-                        window.__allowGeolocation__ = false;
-                        console.log('[gps-guard] allowGeolocationForNextCall expired');
-                    }, 15000);
+                    setTimeout(function () { window.__allowGeolocation__ = false; }, 15000);
                     return true;
                 };
-                // track last user gesture (click/touch) so we can distinguish programmatic calls
+
                 window.__lastUserGestureAt = 0;
-                ['click', 'keydown', 'touchstart'].forEach(function(ev) {
-                    window.addEventListener(ev, function() {
+                ['click', 'keydown', 'touchstart'].forEach(function (ev) {
+                    window.addEventListener(ev, function () {
                         window.__lastUserGestureAt = Date.now();
-                    }, {
-                        passive: true,
-                        capture: true
-                    });
+                    }, { passive: true, capture: true });
                 });
-            } catch (e) {
-                /* ignore */
-            }
+            } catch (e) { }
         })();
     </script>
+
     @if (auth()->check())
-        <script>
-            window.authUserId = {{ auth()->id() }};
-        </script>
+        <script>window.authUserId = {{ auth()->id() }};</script>
     @endif
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     @stack('head')
 </head>
-
 
 <body class="font-sans bg-slate-50 text-slate-800 antialiased selection:bg-primary/10 selection:text-primary">
 
     {{-- ── Top Navigation ── --}}
     @include('components.nav.topnav')
 
-    {{-- Flash message --}}
+    {{-- ── Flash Messages ── --}}
     @include('components.ui.success-message')
     @include('components.ui.error-message')
 
@@ -123,34 +98,35 @@
     <footer class="site-footer">
         <div class="site-footer-main">
 
-            {{-- Brand column --}}
+            {{-- Brand --}}
             <div class="space-y-4">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                        <span class="text-white font-extrabold text-sm">T</span>
+                <div class="flex items-center gap-2.5">
+                    <div
+                        class="w-8 h-8 bg-gradient-to-tr from-primary to-primary-dark rounded-lg flex items-center justify-center shadow-md shadow-primary/20">
+                        <span class="text-white font-black text-sm">T</span>
                     </div>
                     <span class="text-white font-extrabold text-lg tracking-tight">
                         TìmTrẻ<span class="text-primary">.vn</span>
                     </span>
                 </div>
-                <p class="text-xs leading-relaxed">
-                    Nền tảng trực tuyến hỗ trợ tìm kiếm trẻ em mất tích khẩn cấp, kết nối xã hội và ứng dụng phân tích
-                    đối chiếu khuôn mặt AI tiên tiến.
+                <p class="text-xs leading-relaxed text-slate-400">
+                    Nền tảng trực tuyến hỗ trợ tìm kiếm trẻ em mất tích khẩn cấp,
+                    kết nối xã hội và ứng dụng phân tích đối chiếu khuôn mặt AI tiên tiến.
                 </p>
             </div>
 
-            {{-- Features --}}
+            {{-- Tính năng chính --}}
             <div class="space-y-3">
                 <h4 class="footer-heading">Tính năng chính</h4>
                 <ul class="space-y-2 text-xs">
-                    <li><a href="{{ route('missing.index') }}" class="footer-link">Duyệt hồ sơ</a></li>
+                    <li><a href="{{ route('missing.index') }}" class="footer-link">Duyệt hồ sơ mất tích</a></li>
                     <li><a href="{{ route('map.index') }}" class="footer-link">Bản đồ định vị GPS</a></li>
                     <li><a href="{{ route('stats.index') }}" class="footer-link">Thống kê dữ liệu</a></li>
                     <li><a href="{{ route('found-children.create') }}" class="footer-link">Báo tin khẩn cấp</a></li>
                 </ul>
             </div>
 
-            {{-- System --}}
+            {{-- Hệ thống --}}
             <div class="space-y-3">
                 <h4 class="footer-heading">Hệ thống</h4>
                 <ul class="space-y-2 text-xs">
@@ -162,17 +138,26 @@
                 </ul>
             </div>
 
-            {{-- Contact --}}
+            {{-- Liên hệ --}}
             <div class="space-y-3">
                 <h4 class="footer-heading">Liên hệ hỗ trợ</h4>
-                <ul class="space-y-2 text-xs leading-relaxed">
-                    <li>📧 hotro@timtre.vn</li>
-                    <li>📞 1800 1234 (Đường dây nóng miễn phí)</li>
-                    <li class="pt-1">
-                        <strong class="text-white">🚨 Tổng đài Cảnh sát Cứu Hộ: 113</strong>
+                <ul class="space-y-2.5 text-xs leading-relaxed">
+                    <li class="flex items-center gap-2">
+                        <span class="text-slate-500">📧</span>
+                        <span>hotro@timtre.vn</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-slate-500">📞</span>
+                        <span>1800 1234 <span class="text-slate-500">(miễn phí)</span></span>
+                    </li>
+                    <li class="flex items-center gap-2 pt-1 border-t border-slate-800 mt-1">
+                        <span>🚨</span>
+                        <strong class="text-white font-black">Cảnh sát Cứu Hộ: <span
+                                class="text-primary">113</span></strong>
                     </li>
                 </ul>
             </div>
+
         </div>
 
         <div class="site-footer-copy">
@@ -180,79 +165,81 @@
         </div>
     </footer>
 
+    <div class="fixed bottom-24 right-5 z-40 md:hidden">
+        <a href="{{ route('found-children.create') }}" aria-label="Báo tin khẩn cấp" class="flex items-center justify-center w-14 h-14
+                   bg-gradient-to-r from-primary to-primary-dark
+                   rounded-full text-white border-2 border-white
+                   transition-all duration-300 active:scale-95" style="box-shadow: 0 0 20px 2px rgba(255,59,48,0.35);">
+            <span class="text-2xl">🚨</span>
+        </a>
+    </div>
 
-    {{-- ── Chat FAB ── --}}
     @auth
-        <div class="fixed bottom-24 right-4 z-50 sm:bottom-10 sm:right-10">
-            <button type="button" onclick="openChat()"
-                class="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-xl transition hover:bg-blue-700 sm:h-20 sm:w-20">
-                Chat
+        <div class="fixed bottom-6 right-5 z-50 md:bottom-8 md:right-8">
+            <button type="button" onclick="openChat()" class="group flex items-center gap-2
+                               bg-slate-900 text-white
+                               rounded-full px-5 py-3
+                               text-sm font-bold
+                               shadow-xl shadow-slate-900/25
+                               transition-all duration-300
+                               hover:bg-slate-700
+                               hover:-translate-y-0.5
+                               hover:shadow-2xl
+                               active:scale-95">
+                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <span>Chat</span>
             </button>
         </div>
     @endauth
 
-    {{-- ── Mobile FAB ── --}}
-    <div class="mobile-fab">
-        <a href="{{ route('found-children.create') }}" aria-label="Báo tin khẩn cấp">
-            <span class="text-2xl font-bold">🚨</span>
-        </a>
-    </div>
-
-    {{-- Chat Modal --}}
+    {{-- ── Chat Modal ── --}}
     @auth
-        <div id="chat-modal" class="hidden fixed inset-0 z-[9999] flex items-stretch justify-center sm:items-end sm:justify-end sm:p-6">
+        <div id="chat-modal"
+            class="hidden fixed inset-0 z-[9999] flex items-stretch justify-center sm:items-end sm:justify-end sm:p-6">
 
             {{-- Overlay --}}
-            <div class="absolute inset-0 bg-black/40" onclick="closeChat()"></div>
+            <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeChat()"></div>
 
             {{-- Chat Window --}}
-            <div
-                class="
-    relative
-    z-10
-    w-full
-    h-[100dvh]
-    sm:w-[min(900px,calc(100vw-3rem))]
-    sm:h-[min(650px,calc(100vh-3rem))]
-    bg-white
-    sm:rounded-[28px]
-    shadow-2xl
-    overflow-hidden
-    flex
-    flex-col
-    ">
-                <button type="button" onclick="closeChat()"
-                    class="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
-                    aria-label="Đóng khung chat" title="Đóng khung chat">
+            <div class="relative z-10 w-full h-[100dvh]
+                                sm:w-[min(900px,calc(100vw-3rem))]
+                                sm:h-[min(650px,calc(100vh-3rem))]
+                                bg-white sm:rounded-[28px] shadow-2xl
+                                overflow-hidden flex flex-col">
+
+                <button type="button" onclick="closeChat()" class="absolute right-3 top-3 z-20
+                                   flex h-9 w-9 items-center justify-center
+                                   rounded-full border border-slate-200 bg-white/95
+                                   text-slate-500 shadow-sm transition
+                                   hover:bg-slate-50 hover:text-slate-900" aria-label="Đóng khung chat">
                     <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        stroke-linecap="round" stroke-linejoin="round">
                         <path d="M18 6 6 18" />
                         <path d="m6 6 12 12" />
                     </svg>
                 </button>
+
                 @livewire('chat.chat-container')
             </div>
-
         </div>
     @endauth
 
     <script>
         function openChat() {
             document.getElementById('chat-modal')?.classList.remove('hidden');
-
             document.body.style.overflow = 'hidden';
         }
 
         function closeChat() {
             document.getElementById('chat-modal')?.classList.add('hidden');
-
             document.body.style.overflow = 'auto';
         }
 
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeChat();
-            }
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeChat();
         });
     </script>
 

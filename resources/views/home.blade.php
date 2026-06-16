@@ -55,8 +55,8 @@
                     TìmTrẻ.vn kết nối sức mạnh cộng đồng Việt Nam, ứng dụng AI đối chiếu khuôn mặt hiện đại và định vị GPS
                     tức thời để hỗ trợ gia đình tìm lại con em nhanh nhất có thể.
                 </p>
-                
-               
+
+
                 <div class="flex flex-col sm:flex-row gap-4 pt-3">
                     <a href="{{ route('missing.create') }}"
                         class="inline-flex items-center justify-center gap-2 bg-primary text-white font-extrabold px-8 py-4 rounded-2xl hover:bg-primary-dark transition-premium text-base shadow-lg shadow-primary/30 hover:-translate-y-0.5">
@@ -150,7 +150,8 @@
                     <div class="min-w-0">
                         <div class="font-extrabold text-slate-900 text-sm truncate">{{ $f['name'] }}</div>
                         <div class="text-[10px] text-slate-500 font-semibold mt-0.5">{{ $f['age'] }} tuổi ·
-                            {{ $f['city'] }}</div>
+                            {{ $f['city'] }}
+                        </div>
                         <div class="text-[10px] text-success-dark font-black mt-1">✓ Về nhà sau {{ $f['days'] }}</div>
                     </div>
                 </div>
