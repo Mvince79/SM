@@ -8,11 +8,7 @@
         <button type="button"
             class="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-primary hover:bg-primary/5 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             data-notification-toggle aria-label="Thông báo" aria-expanded="false">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
+            <x-heroicon-o-bell class="h-5 w-5" />
             <span
                 class="{{ $unreadCount > 0 ? '' : 'hidden' }} absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-center text-[11px] font-bold leading-none text-white ring-2 ring-white"
                 data-notification-count>{{ $unreadCount > 99 ? '99+' : $unreadCount }}</span>
@@ -39,11 +35,7 @@
                         data-notification-item data-notification-id="{{ $notification->id }}">
                         <span
                             class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                            </svg>
+                            <x-heroicon-o-bell class="h-5 w-5" />
                         </span>
                         <span class="min-w-0 flex-1">
                             <span class="block text-sm font-semibold leading-snug text-slate-900">
@@ -63,11 +55,7 @@
                 @empty
                     <div class="px-4 py-8 text-center" data-notification-empty>
                         <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                            </svg>
+                            <x-heroicon-o-bell class="h-6 w-6" />
                         </div>
                         <p class="mt-3 text-sm font-semibold text-slate-700">Chưa có thông báo</p>
                         <p class="mt-1 text-xs text-slate-500">Khi có cập nhật mới, thông báo sẽ hiển thị ở đây.</p>

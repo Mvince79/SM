@@ -23,10 +23,7 @@
                         <button type="button" wire:click="closeChatThread"
                             class="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50"
                             aria-label="Quay lại danh sách tin nhắn">
-                            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M15 18l-6-6 6-6" />
-                            </svg>
+                            <x-heroicon-o-chevron-left class="h-5 w-5" />
                         </button>
                         <span class="text-sm font-bold text-slate-800">Tin nhắn</span>
                     </div>
@@ -53,10 +50,7 @@
                     <div class="flex flex-1 items-center justify-center bg-slate-50">
                         <div class="px-6 text-center">
                             <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                                <svg class="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
-                                </svg>
+                                <x-heroicon-o-chat-bubble-left-right class="h-8 w-8" />
                             </div>
 
                             <h3 class="text-2xl font-bold text-slate-700">

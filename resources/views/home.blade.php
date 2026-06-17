@@ -61,11 +61,11 @@
                 <div class="flex flex-col sm:flex-row gap-4 pt-3">
                     <a href="{{ route('missing.create') }}"
                         class="inline-flex items-center justify-center gap-2 bg-primary text-white font-extrabold px-8 py-4 rounded-2xl hover:bg-primary-dark transition-premium text-base shadow-lg shadow-primary/30 hover:-translate-y-0.5">
-                        📢 Báo tin khẩn cấp tìm con
+                        <x-heroicon-o-megaphone class="w-5 h-5" /> Báo tin khẩn cấp tìm con
                     </a>
                     <a href="{{ route('missing.index') }}"
                         class="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-md text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/20 transition-premium text-base border border-white/20">
-                        🔍 Tìm kiếm thông tin bé lạc
+                        <x-heroicon-o-magnifying-glass class="w-5 h-5" /> Tìm kiếm thông tin bé lạc
                     </a>
                 </div>
             </div>
@@ -74,7 +74,7 @@
                 <div class="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-6 shadow-2xl">
                     <div class="flex justify-between items-center mb-5 border-b border-white/5 pb-4">
                         <div class="flex items-center gap-2">
-                            <span class="text-lg">🤖</span>
+                            <span class="text-lg"><x-heroicon-o-cpu-chip class="w-5 h-5 text-slate-200" /></span>
                             <span class="text-sm font-bold text-slate-200">AI Nhận Diện Khuôn Mặt Đang Chạy</span>
                         </div>
                         <span
@@ -138,7 +138,7 @@
     {{-- ── Found Stories ── --}}
     <section class="py-16 px-4 max-w-7xl mx-auto">
         <div class="space-y-2 mb-10 text-center sm:text-left">
-            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">✅ Bé đã về nhà an toàn</h2>
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight"><x-heroicon-o-check-circle class="w-7 h-7 inline text-green-500" /> Bé đã về nhà an toàn</h2>
             <p class="section-subtitle">Những câu chuyện hạnh phúc từ cộng đồng TìmTrẻ.vn</p>
         </div>
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -172,7 +172,7 @@
             <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <a href="{{ route('auth.register') }}"
                     class="bg-white text-primary font-black px-8 py-4 rounded-2xl hover:bg-slate-50 shadow-xl transition-premium text-base">
-                    🤝 Tham gia làm tình nguyện viên
+                    <x-heroicon-o-hand-raised class="w-5 h-5 inline-flex items-center gap-2 shrink-0 " /> Tham gia làm tình nguyện viên
                 </a>
                 <a href="{{ route('missing.index') }}"
                     class="border-2 border-white/80 text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 transition-premium text-base">

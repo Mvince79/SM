@@ -92,7 +92,7 @@ new class extends Component
         <div wire:loading.class="hidden">
             @if($cases->isEmpty())
                 <div class="text-center py-24 text-slate-400">
-                    <div class="text-6xl mb-4">🔍</div>
+                    <div class="text-6xl mb-4"><x-heroicon-o-magnifying-glass class="w-14 h-14 mx-auto mb-4 text-slate-300" /></div>
                     <p class="font-extrabold text-slate-700 text-lg">Không tìm thấy hồ sơ nào</p>
                     <p class="text-sm mt-2">Thử thay đổi từ khoá hoặc bỏ bớt bộ lọc</p>
                 </div>

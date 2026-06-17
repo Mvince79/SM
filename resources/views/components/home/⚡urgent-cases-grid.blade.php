@@ -20,7 +20,7 @@ new class extends Component {
 <section class="py-16 px-4 max-w-7xl mx-auto">
     <div class="section-header">
         <div>
-            <h2 class="section-title">🚨 Con đang cần tìm gấp</h2>
+            <h2 class="section-title"><x-heroicon-o-megaphone class="w-6 h-6 text-red-500 inline" /> Con đang cần tìm gấp</h2>
             <p class="section-subtitle">Các hồ sơ được duyệt gần nhất cần cộng đồng hỗ trợ</p>
         </div>
         <a href="{{ route('missing.index') }}" class="section-link">
@@ -30,7 +30,7 @@ new class extends Component {
 
     @if($cases->isEmpty())
         <div class="text-center py-16 text-slate-400">
-            <div class="text-5xl mb-4">🔍</div>
+            <div class="text-5xl mb-4"><x-heroicon-o-magnifying-glass class="w-12 h-12 mx-auto mb-4 text-slate-300" /></div>
             <p class="font-semibold">Chưa có hồ sơ nào được duyệt.</p>
         </div>
     @else
@@ -59,7 +59,7 @@ new class extends Component {
                                 @endif
                             </div>
                             <div class="case-card-location">
-                                <span>📍</span>
+                                <span><x-heroicon-o-map-pin class="w-4 h-4 inline shrink-0" /></span>
                                 {{ collect([$case->district, $case->province?->name])->filter()->implode(', ') }}
                             </div>
                             @if($case->clothes_desc || $case->special_marks)

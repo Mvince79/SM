@@ -130,7 +130,7 @@
         <div x-show="tab === 'clues'" x-transition>
             @if($user->clues->isEmpty())
                 <div class="text-center py-14 space-y-4">
-                    <div class="text-4xl">🔍</div>
+                    <div class="text-4xl"><x-heroicon-o-magnifying-glass class="w-10 h-10 mx-auto text-slate-300" /></div>
                     <h3 class="font-extrabold text-slate-700 text-base">Bạn chưa gửi manh mối nào</h3>
                     <p class="text-xs text-slate-400 max-w-xs mx-auto font-semibold">
                         Các manh mối bạn đóng góp sẽ hiển thị tại đây để bạn tiện theo dõi trạng thái kiểm chứng.

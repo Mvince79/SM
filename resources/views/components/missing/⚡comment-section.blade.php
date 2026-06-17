@@ -148,7 +148,7 @@ new class extends Component
     {{-- Header --}}
     <div class="flex items-center justify-between">
         <h3 class="font-extrabold text-slate-800 text-base">
-            💬 Bình luận ({{ $this->comments->count() }})
+            <x-heroicon-o-chat-bubble-left-right class="w-5 h-5 inline" /> Bình luận ({{ $this->comments->count() }})
         </h3>
     </div>
 

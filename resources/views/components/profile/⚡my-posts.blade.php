@@ -110,7 +110,7 @@ new class extends Component
                     </div>
 
                     <p class="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-wide">
-                        📍 {{ $post->district ?? $post->province?->name ?? '—' }}
+                        <x-heroicon-o-map-pin class="w-3.5 h-3.5 inline" /> {{ $post->district ?? $post->province?->name ?? '—' }}
                         · Mất tích: {{ $post->missing_date?->format('d/m/Y') ?? '—' }}
                     </p>
                     <p class="text-[10px] text-slate-300 font-semibold mt-0.5">

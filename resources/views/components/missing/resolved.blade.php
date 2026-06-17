@@ -93,10 +93,7 @@
     @if($matchResult)
         <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 sm:p-6 shadow-sm flex items-center gap-4">
             <div class="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.35A3.001 3.001 0 0112 21a3 3 0 01-2.121-.879l-.347-.349z"/>
-                </svg>
+                <x-heroicon-o-light-bulb class="w-6 h-6 text-white" />
             </div>
             <div>
                 <p class="text-blue-800 font-extrabold text-base">
@@ -149,7 +146,7 @@
     <div class="text-center py-4">
         <a href="{{ route('missing.index') }}"
            class="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-extrabold px-8 py-3.5 rounded-2xl transition-colors text-sm shadow-md">
-            🔍 Giúp tìm thêm trẻ khác
+            <x-heroicon-o-magnifying-glass class="w-4 h-4 inline" /> Giúp tìm thêm trẻ khác Giúp tìm thêm trẻ khác
         </a>
     </div>
 

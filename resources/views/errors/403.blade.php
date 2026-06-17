@@ -7,7 +7,7 @@
 
         <div class="w-24 h-24 rounded-3xl bg-slate-100 border border-slate-200
                     flex items-center justify-center text-5xl mx-auto shadow-sm">
-            🔒
+            <x-heroicon-o-lock-closed class="w-16 h-16 mx-auto text-slate-400" />
         </div>
 
         <div class="space-y-2">
@@ -27,14 +27,14 @@
                           bg-primary text-white font-extrabold text-xs
                           px-6 py-3 rounded-xl hover:bg-primary-dark
                           transition-all shadow-md shadow-primary/10 uppercase tracking-widest">
-                    🔑 Đăng nhập
+                    <x-heroicon-o-key class="w-4 h-4" /> Đăng nhập
                 </a>
             @endguest
             <a href="{{ url('/') }}"
                class="inline-flex items-center justify-center gap-2
                       border border-slate-200 text-slate-700 font-extrabold text-xs
                       px-6 py-3 rounded-xl hover:bg-slate-50 transition-colors">
-                🏠 Về trang chủ
+                <x-heroicon-o-home class="w-4 h-4" /> Về trang chủ
             </a>
         </div>
 

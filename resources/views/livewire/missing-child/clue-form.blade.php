@@ -30,7 +30,7 @@
             <div class="flex items-center gap-4">
                 <div>
                     <button type="button" onclick="getLocation(this)" class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-md hover:opacity-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/></svg>
+                        <x-heroicon-o-clock class="h-4 w-4" />
                         Lấy vị trí GPS
                     </button>
                 </div>
@@ -65,7 +65,7 @@
 
             <div class="pt-2">
                 <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md" wire:loading.attr="disabled" wire:target="image,submit">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    <x-heroicon-o-check class="h-4 w-4" />
                     <span>Gửi manh mối</span>
                     <span wire:loading wire:target="submit" class="ml-2 text-sm">Đang gửi…</span>
                 </button>

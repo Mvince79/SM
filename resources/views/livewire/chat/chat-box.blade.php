@@ -163,11 +163,7 @@
                 cursor-pointer
                 "
                     title="Đính kèm ảnh">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M16.5 6.75 8.38 14.87a2.5 2.5 0 1 0 3.54 3.54l8.12-8.12a4.5 4.5 0 0 0-6.36-6.36L5.55 12.05a6.5 6.5 0 1 0 9.2 9.2l7.07-7.07" />
-                    </svg>
+                    <x-heroicon-o-paper-airplane class="h-5 w-5 md:h-6 md:w-6" />
                     <input type="file" wire:model="photo" accept="image/*" class="hidden">
                 </label>
 

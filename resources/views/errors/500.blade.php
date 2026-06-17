@@ -7,7 +7,7 @@
 
         <div class="w-24 h-24 rounded-3xl bg-amber-50 border border-amber-200
                     flex items-center justify-center text-5xl mx-auto shadow-sm">
-            ⚠️
+            <x-heroicon-o-exclamation-triangle class="w-16 h-16 mx-auto text-amber-400" />
         </div>
 
         <div class="space-y-2">
@@ -26,7 +26,7 @@
                       bg-primary text-white font-extrabold text-xs
                       px-6 py-3 rounded-xl hover:bg-primary-dark
                       transition-all shadow-md shadow-primary/10 uppercase tracking-widest">
-                🏠 Về trang chủ
+                <x-heroicon-o-home class="w-4 h-4" /> Về trang chủ
             </a>
             <button onclick="window.location.reload()"
                     class="inline-flex items-center justify-center gap-2

@@ -143,15 +143,15 @@
                 <h4 class="footer-heading">Liên hệ hỗ trợ</h4>
                 <ul class="space-y-2.5 text-xs leading-relaxed">
                     <li class="flex items-center gap-2">
-                        <span class="text-slate-500">📧</span>
+                        <span class="text-slate-500"><x-heroicon-o-envelope class="w-4 h-4 text-slate-500" /></span>
                         <span>hotro@timtre.vn</span>
                     </li>
                     <li class="flex items-center gap-2">
-                        <span class="text-slate-500">📞</span>
+                        <span class="text-slate-500"><x-heroicon-o-phone class="w-4 h-4 text-slate-500" /></span>
                         <span>1800 1234 <span class="text-slate-500">(miễn phí)</span></span>
                     </li>
                     <li class="flex items-center gap-2 pt-1 border-t border-slate-800 mt-1">
-                        <span>🚨</span>
+                        <span><x-heroicon-o-exclamation-triangle class="w-4 h-4 text-red-500" /></span>
                         <strong class="text-white font-black">Cảnh sát Cứu Hộ: <span
                                 class="text-primary">113</span></strong>
                     </li>
@@ -170,7 +170,7 @@
                    bg-gradient-to-r from-primary to-primary-dark
                    rounded-full text-white border-2 border-white
                    transition-all duration-300 active:scale-95" style="box-shadow: 0 0 20px 2px rgba(255,59,48,0.35);">
-            <span class="text-2xl">🚨</span>
+            <span class="text-2xl"><x-heroicon-o-exclamation-triangle class="w-6 h-6 text-red-500" /></span>
         </a>
     </div>
 
@@ -186,10 +186,7 @@
                                hover:-translate-y-0.5
                                hover:shadow-2xl
                                active:scale-95">
-                <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
+                <x-heroicon-o-chat-bubble-left-right class="w-4 h-4 shrink-0" />
                 <span>Chat</span>
             </button>
         </div>
@@ -221,11 +218,7 @@
                                    rounded-full border border-slate-200 bg-white/95
                                    text-slate-500 shadow-sm transition
                                    hover:bg-slate-50 hover:text-slate-900" aria-label="Đóng khung chat">
-                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 6 6 18" />
-                        <path d="m6 6 12 12" />
-                    </svg>
+                    <x-heroicon-o-x-mark class="h-5 w-5" />
                 </button>
 
                 @livewire('chat.chat-container')

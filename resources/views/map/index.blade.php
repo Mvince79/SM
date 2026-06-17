@@ -37,7 +37,7 @@
             <div class="glass-premium p-4 sm:p-5 rounded-3xl shadow-premium border border-slate-200/50 space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-200/40 pb-2">
                     <h3 class="font-black text-slate-900 text-sm tracking-tight flex items-center gap-1.5">
-                        🌍 Bản Đồ Tìm Kiếm
+                        <x-heroicon-o-globe-alt class="w-4 h-4" /> Bản Đồ Tìm Kiếm
                     </h3>
                     <span
                         class="bg-primary/10 text-primary text-[9px] font-black uppercase px-2 py-0.5 rounded-full">REALTIME</span>
@@ -45,11 +45,7 @@
 
                 <!-- Quick search input in card -->
                 <div class="relative">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+                    <x-heroicon-o-magnifying-glass class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                     <input type="text" placeholder="Tìm theo tỉnh thành, quận huyện..."
                         class="w-full pl-8 pr-3 py-2 border border-slate-200/70 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent bg-white/70" />
                 </div>

@@ -43,9 +43,9 @@
                             <span class="w-3 h-3 bg-primary rounded-full animate-ping"></span>
                             <span class="text-primary font-extrabold text-sm tracking-tight">
                                 @if ($case->status === 'MATCHED')
-                                    ✅ BÉ ĐÃ ĐƯỢC TÌM THẤY
+                                    <x-heroicon-o-check-circle class="w-4 h-4 inline" /> BÉ ĐÃ ĐƯỢC TÌM THẤY
                                 @else
-                                    🚨 ĐANG CẦN TÌM KHẨN CẤP TRÊN TOÀN QUỐC
+                                    <x-heroicon-o-megaphone class="w-4 h-4 inline" /> ĐANG CẦN TÌM KHẨN CẤP TRÊN TOÀN QUỐC
                                 @endif
                             </span>
                         </div>
@@ -173,11 +173,7 @@
                                     <button title="Sao chép liên kết"
                                         onclick="navigator.clipboard.writeText(window.location.href); alert('Đã sao chép link hồ sơ!')"
                                         class="p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm flex-shrink-0">
-                                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                                        </svg>
+                                        <x-heroicon-o-share class="w-4 h-4 text-slate-500" />
                                     </button>
                                 </div>
 
@@ -358,7 +354,7 @@
                     </p>
                     <button onclick="shareGPS()"
                         class="w-full bg-white text-primary font-black py-3.5 rounded-xl hover:bg-slate-50 transition-premium text-sm shadow-md">
-                        📍 Chia sẻ vị trí GPS tức thời
+                        <x-heroicon-o-map-pin class="w-4 h-4 inline" /> Chia sẻ vị trí GPS tức thời Chia sẻ vị trí GPS tức thời
                     </button>
                 </div>
 
@@ -370,7 +366,7 @@
                             <div class="flex items-center gap-3">
                                 <div
                                     class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl shadow border border-brand/20 flex-shrink-0">
-                                    🤖</div>
+                                    <x-heroicon-o-cpu-chip class="w-6 h-6 text-brand" /></div>
                                 <div>
                                     <h3 class="font-black text-brand text-base tracking-tight">Có thể là</h3>
                                     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">AI gợi ý ·
@@ -379,7 +375,7 @@
                             </div>
                             <p
                                 class="text-[10px] text-slate-500 font-bold leading-relaxed flex items-start gap-1.5 bg-white/50 p-3 rounded-xl border border-brand/10">
-                                <span>⚠️</span>
+                                <span><x-heroicon-o-exclamation-triangle class="w-4 h-4 inline" /></span>
                                 <span>Kết quả AI chỉ mang tính định hướng, cần xác thực của gia đình và cơ quan chức
                                     năng.</span>
                             </p>
@@ -411,20 +407,20 @@
                         </div>
                     @elseif($case->primaryPhoto?->ai_status === 'failed')
                         <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50 text-center space-y-2">
-                            <p class="text-2xl">⏳</p>
+                            <p class="text-2xl"><div class="flex justify-center"><x-heroicon-o-clock class="w-12 h-12 text-slate-300" /></div></p>
                             <p class="text-xs font-bold text-slate-500">Đang chờ xử lý AI</p>
                         </div>
                     @else
                         {{-- Empty state: done nhưng không có match --}}
                         <div class="border border-brand/20 rounded-2xl p-5 bg-brand/5 text-center space-y-2">
-                            <p class="text-2xl">🤖</p>
+                            <div class="flex justify-center"><x-heroicon-o-cpu-chip class="w-10 h-10 text-brand" /></div>
                             <p class="text-xs font-bold text-slate-500">Chưa có gợi ý AI nào cho hồ sơ này</p>
                         </div>
                     @endif
                 @else
                     {{-- Guest CTA --}}
                     <div class="border border-brand/20 rounded-2xl p-5 bg-brand/5 text-center space-y-3">
-                        <p class="text-2xl">🔒</p>
+                        <p class="text-2xl"><x-heroicon-o-lock-closed class="w-6 h-6 text-slate-400" /></p>
                         <p class="text-sm font-bold text-slate-700">Đăng nhập để xem gợi ý AI</p>
                         <a href="{{ route('auth.login') }}"
                             class="inline-block bg-brand text-white text-xs font-black px-5 py-2.5 rounded-xl hover:bg-brand-dark transition-colors">
@@ -500,7 +496,7 @@
                                             @php $mapsUrl = 'https://www.google.com/maps/search/?api=1&query=' . $clue->lat . ',' . $clue->lng; @endphp
                                             <a href="{{ $mapsUrl }}" target="_blank" rel="noopener noreferrer"
                                                 class="bg-primary/10 text-primary px-2.5 py-1 rounded-full inline-flex items-center gap-2">
-                                                <span>📍</span>
+                                                <span><x-heroicon-o-map-pin class="w-4 h-4 inline" /></span>
                                                 <span>{{ number_format($clue->lat, 4) }},
                                                     {{ number_format($clue->lng, 4) }}</span>
                                             </a>
@@ -547,7 +543,7 @@
                     </p>
                     <button id="btn-share-gps" onclick="shareGPS()"
                         class="w-full bg-white text-primary font-black py-4 rounded-2xl hover:bg-slate-50 transition-premium text-sm shadow-md">
-                        📍 Chia sẻ vị trí GPS tức thời
+                        <x-heroicon-o-map-pin class="w-4 h-4 inline" /> Chia sẻ vị trí GPS tức thời
                     </button>
                 </div>
 
@@ -582,14 +578,14 @@
                             <button type="button"
                                 onclick="Livewire.dispatch('openChat', { userId: {{ $case->user_id }}, missingId: {{ $case->id }} }); openChat();"
                                 class="block w-full mt-3 bg-primary text-white text-center font-extrabold py-3 rounded-2xl hover:bg-primary-dark transition">
-                                💬 Chat với người đăng tin
+                                <x-heroicon-o-chat-bubble-left-right class="w-4 h-4 inline" /> Chat với người đăng tin
                             </button>
                         </div>
                     @endguest
 
                     <div
                         class="flex items-center gap-2 justify-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                        <span>🔒</span> Thông tin liên hệ được bảo vệ
+                        <span><x-heroicon-o-lock-closed class="w-6 h-6 text-slate-400" /></span> Thông tin liên hệ được bảo vệ
                     </div>
                 </div>
 
@@ -686,7 +682,7 @@
                             })();
                         </script>
                         <p class="text-[10px] text-slate-400 font-semibold text-center uppercase tracking-wide">
-                            📍
+                            <x-heroicon-o-map-pin class="w-3.5 h-3.5 inline shrink-0" />
                             {{ collect([$case->address_detail, $case->ward, $case->district, $case->province?->name])->filter()->implode(', ') }}
                         </p>
                     </div>

@@ -12,7 +12,7 @@
         class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-lg"
     >
         <div class="bg-success-light border border-success/30 text-success font-bold text-sm px-5 py-4 rounded-2xl shadow-lg flex items-center gap-3">
-            <span class="text-base shrink-0">✅</span>
+            <span class="text-base shrink-0"><x-heroicon-o-check-circle class="w-4 h-4" /></span>
             <span class="flex-1">
                 {{ session('success') ?? 'Đăng tin thành công! Hồ sơ đang chờ duyệt và sẽ được hiển thị sau khi được phê duyệt.' }}
             </span>
