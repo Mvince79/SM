@@ -11,7 +11,8 @@
             </div>
             <div class="flex items-center gap-5 overflow-x-auto no-scrollbar py-1 pr-4 flex-1">
                 @foreach ($sosKids as $index => $kid)
-                    <a href="{{ route('missing.detail', $kid->id) }}" class="flex flex-col items-center flex-shrink-0 group">
+                    <a href="{{ route('missing.by_slug', ['slug' => $kid->slug]) }}"
+                        class="flex flex-col items-center flex-shrink-0 group">
                         <div
                             class="w-12 h-12 rounded-full p-0.5 border-2 {{ $index < 3 ? 'border-primary pulse-dot' : 'border-slate-300' }} flex items-center justify-center transform group-hover:scale-105 transition-all">
                             @if ($kid->primaryPhoto)

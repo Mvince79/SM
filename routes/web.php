@@ -35,7 +35,7 @@ Route::prefix('missing')->name('missing.')->group(function () {
 
     // T-42: Public detail by slug
     Route::get('/{slug}', [MissingController::class, 'detailBySlug'])
-        ->where('slug', '[a-z0-9-]+')
+        ->where('slug', '^(?!create$|store$|detail$|found$)[a-z0-9-]+$')
         ->name('by_slug');
 });
 

@@ -3,8 +3,7 @@
 use Livewire\Component;
 use App\Models\MissingChild;
 
-new class extends Component
-{
+new class extends Component {
     public $cases;
 
     public function mount(): void
@@ -39,15 +38,15 @@ new class extends Component
             @foreach($cases as $case)
                 <div class="case-card">
                     <div class="case-card-img">
-                        <img src="{{ $case->thumb_url }}"
-                             alt="Ảnh {{ $case->full_name }}"
-                             loading="lazy"
-                             onerror="this.src='https://api.dicebear.com/7.x/thumbs/svg?seed={{ urlencode($case->full_name) }}&backgroundColor=ffdfbf'"/>
-                        <span class="absolute top-3 left-3 bg-primary text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl flex items-center gap-1">
+                        <img src="{{ $case->thumb_url }}" alt="Ảnh {{ $case->full_name }}" loading="lazy"
+                            onerror="this.src='https://api.dicebear.com/7.x/thumbs/svg?seed={{ urlencode($case->full_name) }}&backgroundColor=ffdfbf'" />
+                        <span
+                            class="absolute top-3 left-3 bg-primary text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl flex items-center gap-1">
                             <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
                             Đang tìm gấp
                         </span>
-                        <span class="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-lg">
+                        <span
+                            class="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-lg">
                             {{ $case->approved_at?->diffForHumans() ?? $case->created_at->diffForHumans() }}
                         </span>
                     </div>
@@ -71,8 +70,8 @@ new class extends Component
                         </div>
                         <div class="case-card-footer">
                             <span class="badge badge-default">{{ $case->case_code }}</span>
-                            <a href="{{ route('missing.detail', $case->id) }}"
-                               class="text-xs font-extrabold text-primary hover:underline flex items-center gap-1">
+                            <a href="{{ route('missing.by_slug', ['slug' => $case->slug]) }}"
+                                class="text-xs font-extrabold text-primary hover:underline flex items-center gap-1">
                                 Xem hồ sơ <span>→</span>
                             </a>
                         </div>

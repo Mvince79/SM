@@ -43,7 +43,7 @@
             @foreach ($navLinks as $link)
                     @php $isActive = request()->routeIs($link['route']); @endphp
                     <a href="{{ route($link['route']) }}" class="text-sm py-1 relative transition-colors
-                                   {{ $isActive
+                                                           {{ $isActive
                 ? 'font-bold text-primary after:content-[\'\'] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:rounded-full'
                 : 'font-medium text-slate-600 hover:text-primary' }}">
                         {{ $link['label'] }}
@@ -100,7 +100,16 @@
         </div>
 
         {{-- ── Mobile: Bell + Hamburger cùng hàng bên phải ── --}}
-        <div class="ml-auto flex items-center gap-1 md:hidden">
+        <div class="ml-auto flex items-center gap-2 md:hidden">
+
+            <a href="{{ route('missing.create') }}" class="flex h-10 w-10 items-center justify-center rounded-full
+               bg-primary text-white font-black text-xl
+               shadow-lg shadow-primary/20
+               hover:bg-primary-dark
+               active:scale-90 transition-all duration-200">
+                +
+            </a>
+
             @auth
                 <x-notification-bell />
             @endauth
@@ -128,7 +137,7 @@
         @foreach ($navLinks as $link)
             <a href="{{ route($link['route']) }}"
                 class="block text-base font-semibold transition-colors
-                           {{ request()->routeIs($link['route']) ? 'text-primary font-bold' : 'text-slate-700 hover:text-primary' }}">
+                                       {{ request()->routeIs($link['route']) ? 'text-primary font-bold' : 'text-slate-700 hover:text-primary' }}">
                 {{ $link['label'] }}
             </a>
         @endforeach
@@ -139,8 +148,9 @@
         <div class="grid grid-cols-2 gap-3">
             @auth
                 @if (Auth::user()->isAdmin())
-                    <a href="/admin" class="col-span-2 flex items-center justify-center gap-2 text-center font-bold
-                                       bg-brand text-white py-3 rounded-xl hover:bg-brand-dark transition-all">
+                    <a href="/admin"
+                        class="col-span-2 flex items-center justify-center gap-2 text-center font-bold
+                                                               bg-brand text-white py-3 rounded-xl hover:bg-brand-dark transition-all">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
