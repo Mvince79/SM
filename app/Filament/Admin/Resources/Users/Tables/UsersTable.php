@@ -98,6 +98,10 @@ class UsersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                TrashedFilter::make()
+                    ->native(false)
+                    ->columnSpan(1),
+
                 SelectFilter::make('role')
                     ->label('Vai trò')
                     ->options([
@@ -105,6 +109,7 @@ class UsersTable
                         'MODERATOR' => 'Kiểm duyệt viên',
                         'USER' => 'Người dùng',
                     ])
+                    ->native(false)
                     ->columnSpan(1),
 
                 SelectFilter::make('status')
@@ -114,6 +119,7 @@ class UsersTable
                         'BANNED' => 'Bị khóa',
                         'PENDING' => 'Chờ kích hoạt',
                     ])
+                    ->native(false)
                     ->columnSpan(1),
 
                 SelectFilter::make('province_id')
@@ -121,6 +127,7 @@ class UsersTable
                     ->relationship('province', 'name')
                     ->searchable()
                     ->preload()
+                    ->native(false)
                     ->columnSpan(1),
 
                 Filter::make('email_verified')
@@ -132,17 +139,21 @@ class UsersTable
                     ->label('Đăng nhập Google')
                     ->query(fn (Builder $query): Builder => $query->whereNotNull('google_id'))
                     ->columnSpan(1),
-
-                TrashedFilter::make()->columnSpan(1),
             ])
-            ->filtersLayout(FiltersLayout::AboveContent)
+            ->filtersLayout(FiltersLayout::Modal)
             ->filtersFormColumns([
-                'default' => 2,
-                'sm' => 3,
-                'md' => 4,
-                'lg' => 6,
-                'xl' => 6,
+                'default' => 1,
+                'sm' => 2,
+                'md' => 2,
+                'lg' => 2,
+                'xl' => 2,
             ])
+            ->filtersTriggerAction(
+                fn (Action $action): Action => $action
+                    ->button()
+                    ->label('Bộ lọc')
+                    ->icon('heroicon-o-funnel')
+            )
             ->recordActions([
                 EditAction::make(),
 

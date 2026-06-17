@@ -137,6 +137,7 @@ class MissingChildrenTable
                         'CLOSED' => 'Đóng',
                         'REJECTED' => 'Từ chối',
                     ])
+                    ->native(false)
                     ->columnSpan(1),
 
                 SelectFilter::make('gender')
@@ -146,6 +147,7 @@ class MissingChildrenTable
                         'FEMALE' => 'Nữ',
                         'UNKNOWN' => 'Không rõ',
                     ])
+                    ->native(false)
                     ->columnSpan(1),
 
                 SelectFilter::make('skin_tone')
@@ -155,18 +157,23 @@ class MissingChildrenTable
                         'MEDIUM' => 'Trung bình',
                         'DARK' => 'Tối',
                     ])
+                    ->native(false)
                     ->columnSpan(1),
 
                 SelectFilter::make('province_id')
                     ->label('Tỉnh / Thành')
                     ->options(fn() => Province::orderBy('name')->pluck('name', 'id')->toArray())
                     ->searchable()
+                    ->native(false)
                     ->columnSpan(1),
 
                 Filter::make('missing_date')
                     ->label('Ngày mất tích')
-                    ->columnSpan(2)
-                    ->columns(2)
+                    ->columnSpan('full')
+                    ->columns([
+                        'default' => 1,
+                        'sm' => 2,
+                    ])
                     ->schema([
                         \Filament\Forms\Components\DatePicker::make('from')
                             ->label('Từ ngày')
@@ -191,8 +198,11 @@ class MissingChildrenTable
 
                 Filter::make('age_estimate')
                     ->label('Tuổi ước tính')
-                    ->columnSpan(2)
-                    ->columns(2)
+                    ->columnSpan('full')
+                    ->columns([
+                        'default' => 1,
+                        'sm' => 2,
+                    ])
                     ->schema([
                         \Filament\Forms\Components\TextInput::make('age_min')
                             ->label('Tuổi từ')
@@ -217,16 +227,24 @@ class MissingChildrenTable
                         return implode(', ', $parts) ?: null;
                     }),
 
-                TrashedFilter::make()->columnSpan(1),
+                TrashedFilter::make()
+                    ->native(false)
+                    ->columnSpan('full'),
             ])
-            ->filtersLayout(\Filament\Tables\Enums\FiltersLayout::AboveContent)
+            ->filtersLayout(\Filament\Tables\Enums\FiltersLayout::Modal)
             ->filtersFormColumns([
-                'default' => 2,
-                'sm' => 3,
-                'md' => 4,
-                'lg' => 6,
-                'xl' => 9,
+                'default' => 1,
+                'sm' => 2,
+                'md' => 2,
+                'lg' => 2,
+                'xl' => 2,
             ])
+            ->filtersTriggerAction(
+                fn (Action $action): Action => $action
+                    ->button()
+                    ->label('Bộ lọc')
+                    ->icon('heroicon-o-funnel')
+            )
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
