@@ -2,7 +2,7 @@
 
 <div wire:loading.class.remove="hidden" class="hidden">
     @for ($i = 0; $i < 4; $i++)
-        <div class="w-full border-b p-4">
+        <div class="w-full border-b border-slate-200 p-4">
             <div class="flex items-center gap-3">
             <x-ui.skeleton width="48px" height="48px" rounded="rounded-full" class="shrink-0 md:w-14 md:h-14" />
 
@@ -33,6 +33,7 @@
         class="
             w-full
             border-b
+            border-slate-200
             hover:bg-blue-50
             transition
             text-left

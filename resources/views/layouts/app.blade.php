@@ -201,14 +201,20 @@
             class="hidden fixed inset-0 z-[9999] flex items-stretch justify-center sm:items-end sm:justify-end sm:p-6">
 
             {{-- Overlay --}}
-            <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeChat()"></div>
+            <div id="chat-modal-overlay"
+                class="absolute inset-0 bg-black/40 opacity-0 backdrop-blur-sm transition-opacity duration-300 ease-out"
+                onclick="closeChat()"></div>
 
             {{-- Chat Window --}}
-            <div class="relative z-10 w-full h-[100dvh]
-                                sm:w-[min(900px,calc(100vw-3rem))]
-                                sm:h-[min(650px,calc(100vh-3rem))]
-                                bg-white sm:rounded-[28px] shadow-2xl
-                                overflow-hidden flex flex-col">
+            <div id="chat-modal-window"
+                class="relative z-10 w-full h-[100dvh]
+                                 sm:w-[min(900px,calc(100vw-3rem))]
+                                 sm:h-[min(650px,calc(100vh-3rem))]
+                                 bg-white sm:rounded-[28px] shadow-2xl
+                                 overflow-hidden flex flex-col
+                                 translate-y-8 scale-[0.98] opacity-0
+                                 transition-all duration-300 ease-out
+                                 sm:translate-y-10">
 
                 <button type="button" onclick="closeChat()" class="absolute right-3 top-3 z-20
                                    flex h-9 w-9 items-center justify-center
@@ -228,13 +234,45 @@
     @endauth
 
     <script>
+        let chatModalCloseTimer = null;
+
         function openChat() {
-            document.getElementById('chat-modal')?.classList.remove('hidden');
+            const modal = document.getElementById('chat-modal');
+            const overlay = document.getElementById('chat-modal-overlay');
+            const windowEl = document.getElementById('chat-modal-window');
+
+            if (!modal || !overlay || !windowEl) return;
+
+            clearTimeout(chatModalCloseTimer);
+            modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+
+            requestAnimationFrame(() => {
+                overlay.classList.remove('opacity-0');
+                overlay.classList.add('opacity-100');
+
+                windowEl.classList.remove('translate-y-8', 'scale-[0.98]', 'opacity-0', 'sm:translate-y-10');
+                windowEl.classList.add('translate-y-0', 'scale-100', 'opacity-100', 'sm:translate-y-0');
+            });
         }
 
         function closeChat() {
-            document.getElementById('chat-modal')?.classList.add('hidden');
+            const modal = document.getElementById('chat-modal');
+            const overlay = document.getElementById('chat-modal-overlay');
+            const windowEl = document.getElementById('chat-modal-window');
+
+            if (!modal || !overlay || !windowEl) return;
+
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('opacity-0');
+
+            windowEl.classList.remove('translate-y-0', 'scale-100', 'opacity-100', 'sm:translate-y-0');
+            windowEl.classList.add('translate-y-8', 'scale-[0.98]', 'opacity-0', 'sm:translate-y-10');
+
+            chatModalCloseTimer = setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+
             document.body.style.overflow = 'auto';
         }
 

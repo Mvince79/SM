@@ -1,7 +1,7 @@
 <div wire:key="chat-{{ $refreshKey }}" class="w-full h-full flex flex-col min-h-0">
 
     {{-- Header --}}
-    <div class="h-16 shrink-0 border-b bg-white px-4 flex items-center md:h-24 md:px-6">
+    <div class="h-16 shrink-0 border-b border-slate-200 bg-white px-4 flex items-center md:h-24 md:px-6">
 
         <img src="{{ $receiver->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($receiver->full_name) }}"
             class="h-10 w-10 rounded-full object-cover md:h-14 md:w-14">
@@ -65,7 +65,7 @@
                 md:px-4
                 md:py-3
                 md:text-base
-                {{ $message->from_user_id == auth()->id() ? 'bg-blue-600 text-white' : 'bg-white border' }}
+                {{ $message->from_user_id == auth()->id() ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200' }}
                 ">
 
                     @if ($message->attachment_type === 'IMAGE' && $message->attachment_path)
@@ -114,6 +114,7 @@
     <div class="
         shrink-0
         border-t
+        border-slate-200
         bg-white
         p-3
         md:p-4
@@ -124,7 +125,7 @@
             @if ($photo)
                 <div class="mb-3 flex items-start gap-3">
                     <img src="{{ $photo->temporaryUrl() }}" alt="Xem trước ảnh"
-                        class="h-20 w-20 rounded-xl object-cover border md:h-24 md:w-24">
+                        class="h-20 w-20 rounded-xl object-cover border border-slate-200 md:h-24 md:w-24">
 
                     <button type="button" wire:click="$set('photo', null)"
                         class="px-3 py-2 text-sm font-semibold text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
@@ -141,17 +142,19 @@
                 <div class="mb-2 text-sm text-red-600">{{ $message }}</div>
             @enderror
 
-            <div class="flex items-end gap-2 md:gap-3">
+            <div class="grid grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[3rem_minmax(0,1fr)_auto] md:grid-cols-[3.5rem_minmax(0,1fr)_auto] md:gap-3">
 
                 <label
                     class="
                 h-11
                 w-11
+                self-center
                 md:h-14
                 md:w-14
                 shrink-0
                 border
-                rounded-xl
+                border-slate-300
+                rounded-2xl
                 flex
                 items-center
                 justify-center
@@ -163,7 +166,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M18.364 5.636 9.172 14.828a4 4 0 1 0 5.657 5.657l9.192-9.192a6 6 0 0 0-8.485-8.485L6.343 12a8 8 0 1 0 11.314 11.314l8.485-8.485" />
+                            d="M16.5 6.75 8.38 14.87a2.5 2.5 0 1 0 3.54 3.54l8.12-8.12a4.5 4.5 0 0 0-6.36-6.36L5.55 12.05a6.5 6.5 0 1 0 9.2 9.2l7.07-7.07" />
                     </svg>
                     <input type="file" wire:model="photo" accept="image/*" class="hidden">
                 </label>
@@ -171,30 +174,41 @@
                 <textarea wire:model="body" rows="2"
                     class="
                 flex-1
+                min-w-0
+                h-11
+                md:h-14
                 border
-                rounded-xl
-                p-3
+                border-slate-300
+                rounded-2xl
+                px-3
+                py-2.5
                 text-sm
                 resize-none
+                overflow-hidden
                 focus:outline-none
-                focus:ring-2
+                focus:ring-1
                 focus:ring-blue-500
+                focus:border-blue-500
+                sm:px-4
                 md:text-base
+                md:py-4
                 "
                     placeholder="Nhập tin nhắn..."></textarea>
 
                 <button type="submit"
                     class="
                 h-11
+                min-w-14
                 px-4
                 text-sm
                 font-semibold
                 bg-blue-600
                 text-white
-                rounded-xl
+                rounded-2xl
                 hover:bg-blue-700
                 transition
                 md:h-14
+                md:min-w-20
                 md:px-6
                 md:text-base
                 ">

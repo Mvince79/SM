@@ -10,10 +10,10 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
-use Filament\Actions\SelectAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
@@ -35,28 +35,14 @@ class UsersTable
 
                 TextColumn::make('email')
                     ->label('Email')
-                    ->searchable(),
+                    ->searchable()
+                    ->visibleFrom('md'),
 
                 TextColumn::make('phone')
                     ->label('Số điện thoại')
                     ->searchable()
-                    ->placeholder('—'),
-
-                TextColumn::make('role')
-                    ->label('Vai trò')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'ADMIN' => 'danger',
-                        'MODERATOR' => 'warning',
-                        'USER' => 'info',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn ($state) => match ($state) {
-                        'ADMIN' => 'Quản trị viên',
-                        'MODERATOR' => 'Kiểm duyệt viên',
-                        'USER' => 'Người dùng',
-                        default => $state,
-                    }),
+                    ->placeholder('—')
+                    ->visibleFrom('lg'),
 
                 TextColumn::make('status')
                     ->label('Trạng thái')
@@ -78,13 +64,26 @@ class UsersTable
                     ->label('Xác minh email')
                     ->dateTime('d/m/Y H:i')
                     ->placeholder('Chưa xác minh')
-                    ->sortable(),
+                    ->sortable()
+                    ->visibleFrom('xl'),
 
                 TextColumn::make('last_active_at')
                     ->label('Hoạt động cuối')
-                    ->dateTime('d/m/Y H:i')
+                    ->date('d/m/Y')
+                    ->description(fn (User $record): ?string => $record->last_active_at?->format('H:i'))
                     ->placeholder('—')
-                    ->sortable(),
+                    ->sortable()
+                    ->alignCenter(),
+
+                SelectColumn::make('role')
+                    ->label('Vai trò')
+                    ->options([
+                        'USER' => 'Người dùng',
+                        'MODERATOR' => 'Kiểm duyệt viên',
+                        'ADMIN' => 'Quản trị viên',
+                    ])
+                    ->selectablePlaceholder(false)
+                    ->disabled(fn (): bool => ! Auth::check() || Auth::user()->role !== 'ADMIN'),
 
                 TextColumn::make('created_at')
                     ->label('Ngày đăng ký')
@@ -105,7 +104,8 @@ class UsersTable
                         'ADMIN' => 'Quản trị viên',
                         'MODERATOR' => 'Kiểm duyệt viên',
                         'USER' => 'Người dùng',
-                    ]),
+                    ])
+                    ->columnSpan(1),
 
                 SelectFilter::make('status')
                     ->label('Trạng thái')
@@ -113,26 +113,37 @@ class UsersTable
                         'ACTIVE' => 'Hoạt động',
                         'BANNED' => 'Bị khóa',
                         'PENDING' => 'Chờ kích hoạt',
-                    ]),
+                    ])
+                    ->columnSpan(1),
 
                 SelectFilter::make('province_id')
                     ->label('Tỉnh/Thành')
                     ->relationship('province', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->columnSpan(1),
 
                 Filter::make('email_verified')
                     ->label('Đã xác minh email')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('email_verified_at')),
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('email_verified_at'))
+                    ->columnSpan(1),
 
                 Filter::make('google_login')
                     ->label('Đăng nhập Google')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('google_id')),
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('google_id'))
+                    ->columnSpan(1),
 
-                TrashedFilter::make(),
+                TrashedFilter::make()->columnSpan(1),
+            ])
+            ->filtersLayout(FiltersLayout::AboveContent)
+            ->filtersFormColumns([
+                'default' => 2,
+                'sm' => 3,
+                'md' => 4,
+                'lg' => 6,
+                'xl' => 6,
             ])
             ->recordActions([
-                ViewAction::make(),
                 EditAction::make(),
 
                 Action::make('ban')
@@ -159,20 +170,6 @@ class UsersTable
                         $record->update([
                             'status' => 'ACTIVE',
                             'ban_reason' => null,
-                        ]);
-                    }),
-
-                SelectAction::make('change_role')
-                    ->label('Đổi quyền')
-                    ->options([
-                        'USER' => 'Người dùng',
-                        'MODERATOR' => 'Kiểm duyệt viên',
-                        'ADMIN' => 'Quản trị viên',
-                    ])
-                    ->visible(fn (): bool => Auth::check() && Auth::user()->role === 'ADMIN')
-                    ->action(function (User $record, string $state): void {
-                        $record->update([
-                            'role' => $state,
                         ]);
                     }),
             ])

@@ -1,7 +1,7 @@
 <div class="h-full w-full">
     <div class="grid h-full grid-cols-12">
-        <div class="{{ $selectedUserId ? 'hidden md:flex' : 'flex' }} col-span-12 min-h-0 flex-col border-r bg-white md:col-span-4">
-            <div class="flex h-16 flex-col justify-center border-b px-4 md:h-24 md:px-6">
+        <div class="{{ $selectedUserId ? 'hidden md:flex' : 'flex' }} col-span-12 min-h-0 flex-col border-r border-slate-200 bg-white md:col-span-4">
+            <div class="flex h-16 flex-col justify-center border-b border-slate-200 px-4 md:h-24 md:px-6">
                 <h2 class="text-xl font-bold text-slate-800 md:text-3xl">
                     Tin nhắn
                 </h2>
@@ -19,7 +19,7 @@
         <div class="{{ $selectedUserId ? 'flex' : 'hidden md:flex' }} col-span-12 h-full min-h-0 flex-col md:col-span-8">
             @if ($selectedUserId)
                 <div class="flex h-full min-h-0 flex-col">
-                    <div class="flex h-14 shrink-0 items-center gap-3 border-b bg-white px-4 md:hidden">
+                    <div class="flex h-14 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 md:hidden">
                         <button type="button" wire:click="closeChatThread"
                             class="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50"
                             aria-label="Quay lại danh sách tin nhắn">
@@ -44,7 +44,7 @@
                 </div>
             @else
                 <div class="flex h-full flex-col">
-                    <div class="flex h-24 items-center border-b px-6">
+                    <div class="flex h-24 items-center border-b border-slate-200 px-6">
                         <span class="font-semibold text-slate-500">
                             Chưa chọn cuộc trò chuyện
                         </span>
@@ -69,9 +69,9 @@
                         </div>
                     </div>
 
-                    <div class="border-t bg-white p-4">
+                    <div class="border-t border-slate-200 bg-white p-4">
                         <div class="flex gap-3">
-                            <textarea disabled rows="2" class="flex-1 resize-none rounded-xl border bg-slate-100 p-3"
+                            <textarea disabled rows="2" class="flex-1 resize-none rounded-xl border border-slate-200 bg-slate-100 p-3"
                                 placeholder="Chọn người để bắt đầu chat..."></textarea>
 
                             <button disabled class="rounded-xl bg-slate-300 px-6 text-white">
