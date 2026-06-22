@@ -41,6 +41,12 @@
             @enderror
         </div>
 
+        <label class="flex items-center gap-2.5 cursor-pointer">
+            <input type="checkbox" name="remember" class="w-4 h-4 accent-primary rounded shrink-0">
+            <span class="text-xs font-bold text-slate-600">Ghi nhớ đăng nhập</span>
+        </label>
+
+
         {{-- Submit --}}
         <button type="submit" class="btn-primary">
             Đăng nhập
