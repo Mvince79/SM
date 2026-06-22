@@ -51,4 +51,24 @@ class RateLimiterService
     {
         return 'otp-resend:' . $userId;
     }
+
+    public function tooManyFoundChildSubmissions(int $userId): bool
+    {
+        return RateLimiter::tooManyAttempts($this->foundChildKey($userId), 3);
+    }
+
+    public function hitFoundChildSubmission(int $userId): void
+    {
+        RateLimiter::hit($this->foundChildKey($userId), 86400); // cửa sổ 24h
+    }
+
+    public function foundChildAvailableIn(int $userId): int
+    {
+        return RateLimiter::availableIn($this->foundChildKey($userId));
+    }
+
+    private function foundChildKey(int $userId): string
+    {
+        return 'found-child-create:' . $userId;
+    }
 }

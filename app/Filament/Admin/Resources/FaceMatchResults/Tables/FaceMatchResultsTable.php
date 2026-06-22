@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+
 
 class FaceMatchResultsTable
 {
@@ -179,16 +181,38 @@ class FaceMatchResultsTable
                     ->modalDescription(function (FaceMatchResult $record): string {
                         $score = number_format($record->score * 100, 2);
                         $name = $record->missingChild?->full_name ?? '?';
-
-                        return "Xác nhận kết quả AI ({$score}%) cho hồ sơ {$name}?";
+                        return "Xác nhận kết quả AI ({$score}%) cho hồ sơ {$name}? Hệ thống sẽ tự động đóng hồ sơ mất tích và hồ sơ tìm được liên quan.";
                     })
                     ->modalSubmitActionLabel('Xác nhận')
                     ->action(function (FaceMatchResult $record): void {
-                        $record->update([
-                            'status' => 'CONFIRMED',
-                            'confirmed_by' => Auth::id(),
-                            'confirmed_at' => now(),
-                        ]);
+                        DB::transaction(function () use ($record) {
+                            $record->update([
+                                'status' => 'CONFIRMED',
+                                'confirmed_by' => Auth::id(),
+                                'confirmed_at' => now(),
+                            ]);
+
+                            $record->missingChild?->update([
+                                'status' => 'FOUND',
+                                'found_at' => now(),
+                            ]);
+
+                            $record->foundChild?->update([
+                                'status' => 'MATCHED',
+                            ]);
+
+                            // Các match PENDING khác của cùng missing_id → tự Dismiss, tránh trùng
+                            FaceMatchResult::where('missing_id', $record->missing_id)
+                                ->where('id', '!=', $record->id)
+                                ->where('status', 'PENDING')
+                                ->update(['status' => 'DISMISSED']);
+
+                            activity('admin')
+                                ->causedBy(Auth::id())
+                                ->performedOn($record)
+                                ->withProperties(['missing_id' => $record->missing_id, 'found_id' => $record->found_id])
+                                ->log('Xác nhận khớp khuôn mặt — tự động đóng hồ sơ mất tích và tìm được');
+                        });
 
                         Cache::forget('badge_face_match_pending');
                     }),

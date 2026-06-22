@@ -74,15 +74,34 @@ class FoundChildController extends Controller
 
     public function store(FoundChildRequest $request)
     {
+        $this->authorize('create', FoundChild::class);
+
+        $userId = auth()->id();
+        $limiter = app(\App\Services\RateLimiterService::class);
+
+        if ($limiter->tooManyFoundChildSubmissions($userId)) {
+            $seconds = $limiter->foundChildAvailableIn($userId);
+            return back()->withErrors([
+                'limit' => "Bạn đã đăng quá nhiều tin hôm nay. Vui lòng thử lại sau " . ceil($seconds / 3600) . " giờ.",
+            ]);
+        }
+
+
         $data = $request->validated();
         $data['user_id'] = auth()->id();
+        $data['status'] = 'PENDING';
+
+
+
         $found = FoundChild::create($data);
+        $limiter->hitFoundChildSubmission($userId);
         // Attach uploaded photos if present
         if ($request->hasFile('photos')) {
             $files = $request->file('photos');
             $first = true;
             foreach ($files as $file) {
-                if (!$file->isValid()) continue;
+                if (!$file->isValid())
+                    continue;
                 $path = $file->store('found_children/' . $found->id . '/original', 'public');
                 $imageSize = getimagesize($file->getPathname());
                 $width = $imageSize[0] ?? null;
@@ -111,7 +130,7 @@ class FoundChildController extends Controller
             'item' => $foundChild->load([
                 'province',
                 'user',
-                'photos' => fn ($query) => $query->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id'),
+                'photos' => fn($query) => $query->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('id'),
             ]),
         ]);
     }

@@ -4,14 +4,11 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-/**
- * Validate search filter parameters for GET /missing
- */
+
 class SearchMissingChildRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Public endpoint, no authorization needed
         return true;
     }
 

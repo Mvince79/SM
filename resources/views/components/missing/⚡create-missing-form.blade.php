@@ -311,7 +311,7 @@ new class extends Component {
             @foreach ([1 => 'Thông tin bé', 2 => 'Đặc điểm & Ảnh', 3 => 'Liên hệ'] as $s => $label)
                     <div class="relative z-10 flex flex-col items-center gap-1.5">
                         <div class="w-8 h-8 rounded-full font-extrabold text-xs flex items-center justify-center transition-colors duration-500
-                                                                                                                                    {{ $step > $s
+                                                                                                                                            {{ $step > $s
                 ? 'bg-success text-white shadow-md shadow-success/20'
                 : ($step === $s
                     ? 'bg-primary text-white shadow-md shadow-primary/20'
@@ -320,7 +320,7 @@ new class extends Component {
                         </div>
                         <span
                             class="text-[10px] font-black uppercase tracking-wide
-                                                                                                                                    {{ $step > $s ? 'text-success' : ($step === $s ? 'text-primary' : 'text-slate-400') }}">
+                                                                                                                                            {{ $step > $s ? 'text-success' : ($step === $s ? 'text-primary' : 'text-slate-400') }}">
                             {{ $label }}
                         </span>
                     </div>
@@ -329,162 +329,159 @@ new class extends Component {
 
         {{-- ════ BƯỚC 1 ════ --}}
         @if ($step === 1)
-                <div class="space-y-5 pt-4">
-                    <h3 class="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2">
-                        Bước 1: Thông tin cơ bản của trẻ
-                    </h3>
+                    <div class="space-y-5 pt-4">
+                        <h3 class="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2">
+                            Bước 1: Thông tin cơ bản của trẻ
+                        </h3>
 
-                    {{-- Tên + Tuổi --}}
-                    <div class="grid sm:grid-cols-2 gap-4">
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Họ và tên của con
-                                *</label>
-                            <input type="text" wire:model.blur="full_name" placeholder="Ví dụ: Nguyễn Văn An"
-                                class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400
-                                                                                                          {{ $errors->has('full_name') ? 'border-red-400' : 'border-slate-200' }}" />
-                            @error('full_name')
-                                <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
-                            @enderror
+                        {{-- Tên + Tuổi --}}
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Họ và tên của con
+                                    *</label>
+                                <input type="text" wire:model.blur="full_name" placeholder="Ví dụ: Nguyễn Văn An"
+                                    class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400
+                                                                                                                      {{ $errors->has('full_name') ? 'border-red-400' : 'border-slate-200' }}" />
+                                @error('full_name')
+                                    <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Tuổi (hoặc năm
+                                    sinh) *</label>
+                                <input type="number" wire:model.blur="age_estimate" placeholder="Ví dụ: 8" min="0" max="18"
+                                    class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400
+                                                                                                                      {{ $errors->has('age_estimate') ? 'border-red-400' : 'border-slate-200' }}" />
+                                @error('age_estimate')
+                                    <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Tuổi (hoặc năm
-                                sinh) *</label>
-                            <input type="number" wire:model.blur="age_estimate" placeholder="Ví dụ: 8" min="0" max="18"
-                                class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400
-                                                                                                          {{ $errors->has('age_estimate') ? 'border-red-400' : 'border-slate-200' }}" />
-                            @error('age_estimate')
-                                <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
 
-                    {{-- DOB + Giới tính --}}
-                    <div class="grid sm:grid-cols-2 gap-4">
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Ngày sinh (nếu
-                                biết)</label>
-                            <input type="date" wire:model="dob"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium" />
+                        {{-- DOB + Giới tính --}}
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Ngày sinh (nếu
+                                    biết)</label>
+                                <input type="date" wire:model="dob"
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium" />
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Giới tính
+                                    *</label>
+                                <select wire:model="gender"
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600">
+                                    <option value="MALE">Nam</option>
+                                    <option value="FEMALE">Nữ</option>
+                                    <option value="UNKNOWN">Chưa rõ</option>
+                                </select>
+                                @error('gender')
+                                    <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Giới tính
-                                *</label>
-                            <select wire:model="gender"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600">
-                                <option value="MALE">Nam</option>
-                                <option value="FEMALE">Nữ</option>
-                                <option value="UNKNOWN">Chưa rõ</option>
-                            </select>
-                            @error('gender')
-                                <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
 
-                    {{-- Ngày mất tích + Giờ --}}
-                    <div class="grid sm:grid-cols-2 gap-4">
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Ngày mất tích
-                                *</label>
-                            <input type="date" wire:model="missing_date"
-                                class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600
-                                                                                                          {{ $errors->has('missing_date') ? 'border-red-400' : 'border-slate-200' }}" />
-                            @error('missing_date')
-                                <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
-                            @enderror
+                        {{-- Ngày mất tích + Giờ --}}
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Ngày mất tích
+                                    *</label>
+                                <input type="date" wire:model="missing_date"
+                                    class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600
+                                                                                                                      {{ $errors->has('missing_date') ? 'border-red-400' : 'border-slate-200' }}" />
+                                @error('missing_date')
+                                    <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Giờ mất tích (nếu
+                                    biết)</label>
+                                <input type="time" wire:model.blur="missing_time"
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600" />
+                            </div>
                         </div>
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Giờ mất tích (nếu
-                                biết)</label>
-                            <input type="time" wire:model.blur="missing_time"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600" />
-                        </div>
-                    </div>
 
-                    {{-- Tỉnh / Huyện / Xã --}}
-                    <div class="grid sm:grid-cols-3 gap-4">
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Tỉnh/Thành phố
-                                *</label>
-                            <select wire:model="province_id"
-                                class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600
-                                                                                                           {{ $errors->has('province_id') ? 'border-red-400' : 'border-slate-200' }}">
-                                <option value="">Chọn tỉnh...</option>
-                                @foreach ($provinces as $p)
-                                    <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('province_id')
-                                <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
-                            @enderror
+                        {{-- Tỉnh / Huyện / Xã --}}
+                        <div class="grid sm:grid-cols-3 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Tỉnh/Thành phố
+                                    *</label>
+                                <select wire:model="province_id"
+                                    class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600
+                                                                                                                       {{ $errors->has('province_id') ? 'border-red-400' : 'border-slate-200' }}">
+                                    <option value="">Chọn tỉnh...</option>
+                                    @foreach ($provinces as $p)
+                                        <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('province_id')
+                                    <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Quận/Huyện</label>
+                                <input type="text" wire:model.blur="district" placeholder="Quận 6"
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Phường/Xã</label>
+                                <input type="text" wire:model.blur="ward" placeholder="Phường 2"
+                                    class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+                            </div>
                         </div>
+
+                        {{-- Địa chỉ + Hoàn cảnh --}}
                         <div class="space-y-1.5">
-                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Quận/Huyện</label>
-                            <input type="text" wire:model.blur="district" placeholder="Quận 6"
+                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Địa chỉ cụ thể nơi mất
+                                tích</label>
+                            <input type="text" wire:model.blur="address_detail" placeholder="Ví dụ: Chợ Bình Tây, Quận 6, TP.HCM"
                                 class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
                         </div>
+
                         <div class="space-y-1.5">
-                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Phường/Xã</label>
-                            <input type="text" wire:model.blur="ward" placeholder="Phường 2"
-                                class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Hoàn cảnh mất
+                                tích</label>
+                            <textarea wire:model.blur="circumstances" rows="2"
+                                placeholder="Mô tả chi tiết hoàn cảnh bé bị mất tích..."
+                                class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium resize-none placeholder-slate-400"></textarea>
                         </div>
-                    </div>
 
-                    {{-- Địa chỉ + Hoàn cảnh --}}
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Địa chỉ cụ thể nơi mất
-                            tích</label>
-                        <input type="text" wire:model.blur="address_detail" placeholder="Ví dụ: Chợ Bình Tây, Quận 6, TP.HCM"
-                            class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
-                    </div>
+                        {{--
+                        [FIX 1] Leaflet Map Picker — dùng wire:ignore để Livewire không
+                        destroy/re-render div này khi re-render component sau setLocation().
+                        Alpine x-init chạy 1 lần duy nhất khi mount, map không bị trắng.
+                        Dùng $wire.setLocation() qua Alpine để gửi tọa độ về Livewire.
+                        Hiển thị lat/lng đã chọn qua span riêng bên ngoài wire:ignore.
+                        --}}
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                                    stroke="currentColor" class="w-4 h-4 text-slate-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                </svg>
+                                Ghim vị trí trên bản đồ (tuỳ chọn)
+                            </label>
+                            <p class="text-xs text-slate-400">Click vào bản đồ để ghim vị trí bé bị mất tích</p>
 
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Hoàn cảnh mất
-                            tích</label>
-                        <textarea wire:model.blur="circumstances" rows="2"
-                            placeholder="Mô tả chi tiết hoàn cảnh bé bị mất tích..."
-                            class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium resize-none placeholder-slate-400"></textarea>
-                    </div>
-
-                    {{--
-                    [FIX 1] Leaflet Map Picker — dùng wire:ignore để Livewire không
-                    destroy/re-render div này khi re-render component sau setLocation().
-                    Alpine x-init chạy 1 lần duy nhất khi mount, map không bị trắng.
-                    Dùng $wire.setLocation() qua Alpine để gửi tọa độ về Livewire.
-                    Hiển thị lat/lng đã chọn qua span riêng bên ngoài wire:ignore.
-                    --}}
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
-                                stroke="currentColor" class="w-4 h-4 text-slate-500">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                            </svg>
-                            Ghim vị trí trên bản đồ (tuỳ chọn)
-                        </label>
-                        <p class="text-xs text-slate-400">Click vào bản đồ để ghim vị trí bé bị mất tích</p>
-
-                        {{-- wire:ignore ngăn Livewire re-render div map → map không bị trắng --}}
-                        <div wire:ignore x-data="{}" x-init="
+                            {{-- wire:ignore ngăn Livewire re-render div map → map không bị trắng --}}
+                            <div wire:ignore x-data="{}" x-init="
                 $nextTick(() => {
-                    // 1. Dọn dẹp instance cũ nếu có
                     if (window._mapPickerInstance) {
                         window._mapPickerInstance.remove();
                         window._mapPickerInstance = null;
                     }
 
-                    // 2. Lấy giá trị lat/lng hiện tại từ Livewire component
                     const savedLat = parseFloat($wire.get('lat'));
                     const savedLng = parseFloat($wire.get('lng'));
                     const hasSavedLocation = !isNaN(savedLat) && !isNaN(savedLng);
 
-                    // 3. Nếu đã có vị trí trước đó, lấy làm tâm, nếu chưa thì mặc định [16.0544, 108.2022]
+                    // Mặc định tạm — sẽ được geolocation ghi đè nếu thành công
                     const defaultCenter = hasSavedLocation ? [savedLat, savedLng] : [16.0544, 108.2022];
                     const defaultZoom = hasSavedLocation ? 14 : 6;
 
-                    // 4. Khởi tạo bản đồ
                     const map = L.map('map-picker').setView(defaultCenter, defaultZoom);
                     window._mapPickerInstance = map;
 
@@ -493,50 +490,59 @@ new class extends Component {
                     }).addTo(map);
 
                     let marker = null;
-
-                    // 5. Nếu có vị trí lưu từ trước, hiển thị marker ngay khi load
                     if (hasSavedLocation) {
                         marker = L.marker([savedLat, savedLng]).addTo(map)
-                            .bindPopup('<span class=\'text-xs font-bold text-slate-800\'>Vị trí đã chọn</span>').openPopup();
+                            .bindPopup('Vị trí đã chọn').openPopup();
                     }
 
-                    // 6. Sự kiện click để chọn vị trí mới
+                    // ── THÊM: tự định vị nếu chưa có vị trí lưu trước ──────────────
+                    if (!hasSavedLocation && navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                                const { latitude, longitude } = pos.coords;
+                                map.setView([latitude, longitude], 15);
+                                marker = L.marker([latitude, longitude]).addTo(map)
+                                    .bindPopup('Vị trí của bạn — bấm vào bản đồ để sửa nếu sai').openPopup();
+                                $wire.set('lat', latitude.toFixed(6));
+                                $wire.set('lng', longitude.toFixed(6));
+                            },
+                            () => {
+                                // Thất bại (chặn quyền, không có GPS) → giữ bản đồ Đà Nẵng, không báo lỗi gây hoảng
+                            },
+                            { timeout: 8000, enableHighAccuracy: true }
+                        );
+                    }
+
                     map.on('click', (e) => {
                         const { lat, lng } = e.latlng;
                         if (marker) marker.remove();
-
                         marker = L.marker([lat, lng]).addTo(map)
-                            .bindPopup('<span class=\'text-xs font-bold text-slate-800\'>Vị trí đã chọn</span>').openPopup();
-
-                        // Cập nhật giá trị lên Livewire
+                            .bindPopup('Vị trí đã chọn').openPopup();
                         $wire.set('lat', lat.toFixed(6));
                         $wire.set('lng', lng.toFixed(6));
                     });
 
-                    // 7. Sửa lỗi bản đồ bị vỡ layout do ẩn/hiện trong các bước
-                    setTimeout(() => {
-                        map.invalidateSize();
-                    }, 100);
+                    setTimeout(() => map.invalidateSize(), 100);
                 });
             ">
-                            <div id="map-picker" class="w-full h-56 rounded-2xl border border-slate-200 z-0 mt-1"></div>
+                                <div id="map-picker" class="w-full h-56 rounded-2xl border border-slate-200 z-0 mt-1"></div>
+                            </div>
+
+                            {{-- Phần hiển thị lat/lng đặt ngoài wire:ignore để Livewire update được --}}
+                            @if ($lat && $lng)
+                                <p class="text-xs text-success font-bold mt-1 flex items-center gap-1.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                                        stroke="currentColor" class="w-4 h-4 text-success shrink-0">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    <span>Đã ghim: {{ round($lat, 6) }}, {{ round($lng, 6) }}</span>
+                                </p>
+                            @endif
                         </div>
-
-                        {{-- Phần hiển thị lat/lng đặt ngoài wire:ignore để Livewire update được --}}
-                        @if ($lat && $lng)
-                            <p class="text-xs text-success font-bold mt-1 flex items-center gap-1.5">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
-                                    stroke="currentColor" class="w-4 h-4 text-success shrink-0">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                </svg>
-                                <span>Đã ghim: {{ round($lat, 6) }}, {{ round($lng, 6) }}</span>
-                            </p>
-                        @endif
                     </div>
-                </div>
 
-                {{-- ════ BƯỚC 2 ════ --}}
+                    {{-- ════ BƯỚC 2 ════ --}}
         @elseif($step === 2)
                 <div class="space-y-5 pt-4">
                     <h3 class="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2">
@@ -655,7 +661,7 @@ new class extends Component {
                     <textarea rows="4" wire:model.blur="special_marks"
                         placeholder="Ghi cụ thể các chi tiết khác (Ví dụ: Bé nói giọng miền Nam, có vết sẹo nhỏ ở chân mày phải, nhút nhát khi gặp người lạ...)"
                         class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium resize-none placeholder-slate-400
-                                                                                                                                    {{ $errors->has('special_marks') ? 'border-red-400' : 'border-slate-200' }}"></textarea>
+                                                                                                                                            {{ $errors->has('special_marks') ? 'border-red-400' : 'border-slate-200' }}"></textarea>
                     @error('special_marks')
                         <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
                     @enderror
@@ -675,7 +681,7 @@ new class extends Component {
                         tin *</label>
                     <input type="text" wire:model.blur="contact_name" placeholder="Ví dụ: Nguyễn Văn Bình"
                         class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400
-                                                                                                      {{ $errors->has('contact_name') ? 'border-red-400' : 'border-slate-200' }}" />
+                                                                                                          {{ $errors->has('contact_name') ? 'border-red-400' : 'border-slate-200' }}" />
                     @error('contact_name')
                         <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
                     @enderror
@@ -700,7 +706,7 @@ new class extends Component {
                         liên lạc *</label>
                     <input type="tel" wire:model.blur="contact_phone" placeholder="Ví dụ: 0905 123 456"
                         class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400
-                                                                                                      {{ $errors->has('contact_phone') ? 'border-red-400' : 'border-slate-200' }}" />
+                                                                                                          {{ $errors->has('contact_phone') ? 'border-red-400' : 'border-slate-200' }}" />
                     @error('contact_phone')
                         <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
                     @enderror

@@ -6,6 +6,7 @@ use App\Http\Controllers\Client\ProfileController;
 use App\Http\Controllers\Client\StatsController;
 use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\WatchAreaController;
 use App\Models\Message;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -46,6 +47,10 @@ Route::prefix('map')->name('map.')->group(function () {
 Route::prefix('stats')->name('stats.')->group(function () {
     Route::get('/', [StatsController::class, 'index'])->name('index');
 });
+
+Route::post('/watch-area', [WatchAreaController::class, 'store'])->name('watch-area.store');
+Route::delete('/watch-area', [WatchAreaController::class, 'destroy'])->name('watch-area.destroy');
+
 
 // ── Routes cần đăng nhập + email đã xác thực + không bị BAN ────────────────
 Route::middleware(['auth', 'email.verified'])->group(function () {
