@@ -68,9 +68,14 @@ class MissingChildInfolist
                         TextEntry::make('gender')
                             ->label('Giới tính')
                             ->formatStateUsing(fn($state) => match ($state) {
-                                'MALE' => '♂ Nam',
-                                'FEMALE' => '♀ Nữ',
+                                'MALE' => 'Nam',
+                                'FEMALE' => 'Nữ',
                                 default => 'Không rõ',
+                            })
+                            ->icon(fn($state) => match ($state) {
+                                'MALE' => 'heroicon-o-user',
+                                'FEMALE' => 'heroicon-o-user',
+                                default => null,
                             })
                             ->badge()
                             ->color(fn($state) => match ($state) {
@@ -195,14 +200,16 @@ class MissingChildInfolist
                                 ->label('Bản đồ')
                                 ->state(
                                     fn(MissingChild $record): string =>
-                                    $record->lat && $record->lng
-                                    ? '📍 Mở Google Maps'
-                                    : 'Chưa có tọa độ GPS'
+                                    $record->lat && $record->lng ? 'Mở Google Maps' : 'Chưa có tọa độ GPS'
+                                )
+                                ->icon(
+                                    fn(MissingChild $record) =>
+                                    $record->lat && $record->lng ? 'heroicon-o-map' : 'heroicon-o-x-circle'
                                 )
                                 ->url(
                                     fn(MissingChild $record): ?string =>
                                     $record->lat && $record->lng
-                                    ? "https://www.google.com/maps?q={$record->lat},{$record->lng}"
+                                    ? "https://www.google.com/maps/search/?api=1&query={$record->lat},{$record->lng}"
                                     : null
                                 )
                                 ->openUrlInNewTab()
@@ -258,7 +265,7 @@ class MissingChildInfolist
 
                             TextEntry::make('user_email_display')
                                 ->label('Email')
-                                ->state(fn (MissingChild $record) => $record->user()->withTrashed()->first()?->email)
+                                ->state(fn(MissingChild $record) => $record->user()->withTrashed()->first()?->email)
                                 ->icon('heroicon-o-envelope')
                                 ->color('info')
                                 ->placeholder('—'),
@@ -280,7 +287,8 @@ class MissingChildInfolist
                             TextEntry::make('qr_code_url')
                                 ->label('QR Code')
                                 ->url(fn($state) => $state ?: null)
-                                ->formatStateUsing(fn($state) => $state ? '⬇ Tải QR Code' : 'Chưa có')
+                                ->formatStateUsing(fn($state) => $state ? 'Tải QR Code' : 'Chưa có')
+                                ->icon(fn($state) => $state ? 'heroicon-o-arrow-down-tray' : null)
                                 ->openUrlInNewTab()
                                 ->color(fn($state) => $state ? 'info' : 'gray'),
 

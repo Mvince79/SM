@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
 
 class MissingChildrenSeeder extends Seeder
 {
@@ -19,6 +21,7 @@ class MissingChildrenSeeder extends Seeder
             [
                 'user_id' => 4,
                 'case_code' => 'MC-2026-00001',
+                'slug' => Str::slug('Nguyễn Văn An') . '-mc-2026-00001',
                 'full_name' => 'Nguyễn Văn An',
                 'dob' => '2018-03-15',
                 'age_estimate' => null,
@@ -59,6 +62,7 @@ class MissingChildrenSeeder extends Seeder
             [
                 'user_id' => 5,
                 'case_code' => 'MC-2026-00002',
+                'slug' => Str::slug('Trần Thị Bích Ngọc') . '-mc-2026-00002',
                 'full_name' => 'Trần Thị Bích Ngọc',
                 'dob' => '2015-07-22',
                 'age_estimate' => null,
@@ -99,6 +103,7 @@ class MissingChildrenSeeder extends Seeder
             [
                 'user_id' => 6,
                 'case_code' => 'MC-2026-00003',
+                'slug' => Str::slug('Võ Quốc Hùng') . '-mc-2026-00003',
                 'full_name' => 'Võ Quốc Hùng',
                 'dob' => '2019-11-05',
                 'age_estimate' => null,
@@ -139,6 +144,7 @@ class MissingChildrenSeeder extends Seeder
             [
                 'user_id' => 7,
                 'case_code' => 'MC-2026-00004',
+                'slug' => Str::slug('Lý Thị Kim Ngân') . '-mc-2026-00004',
                 'full_name' => 'Lý Thị Kim Ngân',
                 'dob' => null,
                 'age_estimate' => 8,
@@ -179,6 +185,7 @@ class MissingChildrenSeeder extends Seeder
             [
                 'user_id' => 9,
                 'case_code' => 'MC-2026-00005',
+                'slug' => Str::slug('Phạm Minh Khôi') . '-mc-2026-00005',
                 'full_name' => 'Phạm Minh Khôi',
                 'dob' => '2016-01-10',
                 'age_estimate' => null,
@@ -219,6 +226,7 @@ class MissingChildrenSeeder extends Seeder
             [
                 'user_id' => 4,
                 'case_code' => 'MC-2025-00099',
+                'slug' => Str::slug('Đinh Thị Thu') . '-mc-2025-00099',
                 'full_name' => 'Đinh Thị Thu',
                 'dob' => '2014-06-30',
                 'age_estimate' => null,

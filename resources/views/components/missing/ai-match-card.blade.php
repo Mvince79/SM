@@ -1,19 +1,19 @@
 @props(['match'])
 @php
     $found = $match->foundChild;
-    $auth  = Auth::check();
+    $auth = Auth::check();
     $photo = $found->photos->first();
     $imgUrl = $photo
-        ? ($auth ? asset('storage/'.$photo->path_thumb) : asset('storage/'.$photo->path_blurred))
+        ? ($auth ? asset('storage/' . $photo->path_thumb) : asset('storage/' . $photo->path_blurred))
         : null;
 @endphp
 <div class="flex gap-3 items-center bg-white border border-slate-200 rounded-xl p-3">
     {{-- Thumbnail --}}
-    <div class="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
+    <div class="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100 flex items-center justify-center">
         @if($imgUrl)
             <img src="{{ $imgUrl }}" class="w-full h-full object-cover {{ $auth ? '' : 'blur-sm' }}">
         @else
-            <div class="w-full h-full flex items-center justify-center text-2xl">👤</div>
+            <x-heroicon-s-user class="w-6 h-6 text-slate-300" />
         @endif
     </div>
     {{-- Info --}}
@@ -28,7 +28,7 @@
     </div>
     {{-- Link --}}
     <a href="{{ route('found-children.show', $found->id) }}"
-       class="text-[10px] font-black text-primary hover:underline whitespace-nowrap">
+        class="text-[10px] font-black text-primary hover:underline whitespace-nowrap">
         Xem chi tiết →
     </a>
 </div>

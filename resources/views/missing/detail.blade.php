@@ -67,12 +67,12 @@
 
                             <!-- Avatar photo container + Gallery -->
                             <div class="w-full sm:w-44 flex-shrink-0" x-data="{
-                                    open: false,
-                                    current: 0,
-                                    photos: {{ Js::from($case->detail_photo_urls) }},
-                                    prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length },
-                                    next() { this.current = (this.current + 1) % this.photos.length }
-                                }" @keydown.left.window="if(open) prev()" @keydown.right.window="if(open) next()"
+                                        open: false,
+                                        current: 0,
+                                        photos: {{ Js::from($case->detail_photo_urls) }},
+                                        prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length },
+                                        next() { this.current = (this.current + 1) % this.photos.length }
+                                    }" @keydown.left.window="if(open) prev()" @keydown.right.window="if(open) next()"
                                 @keydown.escape.window="open = false">
 
                                 <div class="relative overflow-hidden rounded-xl sm:rounded-2xl border-2 border-slate-100 shadow bg-slate-900 group aspect-square cursor-pointer"
@@ -146,7 +146,7 @@
                                         <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                                             <template x-for="(photo, i) in photos" :key="i">
                                                 <img :src="photo" :class="current === i ? 'border-white scale-110' :
-                                                            'border-transparent opacity-60'"
+                                                                'border-transparent opacity-60'"
                                                     class="w-12 h-12 object-cover rounded-lg border-2 cursor-pointer transition-all"
                                                     @click="current = i" />
                                             </template>
@@ -354,7 +354,8 @@
                     </p>
                     <button onclick="shareGPS()"
                         class="w-full bg-white text-primary font-black py-3.5 rounded-xl hover:bg-slate-50 transition-premium text-sm shadow-md">
-                        <x-heroicon-o-map-pin class="w-4 h-4 inline" /> Chia sẻ vị trí GPS tức thời Chia sẻ vị trí GPS tức thời
+                        <x-heroicon-o-map-pin class="w-4 h-4 inline" /> Chia sẻ vị trí GPS tức thời Chia sẻ vị trí GPS tức
+                        thời
                     </button>
                 </div>
 
@@ -366,11 +367,13 @@
                             <div class="flex items-center gap-3">
                                 <div
                                     class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-xl shadow border border-brand/20 flex-shrink-0">
-                                    <x-heroicon-o-cpu-chip class="w-6 h-6 text-brand" /></div>
+                                    <x-heroicon-o-cpu-chip class="w-6 h-6 text-brand" />
+                                </div>
                                 <div>
                                     <h3 class="font-black text-brand text-base tracking-tight">Có thể là</h3>
                                     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">AI gợi ý ·
-                                        {{ $aiMatches->count() }} hồ sơ tương đồng</p>
+                                        {{ $aiMatches->count() }} hồ sơ tương đồng
+                                    </p>
                                 </div>
                             </div>
                             <p
@@ -407,7 +410,9 @@
                         </div>
                     @elseif($case->primaryPhoto?->ai_status === 'failed')
                         <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50 text-center space-y-2">
-                            <p class="text-2xl"><div class="flex justify-center"><x-heroicon-o-clock class="w-12 h-12 text-slate-300" /></div></p>
+                            <p class="text-2xl">
+                            <div class="flex justify-center"><x-heroicon-o-clock class="w-12 h-12 text-slate-300" /></div>
+                            </p>
                             <p class="text-xs font-bold text-slate-500">Đang chờ xử lý AI</p>
                         </div>
                     @else
@@ -585,7 +590,8 @@
 
                     <div
                         class="flex items-center gap-2 justify-center text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                        <span><x-heroicon-o-lock-closed class="w-6 h-6 text-slate-400" /></span> Thông tin liên hệ được bảo vệ
+                        <span><x-heroicon-o-lock-closed class="w-6 h-6 text-slate-400" /></span> Thông tin liên hệ được bảo
+                        vệ
                     </div>
                 </div>
 
@@ -970,7 +976,7 @@
                     }
                     alert(
                         'Quyền vị trí đã bị chặn cho trang này. Vui lòng cho phép vị trí trong cài đặt trình duyệt và thử lại.'
-                        );
+                    );
                     return;
                 }
                 // allow next geolocation call (user gesture)
@@ -1173,9 +1179,17 @@
                 iconSize: [20, 20],
                 iconAnchor: [10, 10],
             });
-            L.marker([lat, lng], {
-                icon
-            }).addTo(map).bindPopup('📍 Vị trí mất tích').openPopup();
+            L.marker([lat, lng], { icon: icon }).addTo(map)
+                .bindPopup(`
+            <div class='font-bold text-xs p-1 text-slate-900 flex items-center gap-1.5'>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-primary">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                </svg>
+                Vị trí mất tích ước tính
+            </div>
+        `)
+                .openPopup();
         });
     </script>
 @endpush

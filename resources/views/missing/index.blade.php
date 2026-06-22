@@ -22,13 +22,11 @@
     @livewire('missing.cases-grid')
 
     {{-- FAB mobile: nút Đăng tin nổi --}}
-    <a href="{{ route('missing.create') }}"
-       class="fixed bottom-6 right-6 z-50 flex items-center gap-2
-              bg-primary text-white font-extrabold text-sm
-              px-5 py-3.5 rounded-2xl shadow-lg shadow-primary/30
-              hover:bg-primary-dark transition-all
-              sm:hidden">
-        ＋ Đăng tin
-    </a>
+    <a href="{{ route('missing.create') }}" class="fixed bottom-6 right-6 z-50 flex items-center gap-2
+                  bg-primary text-white font-extrabold text-sm
+                  px-5 py-3.5 rounded-2xl shadow-lg shadow-primary/30
+                  hover:bg-primary-dark transition-all
+                  sm:hidden">
+        <x-heroicon-o-plus class="w-4 h-4" /> Đăng tin </a>
 
 @endsection

@@ -286,7 +286,13 @@ new class extends Component {
                             <p class="text-xs text-slate-600 leading-relaxed font-medium break-words">{{ $clue->description }}</p>
                             @if ($clue->lat && $clue->lng)
                                 <div class="mt-1.5">
-                                    <span class="bg-primary/10 text-primary text-[9px] px-2 py-0.5 rounded-full">📍 {{ number_format($clue->lat, 4) }}, {{ number_format($clue->lng, 4) }}</span>
+                                   <span class="inline-flex items-center gap-1 bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap select-all">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3 shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+        </svg>
+        {{ number_format($clue->lat, 4) }}, {{ number_format($clue->lng, 4) }}
+    </span>
                                 </div>
                             @endif
                         </div>
@@ -451,7 +457,10 @@ new class extends Component {
                 </div>
             </div>
         @empty
-            <p class="text-xs text-slate-400 font-semibold text-center py-4">Chưa có manh mối nào. Hãy là người đầu tiên chia sẻ thông tin!</p>
+            <div class="text-center py-6 space-y-2">
+    <x-heroicon-o-chat-bubble-left-right class="w-8 h-8 text-slate-300 mx-auto" />
+    <p class="text-xs text-slate-400 font-semibold">Chưa có manh mối nào. Hãy là người đầu tiên chia sẻ thông tin!</p>
+</div>
         @endforelse
     </div>
 </div>

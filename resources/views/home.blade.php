@@ -123,14 +123,34 @@
                     nhanh nhất</p>
             </div>
             <div class="grid md:grid-cols-3 gap-10">
-                @foreach ([['icon' => '📝', 'bg' => 'bg-primary/10 text-primary', 'title' => '1. Báo tin mất tích', 'desc' => 'Điền biểu mẫu 3 bước tinh gọn, tải ảnh rõ mặt của con lên hệ thống. Đội ngũ kiểm duyệt sẽ phê duyệt và đưa thông tin lên cộng đồng chỉ sau tối đa 30 phút.'], ['icon' => '🌐', 'bg' => 'bg-brand/10 text-brand', 'title' => '2. Lan toả & Báo manh mối', 'desc' => 'Hệ thống sinh mã QR riêng. Người dân chia sẻ lên Facebook, Zalo bằng 1 cú chạm. Bất kỳ ai nhìn thấy trẻ có thể gửi manh mối kèm tọa độ GPS trực tiếp.'], ['icon' => '🏠', 'bg' => 'bg-success/10 text-success', 'title' => '3. Đoàn tụ cùng gia đình', 'desc' => 'Admin phối hợp với cơ quan công an kiểm chứng manh mối, kết nối trực tiếp với phụ huynh để đưa con trở về an toàn. Trạng thái con được cập nhật.']] as $step)
-                    <div class="how-step">
-                        <div class="how-step-icon {{ $step['bg'] }} shadow-lg">{{ $step['icon'] }}</div>
-                        <h3 class="font-extrabold text-slate-900 text-lg">{{ $step['title'] }}</h3>
-                        <p class="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto text-center">{{ $step['desc'] }}
-                        </p>
-                    </div>
-                @endforeach
+                @foreach ([
+    [
+        'icon' => 'heroicon-o-document-text', 
+        'bg' => 'bg-primary/10 text-primary', 
+        'title' => '1. Báo tin mất tích', 
+        'desc' => 'Điền biểu mẫu 3 bước tinh gọn, tải ảnh rõ mặt của con lên hệ thống. Đội ngũ kiểm duyệt sẽ phê duyệt và đưa thông tin lên cộng đồng chỉ sau tối đa 30 phút.'
+    ], 
+    [
+        'icon' => 'heroicon-o-globe-alt', 
+        'bg' => 'bg-brand/10 text-brand', 
+        'title' => '2. Lan toả & Báo manh mối', 
+        'desc' => 'Hệ thống sinh mã QR riêng. Người dân chia sẻ lên Facebook, Zalo bằng 1 cú chạm. Bất kỳ ai nhìn thấy trẻ có thể gửi manh mối kèm tọa độ GPS trực tiếp.'
+    ], 
+    [
+        'icon' => 'heroicon-o-home', 
+        'bg' => 'bg-success/10 text-success', 
+        'title' => '3. Đoàn tụ cùng gia đình', 
+        'desc' => 'Admin phối hợp với cơ quan công an kiểm chứng manh mối, kết nối trực tiếp với phụ huynh để đưa con trở về an toàn. Trạng thái con được cập nhật.'
+    ]
+] as $step)
+    <div class="how-step">
+        <div class="how-step-icon {{ $step['bg'] }} shadow-lg flex items-center justify-center">
+            <x-dynamic-component :component="$step['icon']" class="w-6 h-6" />
+        </div>
+        <h3 class="font-extrabold text-slate-900 text-lg">{{ $step['title'] }}</h3>
+        <p class="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto text-center">{{ $step['desc'] }}</p>
+    </div>
+@endforeach
             </div>
         </div>
     </section>
