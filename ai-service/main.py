@@ -20,6 +20,11 @@ from services.face_service import FaceService, NoFaceDetectedError
 load_dotenv()
 
 MODEL_NAME = os.getenv("MODEL_NAME", "ArcFace")
+DETECTOR_BACKENDS = [
+    backend.strip()
+    for backend in os.getenv("DETECTOR_BACKENDS", "mtcnn,opencv").split(",")
+    if backend.strip()
+]
 INTERNAL_KEY = os.getenv("INTERNAL_KEY", "change_me")
 SCORE_THRESHOLD = float(os.getenv("SCORE_THRESHOLD", "0.70"))
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
@@ -31,12 +36,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger("face-match-service")
 
-face_service = FaceService(model_name=MODEL_NAME, threshold=SCORE_THRESHOLD)
+face_service = FaceService(model_name=MODEL_NAME, threshold=SCORE_THRESHOLD, detector_backends=DETECTOR_BACKENDS)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Starting face match service", extra={"model": MODEL_NAME})
+    logger.info("Starting face match service", extra={"model": MODEL_NAME, "detectors": DETECTOR_BACKENDS})
     yield
 
 

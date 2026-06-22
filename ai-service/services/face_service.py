@@ -11,19 +11,32 @@ class NoFaceDetectedError(RuntimeError):
 
 
 class FaceService:
-    def __init__(self, model_name: str = "ArcFace", threshold: float = 0.70) -> None:
+    def __init__(
+        self,
+        model_name: str = "ArcFace",
+        threshold: float = 0.70,
+        detector_backends: Sequence[str] | None = None,
+    ) -> None:
         self.model_name = model_name
         self.threshold = threshold
+        self.detector_backends = list(detector_backends or ["mtcnn", "opencv"])
 
     def encode(self, image_path: str) -> list[float]:
-        try:
-            representations = DeepFace.represent(
-                img_path=image_path,
-                model_name=self.model_name,
-                enforce_detection=True,
-            )
-        except ValueError as exc:
-            raise NoFaceDetectedError(str(exc)) from exc
+        last_error: Exception | None = None
+
+        for detector_backend in self.detector_backends:
+            try:
+                representations = DeepFace.represent(
+                    img_path=image_path,
+                    model_name=self.model_name,
+                    detector_backend=detector_backend,
+                    enforce_detection=True,
+                )
+                break
+            except ValueError as exc:
+                last_error = exc
+        else:
+            raise NoFaceDetectedError(str(last_error) if last_error else "No face detected")
 
         if not representations:
             raise NoFaceDetectedError("No face representation returned")

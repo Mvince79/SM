@@ -2,6 +2,9 @@
 
 FastAPI microservice for face encoding and ArcFace cosine matching.
 
+The default detector order is `mtcnn,opencv` because OpenCV can miss clear child
+faces in some poses. Override it with `DETECTOR_BACKENDS` if needed.
+
 ## Setup
 
 ```powershell

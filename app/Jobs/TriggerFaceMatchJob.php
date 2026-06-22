@@ -59,24 +59,32 @@ class TriggerFaceMatchJob implements ShouldQueue
 
             $missingPhoto = $photo->model_type === MissingChild::class ? $photo : $targetPhoto;
             $foundPhoto = $photo->model_type === FoundChild::class ? $photo : $targetPhoto;
+            $score = (float) $comparison['score'];
+            $isMatched = $score >= config('face_match.score_threshold');
+            $confidenceLevel = FaceMatchResult::confidenceLevelForScore($score);
 
-            $match = FaceMatchResult::query()->updateOrCreate(
-                [
-                    'missing_photo_id' => $missingPhoto->id,
-                    'found_photo_id' => $foundPhoto->id,
-                ],
-                [
+            $match = FaceMatchResult::query()->firstOrNew([
+                'missing_photo_id' => $missingPhoto->id,
+                'found_photo_id' => $foundPhoto->id,
+            ]);
+
+            $isReviewed = $match->exists && in_array($match->status, ['CONFIRMED', 'DISMISSED'], true);
+
+            if (! $isReviewed) {
+                $match->fill([
                     'missing_id' => $missingPhoto->model_id,
                     'found_id' => $foundPhoto->model_id,
-                    'score' => $comparison['score'],
-                    'is_matched' => $comparison['score'] >= config('face_match.score_threshold'),
+                    'score' => $score,
+                    'is_matched' => $isMatched,
+                    'confidence_level' => $confidenceLevel,
                     'source' => 'REALTIME',
                     'model_used' => $comparison['model'],
                     'status' => 'PENDING',
-                ]
-            );
+                ]);
+                $match->save();
+            }
 
-            if ($match->is_matched && ($match->wasRecentlyCreated || ! $match->notified_at)) {
+            if (! $isReviewed && $match->status === 'PENDING' && $match->is_matched && ($match->wasRecentlyCreated || ! $match->notified_at)) {
                 FaceMatchFound::dispatch($match);
                 $match->forceFill(['notified_at' => now()])->save();
             }

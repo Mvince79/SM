@@ -41,16 +41,30 @@ class FaceMatchResultInfolist
 
                         TextEntry::make('found_id')
                             ->label('Hồ sơ tìm thấy')
-                            ->formatStateUsing(fn($state) => '#' . $state),
+                            ->formatStateUsing(fn ($state) => '#' . $state),
 
                         TextEntry::make('score')
                             ->label('Độ khớp AI')
                             ->badge()
-                            ->formatStateUsing(fn($state) => number_format((float) $state * 100, 2) . '%')
-                            ->color(fn($state) => match (true) {
-                                (float) $state >= 0.90 => 'success',
-                                (float) $state >= 0.70 => 'warning',
+                            ->formatStateUsing(fn ($state) => number_format((float) $state * 100, 2) . '%')
+                            ->color(fn ($state) => match (true) {
+                                (float) $state >= config('face_match.high_confidence_threshold', 0.85) => 'success',
+                                (float) $state >= config('face_match.score_threshold', 0.70) => 'warning',
                                 default => 'danger',
+                            }),
+
+                        TextEntry::make('confidence_level')
+                            ->label('Độ tin cậy')
+                            ->badge()
+                            ->formatStateUsing(fn (?string $state): string => match ($state) {
+                                'HIGH' => 'Khớp mạnh',
+                                'MEDIUM' => 'Cần kiểm tra',
+                                default => 'Thấp',
+                            })
+                            ->color(fn (?string $state): string => match ($state) {
+                                'HIGH' => 'success',
+                                'MEDIUM' => 'warning',
+                                default => 'gray',
                             }),
 
                         TextEntry::make('source')
@@ -64,11 +78,17 @@ class FaceMatchResultInfolist
                         TextEntry::make('status')
                             ->label('Trạng thái')
                             ->badge()
-                            ->formatStateUsing(fn($state) => match ($state) {
+                            ->formatStateUsing(fn ($state) => match ($state) {
                                 'PENDING' => 'Chờ xử lý',
                                 'CONFIRMED' => 'Đã xác nhận',
                                 'DISMISSED' => 'Đã bác bỏ',
                                 default => $state,
+                            })
+                            ->color(fn ($state) => match ($state) {
+                                'PENDING' => 'warning',
+                                'CONFIRMED' => 'success',
+                                'DISMISSED' => 'danger',
+                                default => 'gray',
                             }),
 
                         TextEntry::make('confirmedBy.full_name')

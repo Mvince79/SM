@@ -10,10 +10,12 @@ use App\Models\MissingChild;
 use App\Models\Photo;
 use App\Models\Province;
 use App\Models\User;
+use App\Notifications\FaceMatchNotification;
 use App\Services\FaceMatchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Mockery;
 use Tests\TestCase;
 
@@ -24,7 +26,10 @@ class TriggerFaceMatchJobTest extends TestCase
     public function test_trigger_face_match_job_creates_match_result_and_dispatches_event(): void
     {
         Event::fake([FaceMatchFound::class]);
-        config(['face_match.score_threshold' => 0.70]);
+        config([
+            'face_match.score_threshold' => 0.70,
+            'face_match.high_confidence_threshold' => 0.85,
+        ]);
 
         [$missingPhoto, $foundPhoto] = $this->createPhotoPair();
 
@@ -44,11 +49,121 @@ class TriggerFaceMatchJobTest extends TestCase
             'missing_id' => $missingPhoto->model_id,
             'found_id' => $foundPhoto->model_id,
             'score' => 0.8735,
+            'confidence_level' => 'HIGH',
             'status' => 'PENDING',
         ]);
 
         $this->assertNotNull(FaceMatchResult::query()->first()->notified_at);
         Event::assertDispatched(FaceMatchFound::class);
+    }
+
+    public function test_matched_face_result_notifies_admins(): void
+    {
+        Notification::fake();
+        config([
+            'face_match.score_threshold' => 0.70,
+            'face_match.high_confidence_threshold' => 0.85,
+        ]);
+
+        $admin = User::factory()->create([
+            'role' => 'ADMIN',
+        ]);
+        $moderator = User::factory()->create([
+            'role' => 'MODERATOR',
+        ]);
+        $normalUser = User::factory()->create([
+            'role' => 'USER',
+        ]);
+
+        [$missingPhoto] = $this->createPhotoPair();
+
+        $service = Mockery::mock(FaceMatchService::class);
+        $service->shouldReceive('isHealthy')->once()->andReturnTrue();
+        $service->shouldReceive('compare')->once()->andReturn([
+            'score' => 0.8735,
+            'is_matched' => true,
+            'model' => 'ArcFace',
+        ]);
+
+        (new TriggerFaceMatchJob($missingPhoto->id))->handle($service);
+
+        Notification::assertSentTo($admin, FaceMatchNotification::class);
+        Notification::assertSentTo($moderator, FaceMatchNotification::class);
+        Notification::assertNotSentTo($normalUser, FaceMatchNotification::class);
+    }
+
+    public function test_medium_confidence_match_is_saved_for_admin_review(): void
+    {
+        Event::fake([FaceMatchFound::class]);
+        config([
+            'face_match.score_threshold' => 0.70,
+            'face_match.high_confidence_threshold' => 0.85,
+        ]);
+
+        [$missingPhoto, $foundPhoto] = $this->createPhotoPair();
+
+        $service = Mockery::mock(FaceMatchService::class);
+        $service->shouldReceive('isHealthy')->once()->andReturnTrue();
+        $service->shouldReceive('compare')->once()->andReturn([
+            'score' => 0.7825,
+            'is_matched' => true,
+            'model' => 'ArcFace',
+        ]);
+
+        (new TriggerFaceMatchJob($missingPhoto->id))->handle($service);
+
+        $this->assertDatabaseHas('face_match_results', [
+            'missing_photo_id' => $missingPhoto->id,
+            'found_photo_id' => $foundPhoto->id,
+            'score' => 0.7825,
+            'is_matched' => 1,
+            'confidence_level' => 'MEDIUM',
+            'status' => 'PENDING',
+        ]);
+
+        Event::assertDispatched(FaceMatchFound::class);
+    }
+
+    public function test_reviewed_match_result_is_not_reopened_by_later_ai_runs(): void
+    {
+        Event::fake([FaceMatchFound::class]);
+        config([
+            'face_match.score_threshold' => 0.70,
+            'face_match.high_confidence_threshold' => 0.85,
+        ]);
+
+        [$missingPhoto, $foundPhoto] = $this->createPhotoPair();
+
+        FaceMatchResult::query()->create([
+            'missing_photo_id' => $missingPhoto->id,
+            'found_photo_id' => $foundPhoto->id,
+            'missing_id' => $missingPhoto->model_id,
+            'found_id' => $foundPhoto->model_id,
+            'score' => 0.9123,
+            'is_matched' => true,
+            'confidence_level' => 'HIGH',
+            'source' => 'REALTIME',
+            'model_used' => 'ArcFace',
+            'status' => 'DISMISSED',
+        ]);
+
+        $service = Mockery::mock(FaceMatchService::class);
+        $service->shouldReceive('isHealthy')->once()->andReturnTrue();
+        $service->shouldReceive('compare')->once()->andReturn([
+            'score' => 0.9735,
+            'is_matched' => true,
+            'model' => 'ArcFace',
+        ]);
+
+        (new TriggerFaceMatchJob($missingPhoto->id))->handle($service);
+
+        $this->assertDatabaseHas('face_match_results', [
+            'missing_photo_id' => $missingPhoto->id,
+            'found_photo_id' => $foundPhoto->id,
+            'score' => 0.9123,
+            'status' => 'DISMISSED',
+        ]);
+        Event::assertNotDispatched(FaceMatchFound::class);
     }
 
     public function test_failed_trigger_job_notifies_admins(): void

@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\FaceMatchResult;
+use App\Models\User;
 use App\Notifications\FaceMatchNotification;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -41,18 +42,27 @@ class FaceMatchFound implements ShouldBroadcast
             'missing_id' => $this->match->missing_id,
             'found_id' => $this->match->found_id,
             'score' => (float) $this->match->score,
+            'confidence_level' => $this->match->confidence_level,
+            'confidence_label' => $this->match->confidence_label,
             'missing_name' => $this->match->missingChild?->full_name,
             'title' => 'AI gợi ý có hồ sơ khớp',
-            'message' => 'AI gợi ý ' . number_format((float) $this->match->score * 100, 2) . '% khớp cho hồ sơ ' . $this->match->missingChild?->full_name,
+            'message' => 'AI gợi ý ' . number_format((float) $this->match->score * 100, 2) . '% khớp cho hồ sơ ' . $this->match->missingChild?->full_name . ' (' . $this->match->confidence_label . ')',
             'url' => route('missing.detail', ['id' => $this->match->missing_id]),
         ];
     }
 
     private function usersToNotify()
     {
-        return collect([
+        $caseUsers = collect([
             $this->match->missingChild?->user,
             $this->match->foundChild?->user,
-        ])->filter()->unique('id')->values();
+        ])->filter();
+
+        $admins = User::query()->admins()->get();
+
+        return $caseUsers
+            ->merge($admins)
+            ->unique('id')
+            ->values();
     }
 }

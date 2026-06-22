@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
-
 class FaceMatchResultsTable
 {
     public static function configure(Table $table): Table
@@ -36,10 +35,10 @@ class FaceMatchResultsTable
 
                 Tables\Columns\TextColumn::make('missingChild.full_name')
                     ->label('Trẻ mất tích')
-                    ->description(fn(FaceMatchResult $record): string => $record->missingChild?->case_code ?? '—')
-                    ->searchable(query: fn(Builder $query, string $search) => $query->whereHas(
+                    ->description(fn (FaceMatchResult $record): string => $record->missingChild?->case_code ?? '—')
+                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas(
                         'missingChild',
-                        fn($q) => $q->where('full_name', 'like', "%{$search}%")
+                        fn ($q) => $q->where('full_name', 'like', "%{$search}%")
                             ->orWhere('case_code', 'like', "%{$search}%")
                     ))
                     ->weight('bold'),
@@ -52,19 +51,34 @@ class FaceMatchResultsTable
 
                 Tables\Columns\TextColumn::make('score')
                     ->label('Độ khớp AI')
-                    ->formatStateUsing(fn($state): string => number_format((float) $state * 100, 2) . '%')
+                    ->formatStateUsing(fn ($state): string => number_format((float) $state * 100, 2) . '%')
                     ->badge()
-                    ->color(fn($state): string => match (true) {
-                        (float) $state >= 0.90 => 'success',
-                        (float) $state >= 0.70 => 'warning',
+                    ->color(fn ($state): string => match (true) {
+                        (float) $state >= config('face_match.high_confidence_threshold', 0.85) => 'success',
+                        (float) $state >= config('face_match.score_threshold', 0.70) => 'warning',
                         default => 'danger',
+                    })
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('confidence_level')
+                    ->label('Độ tin cậy')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'HIGH' => 'Khớp mạnh',
+                        'MEDIUM' => 'Cần kiểm tra',
+                        default => 'Thấp',
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'HIGH' => 'success',
+                        'MEDIUM' => 'warning',
+                        default => 'gray',
                     })
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('source')
                     ->label('Nguồn')
                     ->badge()
-                    ->color(fn(?string $state): string => match ($state) {
+                    ->color(fn (?string $state): string => match ($state) {
                         'REALTIME' => 'info',
                         'AGE_PROGRESSION' => 'warning',
                         'MANUAL' => 'gray',
@@ -74,18 +88,19 @@ class FaceMatchResultsTable
                 Tables\Columns\TextColumn::make('model_used')
                     ->label('Model AI')
                     ->placeholder('—')
-                    ->color('gray'),
+                    ->color('gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('status')
                     ->label('Trạng thái')
                     ->badge()
-                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
                         'PENDING' => 'Chờ xử lý',
                         'CONFIRMED' => 'Đã xác nhận',
                         'DISMISSED' => 'Đã bác bỏ',
                         default => $state,
                     })
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'PENDING' => 'warning',
                         'CONFIRMED' => 'success',
                         'DISMISSED' => 'danger',
@@ -106,7 +121,7 @@ class FaceMatchResultsTable
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Tạo lúc')
                     ->since()
-                    ->tooltip(fn(FaceMatchResult $record): string => $record->created_at?->format('d/m/Y H:i:s') ?? '')
+                    ->tooltip(fn (FaceMatchResult $record): string => $record->created_at?->format('d/m/Y H:i:s') ?? '')
                     ->sortable(),
             ])
             ->filters([
@@ -116,6 +131,14 @@ class FaceMatchResultsTable
                         'PENDING' => 'Chờ xử lý',
                         'CONFIRMED' => 'Đã xác nhận',
                         'DISMISSED' => 'Đã bác bỏ',
+                    ]),
+
+                SelectFilter::make('confidence_level')
+                    ->label('Độ tin cậy')
+                    ->options([
+                        'HIGH' => 'Khớp mạnh',
+                        'MEDIUM' => 'Cần kiểm tra',
+                        'LOW' => 'Thấp',
                     ]),
 
                 SelectFilter::make('source')
@@ -142,11 +165,11 @@ class FaceMatchResultsTable
                         return $query
                             ->when(
                                 filled($data['score_from'] ?? null),
-                                fn(Builder $query) => $query->where('score', '>=', ((float) $data['score_from']) / 100)
+                                fn (Builder $query) => $query->where('score', '>=', ((float) $data['score_from']) / 100)
                             )
                             ->when(
                                 filled($data['score_to'] ?? null),
-                                fn(Builder $query) => $query->where('score', '<=', ((float) $data['score_to']) / 100)
+                                fn (Builder $query) => $query->where('score', '<=', ((float) $data['score_to']) / 100)
                             );
                     }),
 
@@ -162,11 +185,11 @@ class FaceMatchResultsTable
                         return $query
                             ->when(
                                 filled($data['created_from'] ?? null),
-                                fn(Builder $query) => $query->whereDate('created_at', '>=', $data['created_from'])
+                                fn (Builder $query) => $query->whereDate('created_at', '>=', $data['created_from'])
                             )
                             ->when(
                                 filled($data['created_until'] ?? null),
-                                fn(Builder $query) => $query->whereDate('created_at', '<=', $data['created_until'])
+                                fn (Builder $query) => $query->whereDate('created_at', '<=', $data['created_until'])
                             );
                     }),
             ])
@@ -175,13 +198,14 @@ class FaceMatchResultsTable
                     ->label('Xác nhận')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->hidden(fn(FaceMatchResult $record): bool => $record->status !== 'PENDING')
+                    ->hidden(fn (FaceMatchResult $record): bool => $record->status !== 'PENDING')
                     ->requiresConfirmation()
                     ->modalHeading('Xác nhận kết quả AI match')
                     ->modalDescription(function (FaceMatchResult $record): string {
                         $score = number_format($record->score * 100, 2);
                         $name = $record->missingChild?->full_name ?? '?';
-                        return "Xác nhận kết quả AI ({$score}%) cho hồ sơ {$name}? Hệ thống sẽ tự động đóng hồ sơ mất tích và hồ sơ tìm được liên quan.";
+
+                        return "Xác nhận kết quả AI {$score}% ({$record->confidence_label}) cho hồ sơ {$name}? Hệ thống sẽ đánh dấu hồ sơ mất tích là đã tìm thấy và hồ sơ tìm thấy là đã khớp.";
                     })
                     ->modalSubmitActionLabel('Xác nhận')
                     ->action(function (FaceMatchResult $record): void {
@@ -201,7 +225,6 @@ class FaceMatchResultsTable
                                 'status' => 'MATCHED',
                             ]);
 
-                            // Các match PENDING khác của cùng missing_id → tự Dismiss, tránh trùng
                             FaceMatchResult::where('missing_id', $record->missing_id)
                                 ->where('id', '!=', $record->id)
                                 ->where('status', 'PENDING')
@@ -211,7 +234,7 @@ class FaceMatchResultsTable
                                 ->causedBy(Auth::id())
                                 ->performedOn($record)
                                 ->withProperties(['missing_id' => $record->missing_id, 'found_id' => $record->found_id])
-                                ->log('Xác nhận khớp khuôn mặt — tự động đóng hồ sơ mất tích và tìm được');
+                                ->log('Xác nhận khớp khuôn mặt bằng AI');
                         });
 
                         Cache::forget('badge_face_match_pending');
@@ -221,10 +244,10 @@ class FaceMatchResultsTable
                     ->label('Bác bỏ')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
-                    ->hidden(fn(FaceMatchResult $record): bool => $record->status !== 'PENDING')
+                    ->hidden(fn (FaceMatchResult $record): bool => $record->status !== 'PENDING')
                     ->requiresConfirmation()
                     ->modalHeading('Bác bỏ kết quả AI match')
-                    ->modalDescription('Kết quả AI này sẽ được đánh dấu là không chính xác.')
+                    ->modalDescription('Kết quả này sẽ được đánh dấu là không chính xác và job AI chạy lại sẽ không tự mở lại kết quả đã bác bỏ.')
                     ->modalSubmitActionLabel('Bác bỏ')
                     ->action(function (FaceMatchResult $record): void {
                         $record->update([
@@ -236,7 +259,7 @@ class FaceMatchResultsTable
 
                 ViewAction::make(),
             ])
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('score', 'desc')
             ->striped()
             ->poll('30s');
     }

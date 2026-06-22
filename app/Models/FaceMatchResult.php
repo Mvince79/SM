@@ -14,6 +14,7 @@ class FaceMatchResult extends Model
         'found_photo_id',
         'score',
         'is_matched',
+        'confidence_level',
         'source',
         'model_used',
         'status',
@@ -28,6 +29,37 @@ class FaceMatchResult extends Model
         'confirmed_at' => 'datetime',
         'notified_at' => 'datetime',
     ];
+
+    public function getConfidenceLabelAttribute(): string
+    {
+        return match ($this->confidence_level) {
+            'HIGH' => 'Khớp mạnh',
+            'MEDIUM' => 'Cần kiểm tra',
+            default => 'Thấp',
+        };
+    }
+
+    public function getConfidenceColorAttribute(): string
+    {
+        return match ($this->confidence_level) {
+            'HIGH' => 'success',
+            'MEDIUM' => 'warning',
+            default => 'gray',
+        };
+    }
+
+    public static function confidenceLevelForScore(float $score): string
+    {
+        if ($score >= config('face_match.high_confidence_threshold', 0.85)) {
+            return 'HIGH';
+        }
+
+        if ($score >= config('face_match.score_threshold', 0.70)) {
+            return 'MEDIUM';
+        }
+
+        return 'LOW';
+    }
 
     // ── Relationships ──────────────────────────────────────────────────────────
 
