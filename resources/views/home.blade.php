@@ -173,7 +173,7 @@
                         <div class="text-[10px] text-slate-500 font-semibold mt-0.5">{{ $f['age'] }} tuổi ·
                             {{ $f['city'] }}
                         </div>
-                        <div class="text-[10px] text-success-dark font-black mt-1">✓ Về nhà sau {{ $f['days'] }}</div>
+                        <div class="text-[10px] text-success-dark font-black mt-1">Về nhà sau {{ $f['days'] }}</div>
                     </div>
                 </div>
             @endforeach

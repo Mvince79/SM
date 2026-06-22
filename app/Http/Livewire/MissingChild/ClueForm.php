@@ -111,6 +111,6 @@ class ClueForm extends Component
 
     public function render()
     {
-        return view('components.missing.clue-form');
+        return view('livewire.missing-child.clue-form');
     }
 }
