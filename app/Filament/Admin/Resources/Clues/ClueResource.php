@@ -30,6 +30,8 @@ class ClueResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Manh mối';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     // ── Navigation Badge: đếm clue chưa xác minh ─────────────────────────────
     public static function getNavigationBadge(): ?string
     {
