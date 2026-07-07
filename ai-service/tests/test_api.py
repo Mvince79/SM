@@ -51,6 +51,39 @@ class FaceMatchApiTest(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
         self.assertEqual(response.json()["detail"], "no_face_detected")
 
+    def test_detect_face_returns_crop_metadata(self) -> None:
+        with patch.object(
+            main.face_service,
+            "detect_face",
+            return_value={
+                "bounding_box": {"x": 10, "y": 20, "w": 80, "h": 80},
+                "crop_image_base64": "ZmFrZS1qcGVn",
+                "detected_gender": "MALE",
+            },
+        ):
+            response = self.client.post(
+                "/detect-face",
+                headers={"X-Internal-Key": "test-key"},
+                files={"file": ("face.jpg", b"fake image bytes", "image/jpeg")},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["has_face"])
+        self.assertEqual(payload["bounding_box"]["w"], 80)
+        self.assertEqual(payload["detected_gender"], "MALE")
+
+    def test_detect_face_no_face_returns_422(self) -> None:
+        with patch.object(main.face_service, "detect_face", side_effect=NoFaceDetectedError()):
+            response = self.client.post(
+                "/detect-face",
+                headers={"X-Internal-Key": "test-key"},
+                files={"file": ("blank.jpg", b"fake image bytes", "image/jpeg")},
+            )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["detail"], "no_face_detected")
+
     def test_compare_returns_match_result(self) -> None:
         payload = {
             "encoding_a": [1.0] * 512,

@@ -23,6 +23,9 @@ class Photo extends Model
         'height',
         'has_face',
         'face_encoding',
+        'face_bounding_box',
+        'face_crop_path',
+        'detected_gender',
         'ai_status',
         'is_primary',
         'sort_order',
@@ -35,6 +38,7 @@ class Photo extends Model
             'width' => 'integer',
             'height' => 'integer',
             'has_face' => 'integer',
+            'face_bounding_box' => 'array',
             'is_primary' => 'integer',
             'sort_order' => 'integer',
         ];

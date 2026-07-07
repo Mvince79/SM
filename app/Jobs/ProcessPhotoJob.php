@@ -48,7 +48,33 @@ class ProcessPhotoJob implements ShouldQueue
 
         $this->generateDerivatives($photo);
 
-        $result = $faceMatchService->encode($photo->path_original);
+        $detection = $faceMatchService->detectFace($photo->path_original);
+
+        if (! $detection['has_face']) {
+            $photo->forceFill([
+                'has_face' => 0,
+                'detected_gender' => $detection['detected_gender'] ?? 'UNKNOWN',
+                'ai_status' => 'done',
+            ])->save();
+
+            return;
+        }
+
+        $photo->face_bounding_box = $detection['bounding_box'] ?? null;
+        $photo->detected_gender = $detection['detected_gender'] ?? 'UNKNOWN';
+
+        if (! empty($detection['crop_image_base64'])) {
+            $cropPath = $this->derivePath($photo->path_original, '_face_crop');
+            $cropData = base64_decode($detection['crop_image_base64'], true);
+
+            if ($cropData !== false) {
+                Storage::disk('public')->put($cropPath, $cropData);
+                $photo->face_crop_path = $cropPath;
+            }
+        }
+
+        $encodingPath = $photo->face_crop_path ?: $photo->path_original;
+        $result = $faceMatchService->encode($encodingPath);
         $photo->has_face = $result['has_face'] ? 1 : 0;
 
         if ($result['encoding']) {

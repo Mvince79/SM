@@ -114,11 +114,20 @@ class TriggerFaceMatchJob implements ShouldQueue
             ? FoundChild::class
             : MissingChild::class;
 
-        return Photo::query()
+        $query = Photo::query()
             ->where('model_type', $targetType)
             ->where('has_face', 1)
-            ->whereNotNull('face_encoding')
-            ->get();
+            ->whereNotNull('face_encoding');
+
+        if (in_array($photo->detected_gender, ['MALE', 'FEMALE'], true)) {
+            $query->where(function ($query) use ($photo) {
+                $query->where('detected_gender', $photo->detected_gender)
+                    ->orWhere('detected_gender', 'UNKNOWN')
+                    ->orWhereNull('detected_gender');
+            });
+        }
+
+        return $query->get();
     }
 
     private function decryptEncoding(Photo $photo): array

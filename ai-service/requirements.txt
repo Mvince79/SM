@@ -6,3 +6,5 @@ httpx==0.28.1
 deepface==0.0.93
 tensorflow==2.18.0
 tf-keras==2.18.0
+numpy==2.0.2
+pillow==11.0.0

@@ -14,7 +14,7 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from starlette import status
 
-from models.schemas import CompareRequest, CompareResponse, EncodeResponse, HealthResponse
+from models.schemas import CompareRequest, CompareResponse, DetectFaceResponse, EncodeResponse, HealthResponse
 from services.face_service import FaceService, NoFaceDetectedError
 
 load_dotenv()
@@ -107,6 +107,34 @@ async def encode(file: UploadFile = File(...)) -> EncodeResponse:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="no_face_detected") from None
 
         return EncodeResponse(encoding=encoding, has_face=True, model=MODEL_NAME)
+    finally:
+        try:
+            os.remove(temp_path)
+        except OSError:
+            logger.warning("Could not remove temporary upload", extra={"path": temp_path})
+
+
+@app.post("/detect-face", response_model=DetectFaceResponse, dependencies=[Depends(require_internal_key)])
+async def detect_face(file: UploadFile = File(...)) -> DetectFaceResponse:
+    if file.content_type not in {"image/jpeg", "image/png"}:
+        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="unsupported_media_type")
+
+    contents = await file.read()
+    if len(contents) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="file_too_large")
+
+    suffix = ".png" if file.content_type == "image/png" else ".jpg"
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as temp_file:
+        temp_file.write(contents)
+        temp_path = temp_file.name
+
+    try:
+        try:
+            result = await run_in_threadpool(face_service.detect_face, temp_path)
+        except NoFaceDetectedError:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="no_face_detected") from None
+
+        return DetectFaceResponse(has_face=True, model=MODEL_NAME, **result)
     finally:
         try:
             os.remove(temp_path)

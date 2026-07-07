@@ -63,6 +63,49 @@ class FaceMatchService
         ];
     }
 
+    public function detectFace(string $storagePath): array
+    {
+        $absolutePath = Storage::disk('public')->path($storagePath);
+
+        if (! is_file($absolutePath)) {
+            throw new RuntimeException("Photo file not found: {$storagePath}");
+        }
+
+        $handle = fopen($absolutePath, 'rb');
+
+        try {
+            $response = $this->client()
+                ->attach('file', $handle, basename($storagePath), [
+                    'Content-Type' => mime_content_type($absolutePath) ?: 'application/octet-stream',
+                ])
+                ->post('/detect-face');
+        } finally {
+            if (is_resource($handle)) {
+                fclose($handle);
+            }
+        }
+
+        if ($response->status() === 422) {
+            return [
+                'has_face' => false,
+                'bounding_box' => null,
+                'crop_image_base64' => null,
+                'detected_gender' => 'UNKNOWN',
+            ];
+        }
+
+        if (! $response->successful()) {
+            throw new AIServiceUnavailableException('AI detect-face request failed with status ' . $response->status());
+        }
+
+        return [
+            'has_face' => (bool) $response->json('has_face', true),
+            'bounding_box' => $response->json('bounding_box'),
+            'crop_image_base64' => $response->json('crop_image_base64'),
+            'detected_gender' => $response->json('detected_gender', 'UNKNOWN'),
+        ];
+    }
+
     public function compare(array $encodingA, array $encodingB): array
     {
         $response = $this->client()->post('/compare', [

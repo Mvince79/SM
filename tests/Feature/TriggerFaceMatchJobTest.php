@@ -166,6 +166,31 @@ class TriggerFaceMatchJobTest extends TestCase
         Event::assertNotDispatched(FaceMatchFound::class);
     }
 
+    public function test_trigger_face_match_job_skips_clearly_different_detected_gender(): void
+    {
+        Event::fake([FaceMatchFound::class]);
+        config([
+            'face_match.score_threshold' => 0.70,
+            'face_match.high_confidence_threshold' => 0.85,
+        ]);
+
+        [$missingPhoto, $foundPhoto] = $this->createPhotoPair();
+        $missingPhoto->forceFill(['detected_gender' => 'MALE'])->save();
+        $foundPhoto->forceFill(['detected_gender' => 'FEMALE'])->save();
+
+        $service = Mockery::mock(FaceMatchService::class);
+        $service->shouldReceive('isHealthy')->once()->andReturnTrue();
+        $service->shouldNotReceive('compare');
+
+        (new TriggerFaceMatchJob($missingPhoto->id))->handle($service);
+
+        $this->assertDatabaseMissing('face_match_results', [
+            'missing_photo_id' => $missingPhoto->id,
+            'found_photo_id' => $foundPhoto->id,
+        ]);
+        Event::assertNotDispatched(FaceMatchFound::class);
+    }
+
     public function test_failed_trigger_job_notifies_admins(): void
     {
         $admin = User::factory()->create([

@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import math
+import base64
+from io import BytesIO
 from typing import Sequence
 
+import numpy as np
+from PIL import Image
 from deepface import DeepFace
 
 
@@ -46,6 +50,69 @@ class FaceService:
             raise NoFaceDetectedError("No embedding returned")
 
         return [float(value) for value in embedding]
+
+    def detect_face(self, image_path: str) -> dict:
+        last_error: Exception | None = None
+
+        for detector_backend in self.detector_backends:
+            try:
+                faces = DeepFace.extract_faces(
+                    img_path=image_path,
+                    detector_backend=detector_backend,
+                    align=True,
+                    enforce_detection=True,
+                )
+                break
+            except ValueError as exc:
+                last_error = exc
+        else:
+            raise NoFaceDetectedError(str(last_error) if last_error else "No face detected")
+
+        if not faces:
+            raise NoFaceDetectedError("No face returned")
+
+        face = faces[0]
+        facial_area = face.get("facial_area") or {}
+        crop_array = face.get("face")
+
+        if crop_array is None:
+            raise NoFaceDetectedError("No face crop returned")
+
+        crop = np.asarray(crop_array)
+        if crop.dtype != np.uint8:
+            crop = np.clip(crop * 255, 0, 255).astype(np.uint8)
+
+        image = Image.fromarray(crop).convert("RGB").resize((112, 112))
+        buffer = BytesIO()
+        image.save(buffer, format="JPEG", quality=90)
+
+        detected_gender = "UNKNOWN"
+        try:
+            analysis = DeepFace.analyze(
+                img_path=image_path,
+                actions=["gender"],
+                detector_backend=detector_backend,
+                enforce_detection=False,
+            )
+            first = analysis[0] if isinstance(analysis, list) else analysis
+            gender = str(first.get("dominant_gender", "")).lower()
+            if gender in {"man", "male"}:
+                detected_gender = "MALE"
+            elif gender in {"woman", "female"}:
+                detected_gender = "FEMALE"
+        except Exception:
+            detected_gender = "UNKNOWN"
+
+        return {
+            "bounding_box": {
+                "x": int(facial_area.get("x", 0)),
+                "y": int(facial_area.get("y", 0)),
+                "w": int(facial_area.get("w", facial_area.get("width", 0))),
+                "h": int(facial_area.get("h", facial_area.get("height", 0))),
+            },
+            "crop_image_base64": base64.b64encode(buffer.getvalue()).decode("ascii"),
+            "detected_gender": detected_gender,
+        }
 
     def compare(self, encoding_a: Sequence[float], encoding_b: Sequence[float]) -> float:
         if len(encoding_a) != len(encoding_b):

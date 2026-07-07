@@ -14,6 +14,14 @@ class EncodeResponse(BaseModel):
     model: str
 
 
+class DetectFaceResponse(BaseModel):
+    has_face: bool
+    bounding_box: dict[str, int] | None = None
+    crop_image_base64: str | None = None
+    detected_gender: str = "UNKNOWN"
+    model: str
+
+
 class CompareRequest(BaseModel):
     encoding_a: list[float] = Field(min_length=512, max_length=512)
     encoding_b: list[float] = Field(min_length=512, max_length=512)
