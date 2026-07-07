@@ -2,6 +2,7 @@
 @section('title', $case->full_name . ' — Chi tiết hồ sơ')
 
 @push('head')
+    <meta name="robots" content="noindex">
     <meta name="description"
         content="{{ $case->meta_description ?: 'Thông tin tìm kiếm trẻ mất tích ' . $case->full_name }}">
     <meta property="og:title" content="{{ $case->meta_title ?: $case->full_name . ' - Hồ sơ mất tích' }}">

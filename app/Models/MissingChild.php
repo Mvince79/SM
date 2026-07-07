@@ -249,18 +249,45 @@ class MissingChild extends Model
 
     protected function resolvePhotoUrlForViewer(Photo $photo, bool $authenticated): ?string
     {
-        $fields = $authenticated
-            ? ['path_original', 'path_thumb', 'path_blurred']
-            : ['path_blurred'];
+        $user = Auth::user();
+
+        if (! $user) {
+            $fields = ['path_blurred'];
+        } elseif ($user->isAdmin() || $user->hasVerifiedKyc()) {
+            $fields = ['path_original', 'path_thumb', 'path_blurred'];
+        } else {
+            $fields = ['path_thumb', 'path_blurred'];
+        }
 
         foreach ($fields as $field) {
             $path = $photo->{$field} ?? null;
             if ($path && Storage::disk('public')->exists($path)) {
+                if ($field === 'path_original') {
+                    $this->logOriginalPhotoAccess($photo, $user);
+                }
+
                 return asset('storage/' . $path);
             }
         }
 
         return null;
+    }
+
+    private function logOriginalPhotoAccess(Photo $photo, ?User $user): void
+    {
+        if (! $user || ! function_exists('activity')) {
+            return;
+        }
+
+        activity('photo_access')
+            ->causedBy($user)
+            ->performedOn($photo)
+            ->withProperties([
+                'photo_id' => $photo->id,
+                'path_type' => 'path_original',
+                'source' => 'missing_child_detail',
+            ])
+            ->log('Original photo accessed');
     }
     public function activities(): MorphMany
     {

@@ -25,6 +25,7 @@ class User extends Authenticatable implements FilamentUser
         'google_id',
         'avatar_url',
         'role',
+        'kyc_status',
         'status',
         'ban_reason',
         'province_id',
@@ -73,6 +74,11 @@ class User extends Authenticatable implements FilamentUser
     public function isAdmin(): bool
     {
         return in_array($this->role, ['ADMIN', 'MODERATOR']);
+    }
+
+    public function hasVerifiedKyc(): bool
+    {
+        return $this->kyc_status === 'VERIFIED';
     }
 
     public function canAccessPanel(Panel $panel): bool

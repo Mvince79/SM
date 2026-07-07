@@ -69,33 +69,12 @@ class MissingChildResource extends JsonResource
             'found_at' => $this->found_at?->toIso8601String(),
 
             // Photo
-            'primary_photo' => $this->whenLoaded('primaryPhoto', function () use ($authenticated) {
-                return [
-                    'id' => $this->primaryPhoto->id,
-                    'url' => $this->detail_primary_photo_url,
-                    'url_original' => $authenticated && $this->primaryPhoto->path_original
-                        ? '/storage/' . $this->primaryPhoto->path_original
-                        : null,
-                    'url_blurred' => ! $authenticated && $this->primaryPhoto->path_blurred
-                        ? '/storage/' . $this->primaryPhoto->path_blurred
-                        : null,
-                ];
+            'primary_photo' => $this->whenLoaded('primaryPhoto', function () {
+                return new PhotoResource($this->primaryPhoto);
             }),
 
-            'photos' => $this->whenLoaded('photos', function () use ($authenticated) {
-                return $this->photos->map(function ($photo) use ($authenticated) {
-                    $url = $authenticated
-                        ? ($photo->path_original ? '/storage/' . $photo->path_original : null)
-                        : ($photo->path_blurred ? '/storage/' . $photo->path_blurred : null);
-
-                    return [
-                        'id' => $photo->id,
-                        'is_primary' => (bool) $photo->is_primary,
-                        'url' => $url,
-                        'url_original' => $authenticated ? ($photo->path_original ? '/storage/' . $photo->path_original : null) : null,
-                        'url_blurred' => $photo->path_blurred ? '/storage/' . $photo->path_blurred : null,
-                    ];
-                })->values();
+            'photos' => $this->whenLoaded('photos', function () {
+                return PhotoResource::collection($this->photos);
             }),
 
             // Stats

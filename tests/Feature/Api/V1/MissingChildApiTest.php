@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Models\MissingChild;
+use App\Models\Photo;
 use App\Models\Province;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -151,6 +152,47 @@ class MissingChildApiTest extends TestCase
         $response = $this->getJson("/api/v1/missing-children/{$missing->case_code}");
         $response->assertStatus(200)
             ->assertJson(['data' => ['case_code' => $missing->case_code]]);
+    }
+
+    public function test_missing_child_photos_are_tiered_by_kyc_status()
+    {
+        $missing = MissingChild::first();
+        Photo::withoutEvents(fn () => Photo::query()->create([
+            'model_type' => MissingChild::class,
+            'model_id' => $missing->id,
+            'path_original' => 'private/original.jpg',
+            'path_thumb' => 'private/thumb.jpg',
+            'path_blurred' => 'private/blurred.jpg',
+            'is_primary' => 1,
+        ]));
+
+        $this->getJson("/api/v1/missing-children/{$missing->id}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.primary_photo.access_tier', 'guest_blur')
+            ->assertJsonPath('data.primary_photo.url', '/storage/private/blurred.jpg')
+            ->assertJsonPath('data.primary_photo.url_original', null);
+
+        $unverifiedUser = User::factory()->create(['kyc_status' => 'NONE']);
+        $this->actingAs($unverifiedUser)
+            ->getJson("/api/v1/missing-children/{$missing->id}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.primary_photo.access_tier', 'thumbnail')
+            ->assertJsonPath('data.primary_photo.url', '/storage/private/thumb.jpg')
+            ->assertJsonPath('data.primary_photo.url_original', null);
+
+        $verifiedUser = User::factory()->create(['kyc_status' => 'VERIFIED']);
+        $this->actingAs($verifiedUser)
+            ->getJson("/api/v1/missing-children/{$missing->id}")
+            ->assertStatus(200)
+            ->assertJsonPath('data.primary_photo.access_tier', 'original')
+            ->assertJsonPath('data.primary_photo.url', '/storage/private/original.jpg')
+            ->assertJsonPath('data.primary_photo.url_original', '/storage/private/original.jpg');
+
+        $this->assertDatabaseHas('activity_log', [
+            'log_name' => 'photo_access',
+            'subject_type' => Photo::class,
+            'causer_id' => $verifiedUser->id,
+        ]);
     }
 
     public function test_missing_child_detail_not_found()

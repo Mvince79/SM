@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\FoundChild;
+use App\Models\Photo;
 use App\Policies\FoundChildPolicy;
 use App\Policies\VolunteerPolicy;
+use App\Policies\PhotoPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 
@@ -12,6 +14,7 @@ class AuthServiceProvider extends ServiceProvider
 {
     protected $policies = [
         FoundChild::class => FoundChildPolicy::class,
+        Photo::class => PhotoPolicy::class,
     ];
 
     public function register(): void
