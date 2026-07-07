@@ -7,6 +7,7 @@ use App\Models\Photo;
 use App\Models\Province;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 /**
@@ -266,6 +267,59 @@ class MissingChildApiTest extends TestCase
         );
         $response->assertStatus(200)
             ->assertJsonStructure(['status', 'data', 'count']);
+    }
+
+    public function test_map_data_with_radius_filter_returns_nearby_markers_only()
+    {
+        Cache::flush();
+
+        $user = User::first();
+        $province = Province::first();
+
+        MissingChild::create([
+            'user_id' => $user->id,
+            'case_code' => 'MC-2026-RADIUS-IN',
+            'full_name' => 'Nearby Radius Case',
+            'age_estimate' => 8,
+            'gender' => 'MALE',
+            'province_id' => $province->id,
+            'lat' => 10.7769,
+            'lng' => 106.7009,
+            'missing_date' => now(),
+            'contact_name' => 'Parent',
+            'contact_phone' => '+84901230001',
+            'status' => 'APPROVED',
+        ]);
+
+        MissingChild::create([
+            'user_id' => $user->id,
+            'case_code' => 'MC-2026-RADIUS-OUT',
+            'full_name' => 'Far Radius Case',
+            'age_estimate' => 8,
+            'gender' => 'MALE',
+            'province_id' => $province->id,
+            'lat' => 21.0278,
+            'lng' => 105.8342,
+            'missing_date' => now(),
+            'contact_name' => 'Parent',
+            'contact_phone' => '+84901230002',
+            'status' => 'APPROVED',
+        ]);
+
+        $response = $this->getJson('/api/v1/map-data?radius=5&lat=10.7769&lng=106.7009');
+
+        $response->assertStatus(200);
+
+        $names = collect($response->json('data'))->pluck('name');
+        $this->assertTrue($names->contains('Nearby Radius Case'));
+        $this->assertFalse($names->contains('Far Radius Case'));
+    }
+
+    public function test_map_data_radius_filter_requires_full_coordinate_set()
+    {
+        $this->getJson('/api/v1/map-data?radius=10&lat=10.7769')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['lng']);
     }
 
     // ────────────────────────────────────────────────────────────────────────

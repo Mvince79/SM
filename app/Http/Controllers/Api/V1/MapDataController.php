@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1;
 use App\Models\MissingChild;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 /**
  * MapDataController
@@ -36,6 +35,9 @@ class MapDataController
             'sw_lng' => 'nullable|numeric|between:-180,180',
             'ne_lat' => 'nullable|numeric|between:-90,90',
             'ne_lng' => 'nullable|numeric|between:-180,180',
+            'radius' => 'nullable|required_with:lat,lng|numeric|min:0.1|max:200',
+            'lat' => 'nullable|required_with:radius,lng|numeric|between:-90,90',
+            'lng' => 'nullable|required_with:radius,lat|numeric|between:-180,180',
         ]);
 
         // Generate cache key
@@ -80,8 +82,14 @@ class MapDataController
             $query->where('province_id', $filters['province_id']);
         }
 
-        // Filter by bounding box if provided
-        if (!empty($filters['sw_lat']) && !empty($filters['ne_lat'])) {
+        // Radius search is more precise than a viewport bounding box, so prefer it
+        // when both filter sets are present.
+        $hasRadiusFilter = isset($filters['radius'], $filters['lat'], $filters['lng']);
+
+        if ($hasRadiusFilter) {
+            $query->whereNotNull('lat')
+                ->whereNotNull('lng');
+        } elseif (!empty($filters['sw_lat']) && !empty($filters['ne_lat'])) {
             $query->whereBetween('lat', [
                 min($filters['sw_lat'], $filters['ne_lat']),
                 max($filters['sw_lat'], $filters['ne_lat']),
@@ -92,6 +100,21 @@ class MapDataController
         }
 
         $results = $query->get();
+
+        if ($hasRadiusFilter) {
+            $originLat = (float) $filters['lat'];
+            $originLng = (float) $filters['lng'];
+            $radius = (float) $filters['radius'];
+
+            $results = $results->filter(function ($child) use ($originLat, $originLng, $radius) {
+                return $this->distanceKm(
+                    $originLat,
+                    $originLng,
+                    (float) $child->lat,
+                    (float) $child->lng,
+                ) <= $radius;
+            })->values();
+        }
 
         // Transform to marker format
         $markers = $results->map(function ($child) {
@@ -138,8 +161,23 @@ class MapDataController
                 'ne_lat' => round($filters['ne_lat'] ?? 0, 2),
                 'ne_lng' => round($filters['ne_lng'] ?? 0, 2),
             ],
+            'radius' => isset($filters['radius']) ? round((float) $filters['radius'], 2) : null,
+            'lat' => isset($filters['lat']) ? round((float) $filters['lat'], 6) : null,
+            'lng' => isset($filters['lng']) ? round((float) $filters['lng'], 6) : null,
         ]));
 
         return "map_data:{$hash}";
+    }
+
+    private function distanceKm(float $latA, float $lngA, float $latB, float $lngB): float
+    {
+        $earthRadiusKm = 6371;
+        $latDelta = deg2rad($latB - $latA);
+        $lngDelta = deg2rad($lngB - $lngA);
+
+        $a = sin($latDelta / 2) ** 2
+            + cos(deg2rad($latA)) * cos(deg2rad($latB)) * sin($lngDelta / 2) ** 2;
+
+        return $earthRadiusKm * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 }
