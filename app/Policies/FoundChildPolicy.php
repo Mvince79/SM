@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\FoundChild;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 class FoundChildPolicy
 {
@@ -17,9 +18,17 @@ class FoundChildPolicy
         return true;
     }
 
-    public function create(User $user): bool
+    public function create(User $user): Response
     {
-        return $user->isVerified();
+        if (!$user->isVerified()) {
+            return Response::deny('Vui lòng xác thực email trước khi đăng tin.');
+        }
+
+        if ($user->kyc_status !== 'VERIFIED') {
+            return Response::deny('Cần xác thực CCCD (KYC) trước khi đăng tin trẻ đã tìm thấy.');
+        }
+
+        return Response::allow();
     }
 
     public function update(User $user, FoundChild $foundChild): bool

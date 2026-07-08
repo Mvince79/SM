@@ -43,6 +43,10 @@ class MissingChildPolicy
             return Response::deny('Tài khoản của bạn đã bị khóa, không thể tạo tin mới.');
         }
 
+        if ($user->kyc_status !== 'VERIFIED') {
+            return Response::deny('Cần xác thực CCCD (KYC) trước khi đăng tin tìm trẻ thất lạc.');
+        }
+
         return Response::allow();
     }
 

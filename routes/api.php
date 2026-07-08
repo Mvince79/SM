@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\Internal\FaceMatchController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\StatsApiController;
+use App\Http\Controllers\Api\V1\KycController;
+
 
 Route::prefix('internal')
     ->middleware('internal.key')
@@ -29,6 +31,11 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             ->name('map-data.index');
         Route::get('/stats', [StatsApiController::class, 'index'])
             ->name('stats.index');
+    });
+
+    Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+        Route::post('/kyc/submit', [KycController::class, 'store'])
+            ->name('kyc.submit');   
     });
 
     // ────────────────────────────────────────────────────────────────────────────
@@ -62,10 +69,6 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('/clues', [\App\Http\Controllers\Api\V1\ClueApiController::class, 'store'])
             ->name('clues.store')
             ->middleware('throttle:60,1');
-        // TODO: Sprint 2 - Authenticated endpoints for create, update, delete
-        // Route::post('/missing-children', [MissingChildApiController::class, 'store']);
-        // Route::put('/missing-children/{id}', [MissingChildApiController::class, 'update']);
-        // Route::delete('/missing-children/{id}', [MissingChildApiController::class, 'destroy']);
     });
 });
 
