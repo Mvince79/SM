@@ -5,6 +5,10 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+[x-cloak] {
+    display: none !important;
+}
+
 /* ═══════════════════════════════════════════════════════════
    DESIGN TOKENS — TìmTrẻ.vn
    Coral Crimson × Royal Trust Blue × Emerald

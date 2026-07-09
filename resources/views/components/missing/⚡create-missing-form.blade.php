@@ -285,6 +285,10 @@ new class extends Component {
 ?>
 
 <div>
+    @if(auth()->user()->kyc_status !== 'VERIFIED')
+        <x-kyc-status-badge :status="auth()->user()->kyc_status" banner />
+    @endif
+
     <div class="bg-white border border-slate-200/85 rounded-3xl p-6 sm:p-10 shadow-premium space-y-8">
 
         <div class="flex flex-col items-center text-center space-y-2.5">

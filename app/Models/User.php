@@ -179,4 +179,9 @@ class User extends Authenticatable implements FilamentUser
             && !$this->isBanned()
             && $this->kyc_status === 'VERIFIED';
     }
+
+    public function kycVerification()
+    {
+        return $this->hasOne(KycVerification::class);
+    }
 }

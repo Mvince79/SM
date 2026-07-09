@@ -56,6 +56,7 @@ Route::delete('/watch-area', [WatchAreaController::class, 'destroy'])->name('wat
 Route::middleware(['auth', 'email.verified'])->group(function () {
     Route::prefix('/profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
+        Route::get('/kyc', fn() => view('profile.kyc'))->name('kyc');
     });
 
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read'])
