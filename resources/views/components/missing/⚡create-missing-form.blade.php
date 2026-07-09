@@ -8,9 +8,11 @@ use App\Models\Province;
 use App\Jobs\ProcessPhotoJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Traits\HasIdempotency;
 
 new class extends Component {
     use WithFileUploads;
+    use HasIdempotency;
 
     public int $step = 1;
 
@@ -46,6 +48,7 @@ new class extends Component {
     public string $contact_address = '';
     public bool $agreed = false;
 
+    public string $idempotencyKey = '';
     public $provinces;
 
     // ── Mount ─────────────────────────────────────────────────────────────
@@ -53,6 +56,7 @@ new class extends Component {
     {
         $this->provinces = Province::where('is_active', 1)->orderBy('name')->get();
         $this->missing_date = now()->toDateString();
+        $this->idempotencyKey = $this->generateIdempotencyKey();
     }
 
     // ── Validate từng bước ────────────────────────────────────────────────
@@ -217,54 +221,65 @@ new class extends Component {
             $this->missing_date = now()->toDateString();
         }
 
-        $case = DB::transaction(function () {
-            $case = MissingChild::create([
-                'user_id' => Auth::id(),
-                'case_code' => $this->generateCaseCode(),
-                'full_name' => $this->full_name,
-                'dob' => $this->dob ?: null,
-                'age_estimate' => $this->age_estimate !== '' ? (int) $this->age_estimate : null,
-                'gender' => $this->gender,
-                'skin_tone' => $this->skin_tone ?: null,
-                'height_cm' => $this->height_cm !== '' ? (int) $this->height_cm : null,
-                'weight_kg' => $this->weight_kg !== '' ? (float) $this->weight_kg : null,
-                'province_id' => (int) $this->province_id,
-                'district' => $this->district ?: null,
-                'ward' => $this->ward ?: null,
-                'address_detail' => $this->address_detail ?: null,
-                'lat' => $this->lat !== '' ? (float) $this->lat : null,
-                'lng' => $this->lng !== '' ? (float) $this->lng : null,
-                'missing_date' => $this->missing_date ?: now()->toDateString(),
-                'missing_time' => preg_match('/^\d{2}:\d{2}/', $this->missing_time ?? '') ? $this->missing_time : null,
-                'clothes_desc' => $this->clothes_desc ?: null,
-                'clothes_color' => $this->clothes_color ?: null,
-                'special_marks' => $this->special_marks,
-                'circumstances' => $this->circumstances ?: null,
-                'contact_name' => $this->contact_name,
-                'contact_phone' => $this->contact_phone,
-                'contact_relation' => $this->contact_relation,
-                'status' => 'PENDING',
-            ]);
-
-            foreach ($this->photos as $index => $photo) {
-                $path = $photo->storePublicly("missing/{$case->id}", 'public');
-                Photo::create([
-                    'model_type' => MissingChild::class,
-                    'model_id' => $case->id,
-                    'path_original' => $path,
-                    'file_size' => $photo->getSize(),
-                    'mime_type' => $photo->getMimeType(),
-                    'is_primary' => $index === 0 ? 1 : 0,
-                    'sort_order' => $index,
+        $result = $this->resolveIdempotent(
+            $this->idempotencyKey,
+            'missing_children',
+            Auth::id(),
+            function () {
+                $case = MissingChild::create([
+                    'user_id' => Auth::id(),
+                    'case_code' => $this->generateCaseCode(),
+                    'full_name' => $this->full_name,
+                    'dob' => $this->dob ?: null,
+                    'age_estimate' => $this->age_estimate !== '' ? (int) $this->age_estimate : null,
+                    'gender' => $this->gender,
+                    'skin_tone' => $this->skin_tone ?: null,
+                    'height_cm' => $this->height_cm !== '' ? (int) $this->height_cm : null,
+                    'weight_kg' => $this->weight_kg !== '' ? (float) $this->weight_kg : null,
+                    'province_id' => (int) $this->province_id,
+                    'district' => $this->district ?: null,
+                    'ward' => $this->ward ?: null,
+                    'address_detail' => $this->address_detail ?: null,
+                    'lat' => $this->lat !== '' ? (float) $this->lat : null,
+                    'lng' => $this->lng !== '' ? (float) $this->lng : null,
+                    'missing_date' => $this->missing_date ?: now()->toDateString(),
+                    'missing_time' => preg_match('/^\d{2}:\d{2}/', $this->missing_time ?? '') ? $this->missing_time : null,
+                    'clothes_desc' => $this->clothes_desc ?: null,
+                    'clothes_color' => $this->clothes_color ?: null,
+                    'special_marks' => $this->special_marks,
+                    'circumstances' => $this->circumstances ?: null,
+                    'contact_name' => $this->contact_name,
+                    'contact_phone' => $this->contact_phone,
+                    'contact_relation' => $this->contact_relation,
+                    'status' => 'PENDING',
                 ]);
-                ProcessPhotoJob::dispatch($case->id, $path);
-            }
 
-            return $case;
-        });
+                foreach ($this->photos as $index => $photo) {
+                    $path = $photo->storePublicly("missing/{$case->id}", 'public');
+                    Photo::create([
+                        'model_type' => MissingChild::class,
+                        'model_id' => $case->id,
+                        'path_original' => $path,
+                        'file_size' => $photo->getSize(),
+                        'mime_type' => $photo->getMimeType(),
+                        'is_primary' => $index === 0 ? 1 : 0,
+                        'sort_order' => $index,
+                    ]);
+                    ProcessPhotoJob::dispatch($case->id, $path);
+                }
+
+                return $case;
+            }
+        );
+
+        if ($result['was_duplicate']) {
+            // Bấm gửi 2 lần / double-click: không tạo lại, điều hướng thẳng đến hồ sơ đã tạo trước đó.
+            $this->redirect(route('missing.detail', $result['resource_id']));
+            return;
+        }
 
         session()->flash('success', 'Đăng tin thành công! Hồ sơ đang chờ xét duyệt.');
-        $this->redirect(route('missing.detail', (int) $case->id));
+        $this->redirect(route('missing.detail', $result['resource_id']));
     }
 };
 ?>
@@ -300,15 +315,16 @@ new class extends Component {
             @foreach ([1 => 'Thông tin bé', 2 => 'Đặc điểm & Ảnh', 3 => 'Liên hệ'] as $s => $label)
                     <div class="relative z-10 flex flex-col items-center gap-1.5">
                         <div class="w-8 h-8 rounded-full font-extrabold text-xs flex items-center justify-center transition-colors duration-500
-                                    {{ $step > $s
+                                            {{ $step > $s
                 ? 'bg-success text-white shadow-md shadow-success/20'
                 : ($step === $s
                     ? 'bg-primary text-white shadow-md shadow-primary/20'
                     : 'bg-slate-100 text-slate-400') }}">
                             {{ $step > $s ? '✓' : $s }}
                         </div>
-                        <span class="text-[10px] font-black uppercase tracking-wide
-                                    {{ $step > $s ? 'text-success' : ($step === $s ? 'text-primary' : 'text-slate-400') }}">
+                        <span
+                            class="text-[10px] font-black uppercase tracking-wide
+                                            {{ $step > $s ? 'text-success' : ($step === $s ? 'text-primary' : 'text-slate-400') }}">
                             {{ $label }}
                         </span>
                     </div>
@@ -328,7 +344,7 @@ new class extends Component {
                         <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Họ và tên của con
                             *</label>
                         <input type="text" wire:model.blur="full_name" placeholder="Ví dụ: Nguyễn Văn An" class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400
-                                    {{ $errors->has('full_name') ? 'border-red-400' : 'border-slate-200' }}" />
+                                        {{ $errors->has('full_name') ? 'border-red-400' : 'border-slate-200' }}" />
                         @error('full_name')
                             <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
                         @enderror
@@ -339,7 +355,7 @@ new class extends Component {
                         <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Tuổi của con *</label>
                         <div class="relative">
                             <input type="number" wire:model.blur="age_estimate" placeholder="VD: 8" min="0" max="18" class="w-full px-4 py-3 pr-14 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400
-                                        {{ $errors->has('age_estimate') ? 'border-red-400' : 'border-slate-200' }}" />
+                                            {{ $errors->has('age_estimate') ? 'border-red-400' : 'border-slate-200' }}" />
                             <span
                                 class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-semibold pointer-events-none">tuổi</span>
                         </div>
@@ -379,7 +395,7 @@ new class extends Component {
                         <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Ngày mất tích
                             *</label>
                         <input type="date" wire:model="missing_date" class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600
-                                    {{ $errors->has('missing_date') ? 'border-red-400' : 'border-slate-200' }}" />
+                                        {{ $errors->has('missing_date') ? 'border-red-400' : 'border-slate-200' }}" />
                         @error('missing_date')
                             <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
                         @enderror
@@ -395,29 +411,29 @@ new class extends Component {
                 {{-- [FIX 2] Tỉnh/Thành — searchable combobox --}}
                 <div class="grid sm:grid-cols-3 gap-4">
                     <div class="space-y-1.5" x-data="{
-                                open: false,
-                                query: '',
-                                selectedLabel: @js(optional($provinces->firstWhere('id', $province_id))->name ?? ''),
-                                options: @js($provinces->map(fn($p) => ['id' => (string) $p->id, 'name' => $p->name])->values()),
-                                get filtered() {
-                                    if (!this.query) return this.options;
-                                    const q = this.query.toLowerCase();
-                                    return this.options.filter(o => o.name.toLowerCase().includes(q));
-                                },
-                                select(opt) {
-                                    this.selectedLabel = opt.name;
-                                    this.query = '';
-                                    this.open = false;
-                                    $wire.set('province_id', opt.id);
-                                }
-                            }" @click.outside="open = false">
+                                    open: false,
+                                    query: '',
+                                    selectedLabel: @js(optional($provinces->firstWhere('id', $province_id))->name ?? ''),
+                                    options: @js($provinces->map(fn($p) => ['id' => (string) $p->id, 'name' => $p->name])->values()),
+                                    get filtered() {
+                                        if (!this.query) return this.options;
+                                        const q = this.query.toLowerCase();
+                                        return this.options.filter(o => o.name.toLowerCase().includes(q));
+                                    },
+                                    select(opt) {
+                                        this.selectedLabel = opt.name;
+                                        this.query = '';
+                                        this.open = false;
+                                        $wire.set('province_id', opt.id);
+                                    }
+                                }" @click.outside="open = false">
                         <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
                             Tỉnh/Thành phố *
                         </label>
                         <div class="relative">
                             <button type="button"
                                 @click="open = !open; if(open) $nextTick(() => $refs.searchMissing.focus())" class="w-full px-4 py-3 border rounded-2xl text-sm text-left bg-slate-50 focus:bg-white transition-all font-bold flex items-center justify-between gap-2
-                                        {{ $errors->has('province_id') ? 'border-red-400' : 'border-slate-200' }}">
+                                            {{ $errors->has('province_id') ? 'border-red-400' : 'border-slate-200' }}">
                                 <span x-text="selectedLabel || 'Chọn tỉnh...'"
                                     :class="selectedLabel ? 'text-slate-700' : 'text-slate-400 font-medium'"></span>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
@@ -492,83 +508,83 @@ new class extends Component {
                         đồ để ghim tay.</p>
 
                     <div wire:ignore x-data="{}" x-init="
-                            $nextTick(() => {
-                                if (window._mapPickerInstance) {
-                                    window._mapPickerInstance.remove();
-                                    window._mapPickerInstance = null;
-                                }
-
-                                const savedLat = parseFloat($wire.get('lat'));
-                                const savedLng = parseFloat($wire.get('lng'));
-                                const hasSavedLocation = !isNaN(savedLat) && !isNaN(savedLng);
-
-                                const defaultCenter = hasSavedLocation ? [savedLat, savedLng] : [16.0544, 108.2022];
-                                const defaultZoom = hasSavedLocation ? 14 : 6;
-
-                                const map = L.map('map-picker').setView(defaultCenter, defaultZoom);
-                                window._mapPickerInstance = map;
-
-                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                    attribution: '© OpenStreetMap'
-                                }).addTo(map);
-
-                                let marker = null;
-                                if (hasSavedLocation) {
-                                    marker = L.marker([savedLat, savedLng]).addTo(map)
-                                        .bindPopup('Vị trí đã chọn').openPopup();
-                                }
-
-                                if (!hasSavedLocation && navigator.geolocation) {
-                                    navigator.geolocation.getCurrentPosition(
-                                        (pos) => {
-                                            const { latitude, longitude } = pos.coords;
-                                            map.setView([latitude, longitude], 15);
-                                            marker = L.marker([latitude, longitude]).addTo(map)
-                                                .bindPopup('Vị trí của bạn — bấm vào bản đồ để sửa nếu sai').openPopup();
-                                            $wire.set('lat', latitude.toFixed(6));
-                                            $wire.set('lng', longitude.toFixed(6));
-                                        },
-                                        () => {},
-                                        { timeout: 8000, enableHighAccuracy: true }
-                                    );
-                                }
-
-                                map.on('click', (e) => {
-                                    const { lat, lng } = e.latlng;
-                                    if (marker) marker.remove();
-                                    marker = L.marker([lat, lng]).addTo(map)
-                                        .bindPopup('Vị trí đã chọn').openPopup();
-                                    $wire.set('lat', lat.toFixed(6));
-                                    $wire.set('lng', lng.toFixed(6));
-                                });
-
-                                setTimeout(() => map.invalidateSize(), 100);
-                            });
-                        ">
-                        <button type="button" onclick="(function(btn){
-                                try { window.__lastUserGestureAt = Date.now(); } catch(e) {}
-                                if (!navigator.geolocation) { alert('Trình duyệt không hỗ trợ định vị.'); return; }
-                                btn.disabled = true;
-                                btn.querySelector('span').textContent = 'Đang định vị…';
-                                const onDone = () => { btn.disabled = false; btn.querySelector('span').textContent = 'Lấy vị trí hiện tại'; };
-                                const onSuccess = (pos) => {
-                                    const lat = pos.coords.latitude, lng = pos.coords.longitude;
-                                    const map = window._mapPickerInstance;
-                                    if (map) {
-                                        map.setView([lat, lng], 16);
-                                        L.marker([lat, lng]).addTo(map).bindPopup('Vị trí hiện tại của bạn').openPopup();
+                                $nextTick(() => {
+                                    if (window._mapPickerInstance) {
+                                        window._mapPickerInstance.remove();
+                                        window._mapPickerInstance = null;
                                     }
-                                    @this.set('lat', lat.toFixed(6));
-                                    @this.set('lng', lng.toFixed(6));
-                                    onDone();
-                                };
-                                const onError = (err) => { onDone(); alert('Không thể lấy vị trí: ' + err.message); };
-                                if (window.allowGeolocationForNextCall) window.allowGeolocationForNextCall();
-                                if (window.__nativeGeolocationGet) { window.__nativeGeolocationGet(onSuccess, onError, {enableHighAccuracy:true,timeout:10000}); }
-                                else { navigator.geolocation.getCurrentPosition(onSuccess, onError, {enableHighAccuracy:true,timeout:10000}); }
-                            })(this)" class="mb-3 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl
-                                       bg-primary/10 text-primary font-extrabold text-xs hover:bg-primary/20 active:scale-95 transition-all
-                                       disabled:opacity-50 disabled:cursor-not-allowed">
+
+                                    const savedLat = parseFloat($wire.get('lat'));
+                                    const savedLng = parseFloat($wire.get('lng'));
+                                    const hasSavedLocation = !isNaN(savedLat) && !isNaN(savedLng);
+
+                                    const defaultCenter = hasSavedLocation ? [savedLat, savedLng] : [16.0544, 108.2022];
+                                    const defaultZoom = hasSavedLocation ? 14 : 6;
+
+                                    const map = L.map('map-picker').setView(defaultCenter, defaultZoom);
+                                    window._mapPickerInstance = map;
+
+                                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                        attribution: '© OpenStreetMap'
+                                    }).addTo(map);
+
+                                    let marker = null;
+                                    if (hasSavedLocation) {
+                                        marker = L.marker([savedLat, savedLng]).addTo(map)
+                                            .bindPopup('Vị trí đã chọn').openPopup();
+                                    }
+
+                                    if (!hasSavedLocation && navigator.geolocation) {
+                                        navigator.geolocation.getCurrentPosition(
+                                            (pos) => {
+                                                const { latitude, longitude } = pos.coords;
+                                                map.setView([latitude, longitude], 15);
+                                                marker = L.marker([latitude, longitude]).addTo(map)
+                                                    .bindPopup('Vị trí của bạn — bấm vào bản đồ để sửa nếu sai').openPopup();
+                                                $wire.set('lat', latitude.toFixed(6));
+                                                $wire.set('lng', longitude.toFixed(6));
+                                            },
+                                            () => {},
+                                            { timeout: 8000, enableHighAccuracy: true }
+                                        );
+                                    }
+
+                                    map.on('click', (e) => {
+                                        const { lat, lng } = e.latlng;
+                                        if (marker) marker.remove();
+                                        marker = L.marker([lat, lng]).addTo(map)
+                                            .bindPopup('Vị trí đã chọn').openPopup();
+                                        $wire.set('lat', lat.toFixed(6));
+                                        $wire.set('lng', lng.toFixed(6));
+                                    });
+
+                                    setTimeout(() => map.invalidateSize(), 100);
+                                });
+                            ">
+                        <button type="button" onclick="(function(btn){
+                                    try { window.__lastUserGestureAt = Date.now(); } catch(e) {}
+                                    if (!navigator.geolocation) { alert('Trình duyệt không hỗ trợ định vị.'); return; }
+                                    btn.disabled = true;
+                                    btn.querySelector('span').textContent = 'Đang định vị…';
+                                    const onDone = () => { btn.disabled = false; btn.querySelector('span').textContent = 'Lấy vị trí hiện tại'; };
+                                    const onSuccess = (pos) => {
+                                        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+                                        const map = window._mapPickerInstance;
+                                        if (map) {
+                                            map.setView([lat, lng], 16);
+                                            L.marker([lat, lng]).addTo(map).bindPopup('Vị trí hiện tại của bạn').openPopup();
+                                        }
+                                        @this.set('lat', lat.toFixed(6));
+                                        @this.set('lng', lng.toFixed(6));
+                                        onDone();
+                                    };
+                                    const onError = (err) => { onDone(); alert('Không thể lấy vị trí: ' + err.message); };
+                                    if (window.allowGeolocationForNextCall) window.allowGeolocationForNextCall();
+                                    if (window.__nativeGeolocationGet) { window.__nativeGeolocationGet(onSuccess, onError, {enableHighAccuracy:true,timeout:10000}); }
+                                    else { navigator.geolocation.getCurrentPosition(onSuccess, onError, {enableHighAccuracy:true,timeout:10000}); }
+                                })(this)" class="mb-3 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl
+                                           bg-primary/10 text-primary font-extrabold text-xs hover:bg-primary/20 active:scale-95 transition-all
+                                           disabled:opacity-50 disabled:cursor-not-allowed">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
                                 stroke="currentColor" class="w-4 h-4 shrink-0">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -710,7 +726,7 @@ new class extends Component {
                     <textarea rows="4" wire:model.blur="special_marks"
                         placeholder="Ghi cụ thể các chi tiết khác (Ví dụ: Bé nói giọng miền Nam, có vết sẹo nhỏ ở chân mày phải, nhút nhát khi gặp người lạ...)"
                         class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium resize-none placeholder-slate-400
-                                {{ $errors->has('special_marks') ? 'border-red-400' : 'border-slate-200' }}"></textarea>
+                                    {{ $errors->has('special_marks') ? 'border-red-400' : 'border-slate-200' }}"></textarea>
                     @error('special_marks')
                         <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
                     @enderror
@@ -729,7 +745,7 @@ new class extends Component {
                         <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Họ tên người báo tin
                             *</label>
                         <input type="text" wire:model.blur="contact_name" placeholder="Ví dụ: Nguyễn Văn Bình" class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400
-                                    {{ $errors->has('contact_name') ? 'border-red-400' : 'border-slate-200' }}" />
+                                        {{ $errors->has('contact_name') ? 'border-red-400' : 'border-slate-200' }}" />
                         @error('contact_name')
                             <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
                         @enderror
@@ -753,7 +769,7 @@ new class extends Component {
                         <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Số điện thoại liên lạc
                             *</label>
                         <input type="tel" wire:model.blur="contact_phone" placeholder="Ví dụ: 0905 123 456" class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400
-                                    {{ $errors->has('contact_phone') ? 'border-red-400' : 'border-slate-200' }}" />
+                                        {{ $errors->has('contact_phone') ? 'border-red-400' : 'border-slate-200' }}" />
                         @error('contact_phone')
                             <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
                         @enderror
