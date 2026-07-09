@@ -155,4 +155,22 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(FcmToken::class);
     }
+
+    public function isVolunteer(): bool
+    {
+        return $this->role === 'VOLUNTEER';
+    }
+
+    /**
+     * Mọi role khác USER (VOLUNTEER, MODERATOR, ADMIN) đều bắt buộc
+     * kyc_status = VERIFIED mới được cấp quyền tương ứng với role đó.
+     * Riêng ADMIN/MODERATOR đã có canAccessPanel() xử lý qua Filament,
+     * helper này chỉ dùng để gate tính năng dành riêng cho VOLUNTEER.
+     */
+    public function canAccessVolunteerFeatures(): bool
+    {
+        return $this->isVolunteer()
+            && !$this->isBanned()
+            && $this->kyc_status === 'VERIFIED';
+    }
 }
