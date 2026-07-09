@@ -22,11 +22,11 @@ class FaceMatchService
         }
     }
 
-    public function encode(string $storagePath): array
+    public function encode(string $storagePath, string $disk = 'public'): array
     {
-        $absolutePath = Storage::disk('public')->path($storagePath);
+        $absolutePath = Storage::disk($disk)->path($storagePath);
 
-        if (! is_file($absolutePath)) {
+        if (!is_file($absolutePath)) {
             throw new RuntimeException("Photo file not found: {$storagePath}");
         }
 
@@ -52,7 +52,7 @@ class FaceMatchService
             ];
         }
 
-        if (! $response->successful()) {
+        if (!$response->successful()) {
             throw new AIServiceUnavailableException('AI encode request failed with status ' . $response->status());
         }
 
@@ -70,7 +70,7 @@ class FaceMatchService
             'encoding_b' => $encodingB,
         ]);
 
-        if (! $response->successful()) {
+        if (!$response->successful()) {
             throw new AIServiceUnavailableException('AI compare request failed with status ' . $response->status());
         }
 
@@ -85,7 +85,7 @@ class FaceMatchService
     {
         $key = config('face_match.internal_key');
 
-        if (! $key) {
+        if (!$key) {
             throw new RuntimeException('FACE_MATCH_INTERNAL_KEY is not configured.');
         }
 

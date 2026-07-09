@@ -7,12 +7,14 @@ use App\Models\MissingChild;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider; 
 
 
 class KycPolicyTest extends TestCase
 {
     use RefreshDatabase;
 
+    #[DataProvider('kycStatusProvider')]
     public function test_missing_child_create_policy_respects_kyc_status(string $kycStatus, bool $shouldAllow): void
     {
         $user = User::factory()->create([
@@ -27,6 +29,7 @@ class KycPolicyTest extends TestCase
         );
     }
 
+    #[DataProvider('kycStatusProvider')] 
     public function test_found_child_create_policy_respects_kyc_status(string $kycStatus, bool $shouldAllow): void
     {
         $user = User::factory()->create([

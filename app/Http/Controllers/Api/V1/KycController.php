@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SubmitKycRequest;
 use App\Models\KycVerification;
 use Illuminate\Http\JsonResponse;
+use App\Jobs\ProcessKycJob;
 
 class KycController extends Controller
 {
@@ -50,6 +51,8 @@ class KycController extends Controller
         ]);
 
         $user->forceFill(['kyc_status' => 'PENDING'])->save();
+        
+        ProcessKycJob::dispatch($kyc->id);
 
         return response()->json([
             'message' => 'Đã nhận hồ sơ KYC, đang chờ xác thực.',
