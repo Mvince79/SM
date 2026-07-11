@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Filament\Admin\Widgets\KycPendingStatsWidget;
 use App\Filament\Admin\Widgets\MissingByProvinceChart;
 use App\Filament\Admin\Widgets\RecentMissingWidget;
 use App\Filament\Admin\Widgets\StatsOverviewWidget;
@@ -17,6 +18,7 @@ class Dashboard extends BaseDashboard
     {
         return [
             StatsOverviewWidget::class,
+            KycPendingStatsWidget::class,
             MissingByProvinceChart::class,
             RecentMissingWidget::class,
         ];

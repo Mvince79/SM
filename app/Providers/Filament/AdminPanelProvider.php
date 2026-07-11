@@ -2,11 +2,15 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Admin\Pages\Dashboard;
+use App\Filament\Admin\Widgets\KycPendingStatsWidget;
+use App\Filament\Admin\Widgets\MissingByProvinceChart;
+use App\Filament\Admin\Widgets\RecentMissingWidget;
+use App\Filament\Admin\Widgets\StatsOverviewWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use App\Filament\Admin\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -18,9 +22,6 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use App\Filament\Admin\Widgets\StatsOverviewWidget;
-use App\Filament\Admin\Widgets\MissingByProvinceChart;
-use App\Filament\Admin\Widgets\RecentMissingWidget;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -41,14 +42,24 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::hex('#F59E0B'),
             ])
             ->darkMode(false)
-            ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
-            ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\Filament\Admin\Pages')
+            ->discoverResources(
+                in: app_path('Filament/Admin/Resources'),
+                for: 'App\Filament\Admin\Resources'
+            )
+            ->discoverPages(
+                in: app_path('Filament/Admin/Pages'),
+                for: 'App\Filament\Admin\Pages'
+            )
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\Filament\Admin\Widgets')
+            ->discoverWidgets(
+                in: app_path('Filament/Admin/Widgets'),
+                for: 'App\Filament\Admin\Widgets'
+            )
             ->widgets([
                 StatsOverviewWidget::class,
+                KycPendingStatsWidget::class,
                 MissingByProvinceChart::class,
                 RecentMissingWidget::class,
 
