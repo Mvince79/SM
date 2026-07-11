@@ -1,7 +1,7 @@
 @props(['radiusOptions' => [5, 10, 20, 50]])
 
 <div x-data="nearbyWidget()" x-init="init()"
-     class="glass-premium rounded-3xl shadow-premium border border-slate-200/50 p-4 sm:p-5 space-y-3 w-[90%] sm:w-72 pointer-events-auto">
+     class="glass-premium rounded-3xl shadow-premium border border-slate-200/50 p-4 sm:p-5 space-y-3 w-full sm:w-72 pointer-events-auto">
 
     <div class="flex items-center justify-between border-b border-slate-200/40 pb-2">
         <h3 class="font-black text-slate-900 text-sm flex items-center gap-1.5">

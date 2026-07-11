@@ -1,0 +1,75 @@
+/* ═══════════════════════════════════════════════════════════
+   MAP WIDGETS — z-index scale & responsive layout cho các panel nổi
+   Dùng chung cho: map/index.blade.php, missing/detail.blade.php (mini-map),
+   create-missing-form (map-picker)
+
+   Thứ tự bắt buộc (C-05 DoD):
+   tile map < overlay chủ quyền (C-01) < widget/filter UI < popup marker
+═══════════════════════════════════════════════════════════ */
+
+:root {
+    --z-map-tile: 10; /* #full-map / #mini-map / #map-picker khi nghỉ */
+    --z-map-overlay: 20; /* hook cho overlay chủ quyền (C-01) */
+    --z-map-ui: 40; /* filter card (C-04), nearby-widget (C-02) */
+    --z-map-popup: 50; /* map container khi có popup marker đang mở */
+}
+
+/* Container Leaflet ở trạng thái nghỉ */
+.map-container {
+    z-index: var(--z-map-tile);
+}
+
+/* Khi 1 popup marker đang mở (toggle bằng JS qua sự kiện popupopen/popupclose
+   của Leaflet), đẩy toàn bộ map container lên trên panel UI để popup không
+   bị filter/widget che mất — vì popup là con của #full-map (stacking context
+   riêng), nên phải nâng z-index của chính #full-map thay vì nâng popup. */
+.map-container.has-open-popup {
+    z-index: var(--z-map-popup);
+}
+
+/* Hook cho overlay chủ quyền (C-01) — layer này PHẢI nằm trên tile nhưng
+   dưới panel UI. Nếu C-01 render bằng Leaflet pane riêng (L.map.createPane),
+   set style.zIndex = 20 cho pane đó để khớp thang trên. Nếu render bằng
+   lớp HTML/SVG phủ ngoài #full-map, gán class này. */
+.map-sovereignty-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-map-overlay);
+    pointer-events: none;
+}
+
+/* ── Panel nổi (filter C-04 + widget C-02) ──────────────────────────
+   Bug đã sửa: ở < 640px cả 2 panel dùng w-[90%] neo 2 góc trái/phải nên
+   cộng lại rộng hơn viewport → chồng nhau. Từ 640px (sm) trở lên mới
+   tách 2 cột trái/phải như thiết kế gốc; dưới 640px xếp dọc 1 cột. */
+.map-floating-panels {
+    position: absolute;
+    inset-inline: 0;
+    top: 1rem;
+    z-index: var(--z-map-ui);
+    padding-inline: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    pointer-events: none;
+}
+
+@media (min-width: 640px) {
+    .map-floating-panels {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+}
+
+.map-floating-panels > * {
+    pointer-events: auto;
+}
+
+/* Breakpoint 1280px (xl): nới rộng khoảng cách 2 cột, tránh panel bị ép sát mép */
+@media (min-width: 1280px) {
+    .map-floating-panels {
+        padding-inline: 2rem;
+    }
+}

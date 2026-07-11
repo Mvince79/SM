@@ -1,0 +1,48 @@
+/* ═══════════════════════════════════════════════════════════
+   MAP LABELS — style cho nhãn text trên overlay chủ quyền (C-01)
+
+   LƯU Ý: Tại thời điểm viết file này, C-01 (overlay chủ quyền —
+   Hoàng Sa/Trường Sa hoặc đường biên giới) CHƯA có trong source code
+   (đã grep toàn bộ resources/ + app/, không thấy). File này chỉ scaffold
+   sẵn class để người làm C-01 dùng, đảm bảo khi overlay được thêm vào
+   sẽ tự động đúng z-index (dưới var(--z-map-ui) từ map-widgets.css) và
+   responsive đúng 3 breakpoint 375/768/1280 mà không cần sửa lại CSS.
+═══════════════════════════════════════════════════════════ */
+
+.map-sovereignty-label {
+    font-weight: 800;
+    fill: #1e293b; /* slate-800, dùng cho label SVG/GeoJSON tooltip */
+    color: #1e293b;
+    font-size: 9px;
+    letter-spacing: 0.02em;
+    paint-order: stroke;
+    stroke: #ffffff;
+    stroke-width: 3px;
+    stroke-linejoin: round;
+}
+
+@media (min-width: 768px) {
+    .map-sovereignty-label {
+        font-size: 10.5px;
+    }
+}
+
+@media (min-width: 1280px) {
+    .map-sovereignty-label {
+        font-size: 12px;
+    }
+}
+
+/* Đường biên giới/ranh giới chủ quyền nếu overlay dùng L.geoJSON polyline */
+.map-sovereignty-boundary {
+    stroke: #dc2626;
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+    fill: transparent;
+}
+
+@media (min-width: 768px) {
+    .map-sovereignty-boundary {
+        stroke-width: 2;
+    }
+}

@@ -7,10 +7,21 @@
 
 @section('content')
     <!-- FULL VIEWPORT MAP CONTAINER -->
-    <div class="relative z-10 h-screen">
+    <!-- Trừ chiều cao topnav (sticky top-0 h-16 = 4rem) khỏi 100vh, nếu không trang sẽ
+         cao hơn màn hình 64px và phần đáy bản đồ (chứa nút ẩn/hiện panel) sẽ bị đẩy
+         khuất khỏi viewport, phải cuộn xuống mới thấy — chính là lý do nút bị cắt mất nửa.
+         Dùng style inline để có fallback vh -> dvh (dvh chính xác hơn trên mobile do
+         thanh địa chỉ trình duyệt co giãn). -->
+    <div class="relative" style="height: calc(100vh - 4rem); height: calc(100dvh - 4rem);"
+        x-data="{ panelsOpen: true }">
 
         <!-- The Leaflet map -->
-        <div id="full-map" class="w-full h-full bg-slate-100 z-10"></div>
+        <div id="full-map" class="map-container w-full h-full bg-slate-100"></div>
+
+        <!-- C-01 hook: overlay chủ quyền cắm vào đây (class định nghĩa ở map-widgets.css/map-labels.css).
+             Hiện chưa có nội dung — chỉ đảm bảo z-index đúng vị trí (trên tile, dưới panel UI) sẵn cho khi C-01 hoàn thành. -->
+        <div id="map-sovereignty-overlay" class="map-sovereignty-overlay"></div>
+
         <div id="map-loading" class="absolute inset-0 z-50 flex items-center justify-center bg-white/70">
 
             <div class="bg-white rounded-2xl shadow-xl px-5 py-4 flex items-center gap-3 border border-slate-200">
@@ -30,41 +41,68 @@
 
             </div>
         </div>
-        <!-- FLOATING CONTROL PANEL (Premium glassmorphism Card) -->
-        <div class="absolute z-1 top-4 left-4 z-40 max-w-sm w-[90%] sm:w-80 space-y-3 pointer-events-auto">
-            <!-- Filter Card -->
-            <div class="glass-premium p-4 sm:p-5 rounded-3xl shadow-premium border border-slate-200/50 space-y-4">
-                <div class="flex items-center justify-between border-b border-slate-200/40 pb-2">
-                    <h3 class="font-black text-slate-900 text-sm tracking-tight flex items-center gap-1.5">
-                        <x-heroicon-o-globe-alt class="w-4 h-4" /> Bản Đồ Tìm Kiếm
-                    </h3>
-                    <span
-                        class="bg-primary/10 text-primary text-[9px] font-black uppercase px-2 py-0.5 rounded-full">REALTIME</span>
-                </div>
 
-                <!-- Quick search input in card -->
-                <div class="relative">
-                    <x-heroicon-o-magnifying-glass
-                        class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                    <input type="text" placeholder="Tìm theo tỉnh thành, quận huyện..."
-                        class="w-full pl-8 pr-3 py-2 border border-slate-200/70 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent bg-white/70" />
-                </div>
-
-                <!-- C-04: Bộ lọc bản đồ nâng cao (thời gian / trạng thái / manh mối mới) -->
-                @livewire('map.map-filters')
-
-                <!-- Quick locating button -->
-                <button onclick="locateMe()"
-                    class="w-full bg-slate-900 text-white font-extrabold text-xs py-2.5 rounded-xl hover:bg-slate-800 transition-colors shadow flex items-center justify-center gap-1">
-                    <x-heroicon-o-cursor-arrow-rays class="w-4 h-4" /> Vị trí của tôi </button>
-
-            </div>
-
+        <!-- C-05: Nút ẩn/hiện 2 panel (filter + widget) — hiện trên MỌI thiết bị.
+             To hơn (w-16 h-16) + màu nổi bật + z-[60] (CAO HƠN lớp "Đang tải bản đồ" z-50)
+             để không bao giờ bị lớp loading (hoặc bất kỳ overlay nào khác) đè mất, đảm bảo luôn bấm được. -->
+        <div class="absolute bottom-6 md:bottom-8 left-4 z-[60] flex flex-col items-start gap-1.5 pointer-events-auto">
+            <span class="bg-slate-900 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow"
+                x-text="panelsOpen ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'"></span>
+            <button type="button" @click="panelsOpen = !panelsOpen"
+                aria-label="Ẩn/hiện bộ lọc và widget bản đồ"
+                class="w-16 h-16 rounded-full bg-primary text-white border-4 border-white shadow-xl flex items-center justify-center active:scale-95 hover:scale-105 hover:shadow-2xl transition-all"
+                style="box-shadow: 0 0 0 2px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.35);">
+                <x-heroicon-o-eye-slash x-show="panelsOpen" x-cloak class="w-7 h-7" />
+                <x-heroicon-o-eye x-show="!panelsOpen" x-cloak class="w-7 h-7" />
+            </button>
         </div>
 
-        <!-- Widget C-02: Gần đây có bao nhiêu trẻ mất tích -->
-        <div class="absolute top-4 right-4 z-40 pointer-events-none">
-            <x-map.nearby-widget />
+        <!-- FLOATING CONTROL PANELS (C-04 filter + C-02 widget)
+             .map-floating-panels (map-widgets.css) tự xếp dọc 1 cột ở < 640px
+             (tránh chồng nhau như bug cũ), tách 2 cột trái/phải từ 640px trở lên.
+             Nút toggle (C-05) giờ hiện trên MỌI thiết bị, panelsOpen mặc định true
+             nên desktop/tablet vẫn thấy panel ngay khi vào trang, nhưng người dùng
+             có thể chủ động ẩn/hiện trên mọi kích thước màn hình. -->
+        <div class="map-floating-panels" x-show="panelsOpen" x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 -translate-y-2">
+
+            <!-- Filter Card -->
+            <div class="w-full sm:w-80 max-w-sm space-y-3">
+                <div class="glass-premium p-4 sm:p-5 rounded-3xl shadow-premium border border-slate-200/50 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200/40 pb-2">
+                        <h3 class="font-black text-slate-900 text-sm tracking-tight flex items-center gap-1.5">
+                            <x-heroicon-o-globe-alt class="w-4 h-4" /> Bản Đồ Tìm Kiếm
+                        </h3>
+                        <span
+                            class="bg-primary/10 text-primary text-[9px] font-black uppercase px-2 py-0.5 rounded-full">REALTIME</span>
+                    </div>
+
+                    <!-- Quick search input in card -->
+                    <div class="relative">
+                        <x-heroicon-o-magnifying-glass
+                            class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                        <input type="text" placeholder="Tìm theo tỉnh thành, quận huyện..."
+                            class="w-full pl-8 pr-3 py-2 border border-slate-200/70 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent bg-white/70" />
+                    </div>
+
+                    <!-- C-04: Bộ lọc bản đồ nâng cao (thời gian / trạng thái / manh mối mới) -->
+                    @livewire('map.map-filters')
+
+                    <!-- Quick locating button -->
+                    <button onclick="locateMe()"
+                        class="w-full bg-slate-900 text-white font-extrabold text-xs py-2.5 rounded-xl hover:bg-slate-800 transition-colors shadow flex items-center justify-center gap-1">
+                        <x-heroicon-o-cursor-arrow-rays class="w-4 h-4" /> Vị trí của tôi </button>
+
+                </div>
+            </div>
+
+            <!-- Widget C-02: Gần đây có bao nhiêu trẻ mất tích -->
+            <div class="flex sm:block justify-end">
+                <x-map.nearby-widget />
+            </div>
+
         </div>
     </div>
 @endsection
@@ -93,6 +131,19 @@
 
             const loadingEl = document.getElementById('map-loading');
 
+            // An toàn: nếu vì lý do gì đó (mạng chậm/tile lỗi) mà event 'load' của
+            // tileLayer không bao giờ bắn, lớp overlay "Đang tải bản đồ" (z-50) sẽ
+            // che kín màn hình vĩnh viễn và chặn MỌI thao tác bấm bên dưới (kể cả
+            // nút ẩn/hiện panel). Đặt timeout dự phòng để luôn tự ẩn sau 6s.
+            let mapTilesLoaded = false;
+            const hideLoadingOverlay = function () {
+                mapTilesLoaded = true;
+                loadingEl?.classList.add('hidden');
+            };
+            setTimeout(function () {
+                if (!mapTilesLoaded) hideLoadingOverlay();
+            }, 6000);
+
             const tileLayer = L.tileLayer(
                 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 {
@@ -102,17 +153,23 @@
             );
 
             tileLayer.on('loading', function () {
-                loadingEl?.classList.remove('hidden');
+                if (!mapTilesLoaded) loadingEl?.classList.remove('hidden');
             });
 
-            tileLayer.on('load', function () {
-                loadingEl?.classList.add('hidden');
-            });
+            tileLayer.on('load', hideLoadingOverlay);
 
             tileLayer.addTo(map);
 
             // Gom toàn bộ marker vào 1 layerGroup để dễ clear/vẽ lại khi đổi filter (C-04)
             const markersLayer = L.layerGroup().addTo(map);
+
+            // C-05: popup marker phải luôn nổi trên panel filter/widget.
+            // #full-map là 1 stacking context riêng (Leaflet set position:relative),
+            // nên phải nâng z-index của chính #full-map (qua class .has-open-popup,
+            // định nghĩa ở map-widgets.css) chứ không phải nâng popup.
+            const fullMapEl = document.getElementById('full-map');
+            map.on('popupopen', () => fullMapEl.classList.add('has-open-popup'));
+            map.on('popupclose', () => fullMapEl.classList.remove('has-open-popup'));
 
             function buildIcon(status) {
                 const color = status === 'FOUND' ? '#22C55E' : '#FF3B30';

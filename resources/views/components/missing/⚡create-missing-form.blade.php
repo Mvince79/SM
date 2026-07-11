@@ -627,7 +627,11 @@ new class extends Component {
                             </svg>
                             <span>Lấy vị trí hiện tại</span>
                         </button>
-                        <div id="map-picker" class="w-full h-56 rounded-2xl border border-slate-200 z-0"></div>
+                        <div class="relative w-full h-56 rounded-2xl overflow-hidden border border-slate-200">
+                            <div id="map-picker" class="map-container w-full h-full"></div>
+                            {{-- C-01 hook: map-picker không cần widget/filter (theo DoD C-05), chỉ cần overlay chủ quyền hoạt động đúng --}}
+                            <div id="map-picker-sovereignty-overlay" class="map-sovereignty-overlay"></div>
+                        </div>
                     </div>
 
                     @if ($lat && $lng)

@@ -639,8 +639,12 @@
                 @if ($case->lat && $case->lng)
                     <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
                         <h4 class="font-extrabold text-slate-900 text-sm uppercase tracking-wider">Vị trí mất tích</h4>
-                        <div id="mini-map" class="h-44 bg-slate-150 rounded-2xl overflow-hidden border border-slate-200 z-10"
-                            data-lat="{{ $case->lat }}" data-lng="{{ $case->lng }}"></div>
+                        <div class="relative h-44 rounded-2xl overflow-hidden border border-slate-200">
+                            <div id="mini-map" class="map-container w-full h-full bg-slate-150"
+                                data-lat="{{ $case->lat }}" data-lng="{{ $case->lng }}"></div>
+                            {{-- C-01 hook: mini-map không cần widget/filter (theo DoD C-05), chỉ cần overlay chủ quyền hoạt động đúng --}}
+                            <div id="mini-map-sovereignty-overlay" class="map-sovereignty-overlay"></div>
+                        </div>
                         <script>
                             (function () {
                                 var el = document.getElementById('mini-map');
