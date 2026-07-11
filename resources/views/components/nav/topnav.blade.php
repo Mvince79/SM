@@ -1,8 +1,8 @@
 {{--
 ┌─────────────────────────────────────────────────────────────────┐
-│ @component('components.nav.topnav') │
-│ Props (via $attributes or parent $page / auth state): │
-│ $activeRoute — current named route (e.g. 'home') │
+│ @component('components.nav.topnav')                             │
+│ Props (via $attributes or parent $page / auth state):           │
+│   $activeRoute — current named route (e.g. 'home')              │
 └─────────────────────────────────────────────────────────────────┘
 --}}
 
@@ -28,22 +28,22 @@
 @endphp
 
 <nav class="topnav" id="topnav">
-    <div class="topnav-inner">
+    <div class="topnav-inner gap-6">
 
         {{-- ── Brand ── --}}
-        <a href="{{ route('home') }}" class="brand-logo">
+        <a href="{{ route('home') }}" class="brand-logo shrink-0">
             <div class="brand-logo-mark">
                 <span class="text-white font-black text-base">T</span>
             </div>
-            <span class="brand-logo-text">TìmTrẻ<span class="text-primary">.vn</span></span>
+            <span class="brand-logo-text whitespace-nowrap">TìmTrẻ<span class="text-primary">.vn</span></span>
         </a>
 
         {{-- ── Desktop Nav Links ── --}}
-        <div class="hidden md:flex items-center gap-8">
+        <div class="hidden lg:flex items-center gap-8">
             @foreach ($navLinks as $link)
                 @php $isActive = request()->routeIs($link['route']); @endphp
                 <a href="{{ route($link['route']) }}"
-                    class="text-sm py-1 relative transition-colors
+                    class="text-sm py-1 relative transition-colors whitespace-nowrap
                                                            {{ $isActive
                                                                ? 'font-bold text-primary after:content-[\'\'] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:rounded-full'
                                                                : 'font-medium text-slate-600 hover:text-primary' }}">
@@ -53,60 +53,85 @@
         </div>
 
         {{-- ── Desktop CTA ── --}}
-        <div class="hidden md:flex items-center gap-4">
+        <div class="hidden lg:flex items-center gap-4">
             @auth
-                @if (Auth::user()->isAdmin())
-                    <a href="/admin"
-                        class="text-sm font-bold text-brand hover:text-brand-dark transition-colors mr-2 flex items-center gap-1.5">
-                        <x-heroicon-o-shield-check class="w-4 h-4 text-brand" />
-                        Quản trị
-                    </a>
-                @endif
-
                 <x-notification-bell />
 
-                @if (Auth::user()->kyc_status !== 'VERIFIED')
-                    <a href="{{ route('profile.kyc') }}"
-                        class="text-xs font-black uppercase text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors flex items-center gap-1.5">
-                        <x-heroicon-o-identification class="w-3.5 h-3.5" /> Xác thực KYC
-                    </a>
-                @endif
-
-                <a href="{{ route('profile.index') }}" class="flex items-center gap-2 group">
-                    <div class="w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200">
-                        <img src="{{ Auth::user()->avatar_url }}" class="w-full h-full object-cover"
-                            alt="{{ Auth::user()->full_name }}" />
-                    </div>
-                    <span
-                        class="text-sm font-bold text-slate-800 group-hover:text-primary transition-colors hidden lg:block">
-                        {{ Auth::user()->full_name }}
-                    </span>
-                </a>
-
-                <form method="POST" action="{{ route('auth.logout') }}" class="inline">
-                    @csrf
-                    <button type="submit"
-                        class="text-sm font-semibold text-slate-400 hover:text-primary transition-colors">
-                        Đăng xuất
+                {{-- Avatar dropdown: gộp Quản trị / Xác thực KYC / Hồ sơ / Đăng xuất --}}
+                <div x-data="{ open: false }" @click.outside="open = false" class="relative">
+                    <button type="button" @click="open = !open"
+                        class="flex items-center gap-2 group min-w-0 rounded-full pl-1 pr-2.5 py-1 hover:bg-slate-50 transition-colors">
+                        <div class="relative w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                            <img src="{{ Auth::user()->avatar_url }}" class="w-full h-full object-cover"
+                                alt="{{ Auth::user()->full_name }}" />
+                            @if (Auth::user()->kyc_status !== 'VERIFIED')
+                                <span
+                                    class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-white"
+                                    title="Cần xác thực CCCD"></span>
+                            @endif
+                        </div>
+                        <span
+                            class="text-sm font-bold text-slate-800 group-hover:text-primary transition-colors truncate max-w-[110px]">
+                            {{ Auth::user()->full_name }}
+                        </span>
+                        <x-heroicon-o-chevron-down
+                            class="w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform"
+                            x-bind:class="open && 'rotate-180'" />
                     </button>
-                </form>
+
+                    <div x-show="open" x-cloak x-transition.origin.top.right
+                        class="absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-slate-200/85 shadow-premium py-2 z-50">
+
+                        @if (Auth::user()->isAdmin())
+                            <a href="/admin"
+                                class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-brand hover:bg-slate-50 transition-colors">
+                                <x-heroicon-o-shield-check class="w-4 h-4 text-brand shrink-0" /> Quản trị
+                            </a>
+                        @endif
+
+                        <a href="{{ route('profile.kyc') }}"
+                            class="flex items-center justify-between gap-2.5 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                            <span class="flex items-center gap-2.5">
+                                <x-heroicon-o-identification class="w-4 h-4 text-slate-400 shrink-0" /> Xác thực KYC
+                            </span>
+                            @if (Auth::user()->kyc_status !== 'VERIFIED')
+                                <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+                            @endif
+                        </a>
+
+                        <a href="{{ route('profile.index') }}"
+                            class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                            <x-heroicon-o-user-circle class="w-4 h-4 text-slate-400 shrink-0" /> Hồ sơ
+                        </a>
+
+                        <hr class="border-slate-100 my-1.5">
+
+                        <form method="POST" action="{{ route('auth.logout') }}">
+                            @csrf
+                            <button type="submit"
+                                class="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-slate-400 hover:bg-slate-50 hover:text-primary transition-colors">
+                                <x-heroicon-o-arrow-right-start-on-rectangle class="w-4 h-4 shrink-0" /> Đăng xuất
+                            </button>
+                        </form>
+                    </div>
+                </div>
             @else
                 <a href="{{ route('auth.login') }}"
-                    class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors">
+                    class="text-sm font-semibold text-slate-600 hover:text-primary transition-colors whitespace-nowrap">
                     Đăng nhập
                 </a>
             @endauth
 
             <a href="{{ route('missing.create') }}"
-                class="bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl
+                class="bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl whitespace-nowrap
                        hover:bg-primary-dark shadow-lg shadow-primary/10
                        hover:shadow-primary/25 hover:-translate-y-0.5 transition-all duration-300">
                 + Báo tin tìm con
             </a>
         </div>
 
-        {{-- ── Mobile: Bell + Hamburger cùng hàng bên phải ── --}}
-        <div class="ml-auto flex items-center gap-2 md:hidden">
+        {{-- ── Mobile/Tablet: Bell + Hamburger cùng hàng bên phải (hiện tới trước lg) ── --}}
+        <div class="ml-auto flex items-center gap-2 lg:hidden">
 
             <a href="{{ route('missing.create') }}"
                 class="flex h-10 w-10 items-center justify-center rounded-full
@@ -138,9 +163,9 @@
 
     </div>{{-- /topnav-inner --}}
 
-    {{-- ── Mobile Drawer ── --}}
+    {{-- ── Mobile/Tablet Drawer (hiện tới trước xl) ── --}}
     <div id="mobile-menu" data-open="false"
-        class="md:hidden hidden border-t border-slate-100 bg-white px-4 py-5 space-y-4 shadow-xl">
+        class="lg:hidden hidden border-t border-slate-100 bg-white px-4 py-5 space-y-4 shadow-xl">
         {{-- Nav links --}}
         @foreach ($navLinks as $link)
             <a href="{{ route($link['route']) }}"

@@ -12,65 +12,75 @@
         rel="stylesheet">
 
     <script>
-        (function () {
+        (function() {
             try {
                 if (!navigator.geolocation) return;
 
                 var nativeGet = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
-                var nativeWatch = navigator.geolocation.watchPosition && navigator.geolocation.watchPosition.bind(navigator.geolocation);
-                var nativeClear = navigator.geolocation.clearWatch && navigator.geolocation.clearWatch.bind(navigator.geolocation);
+                var nativeWatch = navigator.geolocation.watchPosition && navigator.geolocation.watchPosition.bind(
+                    navigator.geolocation);
+                var nativeClear = navigator.geolocation.clearWatch && navigator.geolocation.clearWatch.bind(navigator
+                    .geolocation);
 
                 try {
                     window.__nativeGeolocationGet = nativeGet;
                     window.__nativeGeolocationWatch = nativeWatch;
                     window.__nativeGeolocationClear = nativeClear;
-                } catch (e) { }
+                } catch (e) {}
 
-                navigator.geolocation.getCurrentPosition = function (success, error, options) {
+                navigator.geolocation.getCurrentPosition = function(success, error, options) {
                     if (window.__allowGeolocation__) return nativeGet(success, error, options);
                     try {
-                        console.warn('[gps-guard] Blocked getCurrentPosition call (no user gesture). Stack:', new Error().stack);
-                    } catch (e) { }
+                        console.warn('[gps-guard] Blocked getCurrentPosition call (no user gesture). Stack:',
+                            new Error().stack);
+                    } catch (e) {}
                 };
 
                 if (nativeWatch) {
                     var _nextWatchId = 1;
                     var _activeWatches = {};
-                    navigator.geolocation.watchPosition = function (success, error, options) {
+                    navigator.geolocation.watchPosition = function(success, error, options) {
                         if (window.__allowGeolocation__) return nativeWatch(success, error, options);
                         var id = _nextWatchId++;
                         _activeWatches[id] = true;
                         return id;
                     };
-                    navigator.geolocation.clearWatch = function (id) {
+                    navigator.geolocation.clearWatch = function(id) {
                         if (_activeWatches[id]) delete _activeWatches[id];
                         if (nativeClear) return nativeClear(id);
                     };
                 }
 
-                window.allowGeolocationForNextCall = function () {
+                window.allowGeolocationForNextCall = function() {
                     var now = Date.now();
                     if (!window.__lastUserGestureAt || (now - window.__lastUserGestureAt) > 3000) {
                         console.warn('[gps-guard] allowGeolocationForNextCall ignored: no recent user gesture');
                         return false;
                     }
                     window.__allowGeolocation__ = true;
-                    setTimeout(function () { window.__allowGeolocation__ = false; }, 15000);
+                    setTimeout(function() {
+                        window.__allowGeolocation__ = false;
+                    }, 15000);
                     return true;
                 };
 
                 window.__lastUserGestureAt = 0;
-                ['click', 'keydown', 'touchstart'].forEach(function (ev) {
-                    window.addEventListener(ev, function () {
+                ['click', 'keydown', 'touchstart'].forEach(function(ev) {
+                    window.addEventListener(ev, function() {
                         window.__lastUserGestureAt = Date.now();
-                    }, { passive: true, capture: true });
+                    }, {
+                        passive: true,
+                        capture: true
+                    });
                 });
-            } catch (e) { }
+            } catch (e) {}
         })();
     </script>
 
     @if (auth()->check())
-        <script>window.authUserId = {{ auth()->id() }};</script>
+        <script>
+            window.authUserId = {{ auth()->id() }};
+        </script>
     @endif
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -113,6 +123,14 @@
                     Nền tảng trực tuyến hỗ trợ tìm kiếm trẻ em mất tích khẩn cấp,
                     kết nối xã hội và ứng dụng phân tích đối chiếu khuôn mặt AI tiên tiến.
                 </p>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-3 border-t border-slate-800/80">
+                    <a href="{{ route('legal.terms') }}" class="footer-link text-[11px] whitespace-nowrap">Điều
+                        khoản</a>
+                    <a href="{{ route('legal.privacy') }}" class="footer-link text-[11px] whitespace-nowrap">Quyền riêng
+                        tư</a>
+                    <a href="{{ route('legal.child-data') }}" class="footer-link text-[11px] whitespace-nowrap">CS Bảo
+                        vệ Trẻ em</a>
+                </div>
             </div>
 
             {{-- Tính năng chính --}}
@@ -167,26 +185,31 @@
 
     <div class="fixed bottom-44 right-5 z-40 md:hidden flex flex-col items-end gap-1">
         <span class="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Gọi 113</span>
-        <a href="tel:113" aria-label="Gọi 113 — Cảnh sát cứu hộ" class="flex items-center justify-center w-14 h-14
+        <a href="tel:113" aria-label="Gọi 113 — Cảnh sát cứu hộ"
+            class="flex items-center justify-center w-14 h-14
            bg-white border-2 border-primary rounded-full
-           transition-all duration-300 active:scale-95" style="box-shadow: 0 0 20px 2px rgba(255,59,48,0.25);">
+           transition-all duration-300 active:scale-95"
+            style="box-shadow: 0 0 20px 2px rgba(255,59,48,0.25);">
             <x-heroicon-s-phone class="w-6 h-6 text-primary" />
         </a>
     </div>
 
     <div class="fixed bottom-24 right-5 z-40 md:hidden flex flex-col items-end gap-1">
         <span class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Báo tin</span>
-        <a href="{{ route('found-children.create') }}" aria-label="Báo tin khẩn cấp tìm trẻ" class="flex items-center justify-center w-14 h-14
+        <a href="{{ route('found-children.create') }}" aria-label="Báo tin khẩn cấp tìm trẻ"
+            class="flex items-center justify-center w-14 h-14
                bg-gradient-to-br from-primary to-primary-dark
                rounded-full border-2 border-white
-               transition-all duration-300 active:scale-95" style="box-shadow: 0 0 20px 2px rgba(255,59,48,0.4);">
+               transition-all duration-300 active:scale-95"
+            style="box-shadow: 0 0 20px 2px rgba(255,59,48,0.4);">
             <x-heroicon-s-megaphone class="w-6 h-6 text-white" />
         </a>
     </div>
 
     @auth
         <div class="fixed bottom-6 right-5 z-50 md:bottom-8 md:right-8">
-            <button type="button" onclick="openChat()" class="group flex items-center gap-2
+            <button type="button" onclick="openChat()"
+                class="group flex items-center gap-2
                                        bg-slate-900 text-white
                                        rounded-full px-5 py-3
                                        text-sm font-bold
@@ -213,7 +236,8 @@
                 onclick="closeChat()"></div>
 
             {{-- Chat Window --}}
-            <div id="chat-modal-window" class="relative z-10 w-full h-[100dvh]
+            <div id="chat-modal-window"
+                class="relative z-10 w-full h-[100dvh]
                                          sm:w-[min(900px,calc(100vw-3rem))]
                                          sm:h-[min(650px,calc(100vh-3rem))]
                                          bg-white sm:rounded-[28px] shadow-2xl
@@ -222,11 +246,13 @@
                                          transition-all duration-300 ease-out
                                          sm:translate-y-10">
 
-                <button type="button" onclick="closeChat()" class="absolute right-3 top-3 z-20
+                <button type="button" onclick="closeChat()"
+                    class="absolute right-3 top-3 z-20
                                            flex h-9 w-9 items-center justify-center
                                            rounded-full border border-slate-200 bg-white/95
                                            text-slate-500 shadow-sm transition
-                                           hover:bg-slate-50 hover:text-slate-900" aria-label="Đóng khung chat">
+                                           hover:bg-slate-50 hover:text-slate-900"
+                    aria-label="Đóng khung chat">
                     <x-heroicon-o-x-mark class="h-5 w-5" />
                 </button>
 
@@ -278,7 +304,7 @@
             document.body.style.overflow = 'auto';
         }
 
-        document.addEventListener('keydown', function (e) {
+        document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') closeChat();
         });
     </script>

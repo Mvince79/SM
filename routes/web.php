@@ -51,6 +51,11 @@ Route::prefix('stats')->name('stats.')->group(function () {
 Route::post('/watch-area', [WatchAreaController::class, 'store'])->name('watch-area.store');
 Route::delete('/watch-area', [WatchAreaController::class, 'destroy'])->name('watch-area.destroy');
 
+Route::prefix('legal')->name('legal.')->group(function () {
+    Route::view('/terms-of-service', 'legal.terms-of-service')->name('terms');
+    Route::view('/privacy-policy', 'legal.privacy-policy')->name('privacy');
+    Route::view('/child-data-policy', 'legal.child-data-policy')->name('child-data');
+});
 
 // ── Routes cần đăng nhập + email đã xác thực + không bị BAN ────────────────
 Route::middleware(['auth', 'email.verified'])->group(function () {
