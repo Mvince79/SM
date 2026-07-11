@@ -50,34 +50,8 @@
                         class="w-full pl-8 pr-3 py-2 border border-slate-200/70 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent bg-white/70" />
                 </div>
 
-                <!-- Categories toggle checkboxes -->
-                <div class="space-y-2 text-xs">
-                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Loại điểm hiển thị</div>
-
-                    <label
-                        class="flex items-center gap-2.5 cursor-pointer p-1.5 hover:bg-white/40 rounded-lg transition-colors">
-                        <input type="checkbox" checked class="accent-primary" />
-                        <span
-                            class="w-2.5 h-2.5 bg-primary rounded-full border border-white shadow-sm flex-shrink-0"></span>
-                        <span class="font-bold text-slate-700">Trẻ đang cần tìm</span>
-                    </label>
-
-                    <label
-                        class="flex items-center gap-2.5 cursor-pointer p-1.5 hover:bg-white/40 rounded-lg transition-colors">
-                        <input type="checkbox" checked class="accent-[#F59E0B]" />
-                        <span
-                            class="w-2.5 h-2.5 bg-[#F59E0B] rounded-full border border-white shadow-sm flex-shrink-0"></span>
-                        <span class="font-bold text-slate-700">Địa bàn có manh mối (18)</span>
-                    </label>
-
-                    <label
-                        class="flex items-center gap-2.5 cursor-pointer p-1.5 hover:bg-white/40 rounded-lg transition-colors">
-                        <input type="checkbox" checked class="accent-success" />
-                        <span
-                            class="w-2.5 h-2.5 bg-success rounded-full border border-white shadow-sm flex-shrink-0"></span>
-                        <span class="font-bold text-slate-700">Trẻ đã đoàn tụ an toàn</span>
-                    </label>
-                </div>
+                <!-- C-04: Bộ lọc bản đồ nâng cao (thời gian / trạng thái / manh mối mới) -->
+                @livewire('map.map-filters')
 
                 <!-- Quick locating button -->
                 <button onclick="locateMe()"
@@ -137,22 +111,34 @@
 
             tileLayer.addTo(map);
 
-            const lostIcon = L.divIcon({
-                className: 'pulse-dot',
-                html: '<div style="width:14px;height:14px;background:#FF3B30;border:2px solid white;border-radius:50%;box-shadow:0 0 10px rgba(255,59,48,0.4);"></div>',
-                iconSize: [14, 14],
-                iconAnchor: [7, 7]
-            });
+            // Gom toàn bộ marker vào 1 layerGroup để dễ clear/vẽ lại khi đổi filter (C-04)
+            const markersLayer = L.layerGroup().addTo(map);
 
-            fetch('/api/v1/map-data')
-                .then(response => response.json())
-                .then(result => {
+            function buildIcon(status) {
+                const color = status === 'FOUND' ? '#22C55E' : '#FF3B30';
+                return L.divIcon({
+                    className: 'pulse-dot',
+                    html: `<div style="width:14px;height:14px;background:${color};border:2px solid white;border-radius:50%;box-shadow:0 0 10px ${color}66;"></div>`,
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7]
+                });
+            }
 
-                    const kidsList = result.data ?? [];
+            function loadMarkers(queryString = '') {
+                loadingEl?.classList.remove('hidden');
 
-                    kidsList.forEach(kid => {
+                fetch('/api/v1/map-data' + queryString)
+                    .then(response => response.json())
+                    .then(result => {
+                        markersLayer.clearLayers();
 
-                        const popupHtml = `
+                        const kidsList = result.data ?? [];
+
+                        kidsList.forEach(kid => {
+
+                            const isFound = kid.status === 'FOUND';
+
+                            const popupHtml = `
                                                         <div class="flex gap-3 items-center min-w-[240px] max-w-[280px]">
 
                                                             <div class="w-[60px] h-[60px] rounded-2xl overflow-hidden border border-slate-200 flex-shrink-0">
@@ -165,8 +151,9 @@
 
                                                             <div class="min-w-0 flex-1">
 
-                                                                <div class="font-black text-sm text-slate-900">
+                                                                <div class="font-black text-sm text-slate-900 flex items-center gap-1.5">
                                                                     ${kid.name}
+                                                                    ${isFound ? '<span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-success/10 text-success">Đã tìm thấy</span>' : ''}
                                                                 </div>
 
                                                                 <div class="text-[11px] text-slate-500 font-semibold mt-1">
@@ -185,7 +172,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-slate-400 shrink-0">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
                     </svg>
-                    ${kid.missing_date ?? 'Chưa rõ'}
+                    ${isFound ? (kid.found_at ?? 'Chưa rõ') : (kid.missing_date ?? 'Chưa rõ')}
                 </div>
 
                                                                 <a
@@ -200,23 +187,36 @@
                                                         </div>
                                                     `;
 
-                        L.marker([kid.lat, kid.lng], {
-                            icon: lostIcon
-                        })
-                            .addTo(map)
-                            .bindPopup(
-                                popupHtml,
-                                {
-                                    maxWidth: window.innerWidth - 32
-                                }
-                            );
+                            L.marker([kid.lat, kid.lng], {
+                                icon: buildIcon(kid.status)
+                            })
+                                .addTo(markersLayer)
+                                .bindPopup(
+                                    popupHtml,
+                                    {
+                                        maxWidth: window.innerWidth - 32
+                                    }
+                                );
 
+                        });
+
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    })
+                    .finally(() => {
+                        loadingEl?.classList.add('hidden');
                     });
+            }
 
-                })
-                .catch(error => {
-                    console.error(error);
-                });
+            // Tải marker lần đầu (không filter)
+            loadMarkers();
+
+            // C-04: Livewire MapFilters bắn event này mỗi khi người dùng đổi filter
+            Livewire.on('map-filters-changed', ({ filters }) => {
+                const params = new URLSearchParams(filters).toString();
+                loadMarkers('?' + params);
+            });
 
             // Locate the client device location
             window.locateMe = function () {

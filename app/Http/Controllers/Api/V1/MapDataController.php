@@ -17,6 +17,15 @@ class MapDataController
     protected const CACHE_TTL = 300; // 5 minutes
 
     /**
+     * Map time_range filter value => số giờ tính từ hiện tại.
+     */
+    protected const TIME_RANGE_HOURS = [
+        '24h' => 24,
+        '7d' => 24 * 7,
+        '30d' => 24 * 30,
+    ];
+
+    /**
      * GET /api/v1/map-data
      * 
      * Return JSON markers for Leaflet map
@@ -24,6 +33,8 @@ class MapDataController
      * Query Parameters:
      * - province_id: Filter by province
      * - type: missing|found|all (default: all)
+     * - time_range: 24h|7d|30d|all (default: all) — lọc theo missing_date
+     * - has_new_clue: 1|0 — chỉ lấy case có manh mối GPS trong 7 ngày gần nhất
      * - sw_lat, sw_lng, ne_lat, ne_lng: Bounding box filter
      */
     public function index(Request $request)
@@ -31,6 +42,8 @@ class MapDataController
         $validated = $request->validate([
             'province_id' => 'nullable|integer|min:1|max:255',
             'type' => 'nullable|in:missing,found,all',
+            'time_range' => 'nullable|in:24h,7d,30d,all',
+            'has_new_clue' => 'nullable|boolean',
             'sw_lat' => 'nullable|numeric|between:-90,90',
             'sw_lng' => 'nullable|numeric|between:-180,180',
             'ne_lat' => 'nullable|numeric|between:-90,90',
@@ -62,8 +75,10 @@ class MapDataController
      */
     protected function getMarkers(array $filters): array
     {
+        $type = $filters['type'] ?? 'all';
+
         // Query missing_children with photos
-        $query = MissingChild::where('status', 'APPROVED')
+        $query = MissingChild::query()
             ->whereNull('deleted_at')
             ->with(['primaryPhoto', 'province'])
             ->select([
@@ -75,11 +90,37 @@ class MapDataController
                 'lat',
                 'lng',
                 'missing_date',
+                'status',
+                'found_at',
             ]);
+
+        // Trạng thái: Đang tìm (APPROVED) / Đã tìm thấy (FOUND) / Tất cả (cả hai)
+        match ($type) {
+            'missing' => $query->where('status', 'APPROVED'),
+            'found' => $query->where('status', 'FOUND'),
+            default => $query->whereIn('status', ['APPROVED', 'FOUND']),
+        };
 
         // Filter by province if provided
         if (!empty($filters['province_id'])) {
             $query->where('province_id', $filters['province_id']);
+        }
+
+        // Thời gian mất tích: 24h / 7 ngày / 30 ngày / Tất cả
+        $timeRange = $filters['time_range'] ?? 'all';
+        if ($timeRange !== 'all' && isset(self::TIME_RANGE_HOURS[$timeRange])) {
+            $query->where('missing_date', '>=', now()->subHours(self::TIME_RANGE_HOURS[$timeRange]));
+        }
+
+        // Có manh mối GPS mới nhất: case có ít nhất 1 clue có tọa độ,
+        // không bị ẩn, gửi trong 7 ngày gần nhất
+        if (!empty($filters['has_new_clue'])) {
+            $query->whereHas('clues', function ($q) {
+                $q->whereNotNull('lat')
+                    ->whereNotNull('lng')
+                    ->where('is_hidden', false)
+                    ->where('gps_shared_at', '>=', now()->subDays(7));
+            });
         }
 
         // Radius search is more precise than a viewport bounding box, so prefer it
@@ -94,9 +135,9 @@ class MapDataController
                 min($filters['sw_lat'], $filters['ne_lat']),
                 max($filters['sw_lat'], $filters['ne_lat']),
             ])->whereBetween('lng', [
-                min($filters['sw_lng'], $filters['ne_lng']),
-                max($filters['sw_lng'], $filters['ne_lng']),
-            ]);
+                        min($filters['sw_lng'], $filters['ne_lng']),
+                        max($filters['sw_lng'], $filters['ne_lng']),
+                    ]);
         }
 
         $results = $query->get();
@@ -121,13 +162,15 @@ class MapDataController
             return [
                 'id' => $child->id,
                 'case_code' => $child->case_code,
-                'type' => 'missing',
+                'type' => $child->status === 'FOUND' ? 'found' : 'missing',
+                'status' => $child->status,
                 'lat' => (float) $child->lat,
                 'lng' => (float) $child->lng,
                 'name' => $child->full_name,
                 'age' => $child->age_estimate,
                 'province_name' => $child->province?->name,
                 'missing_date' => $child->missing_date?->format('d/m/Y'),
+                'found_at' => $child->found_at?->format('d/m/Y'),
 
                 'thumb_url' => 'https://api.dicebear.com/7.x/initials/svg?seed=' . urlencode($child->full_name),
 
@@ -136,9 +179,6 @@ class MapDataController
                 'url' => route('missing.detail', ['id' => $child->id]),
             ];
         })->values()->all();
-
-        // TODO: Add found_children markers (T-15)
-        // Query found_children and merge results
 
         return [
             'status' => 'success',
@@ -155,6 +195,8 @@ class MapDataController
         $hash = hash('sha256', json_encode([
             'province_id' => $filters['province_id'] ?? null,
             'type' => $filters['type'] ?? 'all',
+            'time_range' => $filters['time_range'] ?? 'all',
+            'has_new_clue' => !empty($filters['has_new_clue']),
             'bounds' => [
                 'sw_lat' => round($filters['sw_lat'] ?? 0, 2),
                 'sw_lng' => round($filters['sw_lng'] ?? 0, 2),
