@@ -10,7 +10,7 @@
     <div class="relative z-10 h-screen">
 
         <!-- The Leaflet map -->
-        <div id="full-map" class="w-full h-full bg-slate-100"></div>
+        <div id="full-map" class="w-full h-full bg-slate-100 z-10"></div>
         <div id="map-loading" class="absolute inset-0 z-50 flex items-center justify-center bg-white/70">
 
             <div class="bg-white rounded-2xl shadow-xl px-5 py-4 flex items-center gap-3 border border-slate-200">
@@ -31,8 +31,7 @@
             </div>
         </div>
         <!-- FLOATING CONTROL PANEL (Premium glassmorphism Card) -->
-        <div class="absolute top-4 left-4 z-40 max-w-sm w-[90%] sm:w-80 space-y-3 pointer-events-auto">
-
+        <div class="absolute z-1 top-4 left-4 z-40 max-w-sm w-[90%] sm:w-80 space-y-3 pointer-events-auto">
             <!-- Filter Card -->
             <div class="glass-premium p-4 sm:p-5 rounded-3xl shadow-premium border border-slate-200/50 space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-200/40 pb-2">
@@ -88,9 +87,13 @@
             </div>
 
         </div>
+
+        <!-- Widget C-02: Gần đây có bao nhiêu trẻ mất tích -->
+        <div class="absolute top-4 right-4 z-40 pointer-events-none">
+            <x-map.nearby-widget />
+        </div>
     </div>
 @endsection
-
 
 @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
