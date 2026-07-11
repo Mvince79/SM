@@ -123,4 +123,5 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'child_age_limit' => env('CHILD_AGE_LIMIT', 16),
 ];

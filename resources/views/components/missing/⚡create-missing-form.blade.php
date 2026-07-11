@@ -44,7 +44,7 @@ new class extends Component {
 
     // ── Bước 3 — Liên hệ ─────────────────────────────────────────────────
     public string $contact_name = '';
-    public string $contact_relation = 'Mẹ';
+    public string $contact_relation = 'PARENT';
     public string $contact_phone = '';
     public string $contact_address = '';
     public bool $agreed = false;
@@ -70,7 +70,7 @@ new class extends Component {
             'missing_date' => ['required', 'date', 'before_or_equal:today'],
             'province_id' => ['required', 'exists:provinces,id'],
             'dob' => ['nullable', 'date', 'before:today'],
-            'age_estimate' => ['nullable', 'integer', 'min:0', 'max:18'],
+            'age_estimate' => ['nullable', 'integer', 'min:0', 'max:' . (config('app.child_age_limit') - 1)],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lng' => ['nullable', 'numeric', 'between:-180,180'],
         ];
@@ -84,6 +84,7 @@ new class extends Component {
             'missing_date.required' => 'Vui lòng nhập ngày mất tích.',
             'missing_date.before_or_equal' => 'Ngày mất tích không thể ở tương lai.',
             'province_id.required' => 'Vui lòng chọn tỉnh/thành phố.',
+            'age_estimate.max' => 'Hệ thống chỉ tiếp nhận báo tin cho trẻ dưới ' . config('app.child_age_limit') . ' tuổi theo quy định của Luật Trẻ em 2016.',
         ];
     }
 
@@ -377,7 +378,7 @@ new class extends Component {
                             <span
                                 class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-semibold pointer-events-none">tuổi</span>
                         </div>
-                        <p class="text-[10px] text-slate-400 font-medium">Nhập số tuổi (0–18). Nếu chỉ biết năm sinh,
+                        <p class="text-[10px] text-slate-400 font-medium">Nhập số tuổi (0–16). Nếu chỉ biết năm sinh,
                             điền
                             vào ô ngày sinh bên dưới.</p>
                         @error('age_estimate')
@@ -793,11 +794,13 @@ new class extends Component {
                             trẻ</label>
                         <select wire:model="contact_relation"
                             class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600">
-                            <option>Cha</option>
-                            <option>Mẹ</option>
-                            <option>Ông/Bà</option>
-                            <option>Người giám hộ hợp pháp</option>
-                            <option>Người phát hiện trẻ đi lạc</option>
+                            <option value="PARENT">Cha/Mẹ</option>
+                            <option value="GRANDPARENT">Ông/Bà</option>
+                            <option value="LEGAL_GUARDIAN">Người giám hộ hợp pháp</option>
+                            <option value="SIBLING">Anh/Chị/Em ruột</option>
+                            <option value="RELATIVE_OTHER">Họ hàng khác</option>
+                            <option value="WITNESS_NO_RELATION">Người phát hiện trẻ đi lạc (không quan hệ)</option>
+                            <option value="ORGANIZATION">Tổ chức/Đơn vị</option>
                         </select>
                     </div>
                 </div>

@@ -48,13 +48,18 @@ class MissingChildObserver
     public function created(MissingChild $missingChild): void
     {
         try {
-            activity()
-                ->performedOn($missingChild)
-                ->event('created')
-                ->withProperties(['attributes' => $missingChild->toArray()])
-                ->log("Đã tạo tin tìm kiếm trẻ thất lạc: {$missingChild->full_name} ({$missingChild->case_code})");
+            $reviewLevel = match (true) {
+                in_array($missingChild->contact_relation, ['PARENT', 'LEGAL_GUARDIAN'], true)
+                && $missingChild->user?->kyc_status === 'VERIFIED' => 'STANDARD',
+                default => 'ENHANCED',
+            };
+
+            $missingChild->review_level = $reviewLevel;
+            $missingChild->saveQuietly();
+
+            Log::info("MissingChild Observer: review_level={$reviewLevel} for {$missingChild->case_code}");
         } catch (\Throwable $e) {
-            Log::warning("Activity log failed: " . $e->getMessage());
+            Log::warning('Set review_level failed: ' . $e->getMessage());
         }
 
         Log::info("MissingChild Observer (created): Generated case_code {$missingChild->case_code} for child ID {$missingChild->id}");
