@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\MissingChildren;
 
+use App\Filament\Admin\Resources\MissingChildren\RelationManagers\PhotoActivityLogRelationManager;
 use App\Filament\Admin\Resources\MissingChildren\Pages\CreateMissingChild;
 use App\Filament\Admin\Resources\MissingChildren\Pages\EditMissingChild;
 use App\Filament\Admin\Resources\MissingChildren\Pages\ListMissingChildren;
@@ -71,6 +72,7 @@ class MissingChildResource extends Resource
             PhotosRelationManager::class,
             CommentsRelationManager::class,
             ActivityLogRelationManager::class,
+            PhotoActivityLogRelationManager::class,
         ];
     }
 
