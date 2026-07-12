@@ -539,59 +539,62 @@ new class extends Component {
                         bản
                         đồ để ghim tay.</p>
 
-                    <div wire:ignore x-data="{}" x-init="$nextTick(() => {
-                        if (window._mapPickerInstance) {
-                            window._mapPickerInstance.remove();
-                            window._mapPickerInstance = null;
-                        }
-                    
-                        const savedLat = parseFloat($wire.get('lat'));
-                        const savedLng = parseFloat($wire.get('lng'));
-                        const hasSavedLocation = !isNaN(savedLat) && !isNaN(savedLng);
-                    
-                        const defaultCenter = hasSavedLocation ? [savedLat, savedLng] : [16.0544, 108.2022];
-                        const defaultZoom = hasSavedLocation ? 14 : 6;
-                    
-                        const map = L.map('map-picker').setView(defaultCenter, defaultZoom);
-                        window._mapPickerInstance = map;
-                    
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '© OpenStreetMap'
-                        }).addTo(map);
-                    
-                        let marker = null;
-                        if (hasSavedLocation) {
-                            marker = L.marker([savedLat, savedLng]).addTo(map)
-                                .bindPopup('Vị trí đã chọn').openPopup();
-                        }
-                    
-                        if (!hasSavedLocation && navigator.geolocation) {
-                            navigator.geolocation.getCurrentPosition(
-                                (pos) => {
-                                    const { latitude, longitude } = pos.coords;
-                                    map.setView([latitude, longitude], 15);
-                                    marker = L.marker([latitude, longitude]).addTo(map)
-                                        .bindPopup('Vị trí của bạn — bấm vào bản đồ để sửa nếu sai').openPopup();
-                                    $wire.set('lat', latitude.toFixed(6));
-                                    $wire.set('lng', longitude.toFixed(6));
-                                },
-                                () => {}, { timeout: 8000, enableHighAccuracy: true }
-                            );
-                        }
-                    
-                        map.on('click', (e) => {
-                            const { lat, lng } = e.latlng;
-                            if (marker) marker.remove();
-                            marker = L.marker([lat, lng]).addTo(map)
-                                .bindPopup('Vị trí đã chọn').openPopup();
-                            $wire.set('lat', lat.toFixed(6));
-                            $wire.set('lng', lng.toFixed(6));
-                        });
-                    
-                        setTimeout(() => map.invalidateSize(), 100);
-                    });">
-                        <button type="button"
-                            onclick="(function(btn){
+                    <div wire:ignore x-data="{}" x-init="
+                                $nextTick(() => {
+                                    if (window._mapPickerInstance) {
+                                        window._mapPickerInstance.remove();
+                                        window._mapPickerInstance = null;
+                                    }
+
+                                    const savedLat = parseFloat($wire.get('lat'));
+                                    const savedLng = parseFloat($wire.get('lng'));
+                                    const hasSavedLocation = !isNaN(savedLat) && !isNaN(savedLng);
+
+                                    const defaultCenter = hasSavedLocation ? [savedLat, savedLng] : [16.0544, 108.2022];
+                                    const defaultZoom = hasSavedLocation ? 14 : 6;
+
+                                    const map = L.map('map-picker').setView(defaultCenter, defaultZoom);
+                                    initVnSovereigntyLayer(map);
+                                    window._mapPickerInstance = map;
+
+                                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                        attribution: '© OpenStreetMap'
+                                    }).addTo(map);
+
+                                    let marker = null;
+                                    if (hasSavedLocation) {
+                                        marker = L.marker([savedLat, savedLng]).addTo(map)
+                                            .bindPopup('Vị trí đã chọn').openPopup();
+                                    }
+
+                                    if (!hasSavedLocation && navigator.geolocation) {
+                                        navigator.geolocation.getCurrentPosition(
+                                            (pos) => {
+                                                const { latitude, longitude } = pos.coords;
+                                                map.setView([latitude, longitude], 15);
+                                                marker = L.marker([latitude, longitude]).addTo(map)
+                                                    .bindPopup('Vị trí của bạn — bấm vào bản đồ để sửa nếu sai').openPopup();
+                                                $wire.set('lat', latitude.toFixed(6));
+                                                $wire.set('lng', longitude.toFixed(6));
+                                            },
+                                            () => {},
+                                            { timeout: 8000, enableHighAccuracy: true }
+                                        );
+                                    }
+
+                                    map.on('click', (e) => {
+                                        const { lat, lng } = e.latlng;
+                                        if (marker) marker.remove();
+                                        marker = L.marker([lat, lng]).addTo(map)
+                                            .bindPopup('Vị trí đã chọn').openPopup();
+                                        $wire.set('lat', lat.toFixed(6));
+                                        $wire.set('lng', lng.toFixed(6));
+                                    });
+
+                                    setTimeout(() => map.invalidateSize(), 100);
+                                });
+                            ">
+                        <button type="button" onclick="(function(btn){
                                     try { window.__lastUserGestureAt = Date.now(); } catch(e) {}
                                     if (!navigator.geolocation) { alert('Trình duyệt không hỗ trợ định vị.'); return; }
                                     btn.disabled = true;
@@ -605,7 +608,6 @@ new class extends Component {
                                             L.marker([lat, lng]).addTo(map).bindPopup('Vị trí hiện tại của bạn').openPopup();
                                         }
                                         @this.set('lat', lat.toFixed(6));
-                                        @this.set('lng', lng.toFixed(6));
                                         onDone();
                                     };
                                     const onError = (err) => { onDone(); alert('Không thể lấy vị trí: ' + err.message); };
@@ -941,4 +943,5 @@ new class extends Component {
 @endpush
 @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ asset('js/map/vn-sovereignty-layer.js') }}"></script>
 @endpush

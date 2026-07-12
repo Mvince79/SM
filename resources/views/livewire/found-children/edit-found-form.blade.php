@@ -345,6 +345,7 @@ new class extends Component {
                         const zoom     = hasSaved ? 15 : 6;
 
                         this.map = L.map('found-edit-map-picker').setView(center, zoom);
+                        initVnSovereigntyLayer(this.map);
                         window._foundEditMapPickerInstance = this.map;
 
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -511,22 +512,23 @@ new class extends Component {
                 @foreach ($existingPhotos as $photo)
                     <div class="relative group">
                         <img src="{{ Storage::url($photo->path_original) }}" class="w-full aspect-square object-cover rounded-xl border-2
-                                        {{ $photo->is_primary ? 'border-primary' : 'border-slate-200' }}" />
+                                                {{ $photo->is_primary ? 'border-primary' : 'border-slate-200' }}" />
                         @if ($photo->is_primary)
                             <span
                                 class="absolute top-1 left-1 bg-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-lg">
                                 Chính
                             </span>
                         @else
-                            <button type="button" wire:click="setPrimary({{ $photo->id }})" class="absolute top-1 left-1 bg-white/90 text-slate-500 text-[9px] font-bold px-1.5 py-0.5 rounded-lg
-                                                   opacity-0 group-hover:opacity-100 transition-opacity hover:text-primary">
+                            <button type="button" wire:click="setPrimary({{ $photo->id }})"
+                                class="absolute top-1 left-1 bg-white/90 text-slate-500 text-[9px] font-bold px-1.5 py-0.5 rounded-lg
+                                                               opacity-0 group-hover:opacity-100 transition-opacity hover:text-primary">
                                 Đặt chính
                             </button>
                         @endif
                         <button type="button" wire:click="deleteExistingPhoto({{ $photo->id }})"
                             wire:confirm="Xoá ảnh này khỏi hồ sơ?"
                             class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full w-5 h-5
-                                           flex items-center justify-center hover:bg-rose-600 transition-colors shadow-md z-10 text-xs font-black">
+                                                   flex items-center justify-center hover:bg-rose-600 transition-colors shadow-md z-10 text-xs font-black">
                             &times;
                         </button>
                     </div>
@@ -582,7 +584,7 @@ new class extends Component {
                         </span>
                         <button type="button" wire:click="removeNewPhoto({{ $index }})"
                             class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full w-5 h-5
-                                           flex items-center justify-center hover:bg-rose-600 transition-colors shadow-md z-10 text-xs font-black">
+                                                   flex items-center justify-center hover:bg-rose-600 transition-colors shadow-md z-10 text-xs font-black">
                             &times;
                         </button>
                     </div>
@@ -611,4 +613,5 @@ new class extends Component {
 @endpush
 @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ asset('js/map/vn-sovereignty-layer.js') }}"></script>
 @endpush

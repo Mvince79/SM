@@ -71,7 +71,7 @@
 
 @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+    <script src="{{ asset('js/map/vn-sovereignty-layer.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             function toggleMenu() {
@@ -85,7 +85,7 @@
             const map = L.map('full-map', {
                 zoomControl: false
             }).setView([16.0544, 108.2022], 6); // Da Nang center center
-
+            initVnSovereigntyLayer(map);
             // Custom Zoom Control placed to the bottom-right for thumb ease
             L.control.zoom({
                 position: 'bottomright'
@@ -132,60 +132,53 @@
                     .then(result => {
                         markersLayer.clearLayers();
 
-                        const kidsList = result.data ?? [];
+                        const popupHtml = `
+                                                                <div class="flex gap-3 items-center min-w-[240px] max-w-[280px]">
 
-                        kidsList.forEach(kid => {
+                                                                    <div class="w-[60px] h-[60px] rounded-2xl overflow-hidden border border-slate-200 flex-shrink-0">
+                                                                        <img
+                                                                            src="${kid.thumb_url}"
+                                                                            class="w-full h-full object-cover"
+                                                                            alt="${kid.name}"
+                                                                        >
+                                                                    </div>
 
-                            const isFound = kid.status === 'FOUND';
+                                                                    <div class="min-w-0 flex-1">
 
-                            const popupHtml = `
-                                                        <div class="flex gap-3 items-center min-w-[240px] max-w-[280px]">
+                                                                        <div class="font-black text-sm text-slate-900">
+                                                                            ${kid.name}
+                                                                        </div>
 
-                                                            <div class="w-[60px] h-[60px] rounded-2xl overflow-hidden border border-slate-200 flex-shrink-0">
-                                                                <img
-                                                                    src="${kid.thumb_url}"
-                                                                    class="w-full h-full object-cover"
-                                                                    alt="${kid.name}"
-                                                                >
-                                                            </div>
+                                                                        <div class="text-[11px] text-slate-500 font-semibold mt-1">
+                                                                            ${kid.age ? kid.age + ' tuổi' : 'Chưa rõ tuổi'}
+                                                                        </div>
 
-                                                            <div class="min-w-0 flex-1">
+                                                                        <div class="text-[11px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-slate-400 shrink-0">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                            </svg>
+                            ${kid.province_name ?? 'Chưa rõ'}
+                        </div>
 
-                                                                <div class="font-black text-sm text-slate-900 flex items-center gap-1.5">
-                                                                    ${kid.name}
-                                                                    ${isFound ? '<span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-success/10 text-success">Đã tìm thấy</span>' : ''}
+                        <div class="text-[11px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-slate-400 shrink-0">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                            </svg>
+                            ${kid.missing_date ?? 'Chưa rõ'}
+                        </div>
+
+                                                                        <a
+                                                                            href="${kid.url}"
+                                                                            class="inline-flex mt-2 text-[11px] font-black text-primary hover:underline"
+                                                                        >
+                                                                            Xem chi tiết →
+                                                                        </a>
+
+                                                                    </div>
+
                                                                 </div>
-
-                                                                <div class="text-[11px] text-slate-500 font-semibold mt-1">
-                                                                    ${kid.age ? kid.age + ' tuổi' : 'Chưa rõ tuổi'}
-                                                                </div>
-
-                                                                <div class="text-[11px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-slate-400 shrink-0">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                    </svg>
-                    ${kid.province_name ?? 'Chưa rõ'}
-                </div>
-
-                <div class="text-[11px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-slate-400 shrink-0">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-                    </svg>
-                    ${isFound ? (kid.found_at ?? 'Chưa rõ') : (kid.missing_date ?? 'Chưa rõ')}
-                </div>
-
-                                                                <a
-                                                                    href="${kid.url}"
-                                                                    class="inline-flex mt-2 text-[11px] font-black text-primary hover:underline"
-                                                                >
-                                                                    Xem chi tiết →
-                                                                </a>
-
-                                                            </div>
-
-                                                        </div>
-                                                    `;
+                                                            `;
 
                             L.marker([kid.lat, kid.lng], {
                                 icon: buildIcon(kid.status)
@@ -236,12 +229,12 @@
                         icon: myIcon
                     }).addTo(map).bindPopup(
                         `<div class='font-bold text-xs p-1 text-slate-900 flex items-center gap-1'>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-primary">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                                </svg>
-                                Vị trí hiện tại của bạn
-                            </div>`
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-primary">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                        </svg>
+                                        Vị trí hiện tại của bạn
+                                    </div>`
                     ).openPopup();
                 });
 

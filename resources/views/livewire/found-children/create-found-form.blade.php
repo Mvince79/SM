@@ -389,6 +389,7 @@ new class extends Component {
                                             const zoom     = hasSaved ? 15 : 6;
 
                                             this.map = L.map('found-map-picker').setView(center, zoom);
+                                            initVnSovereigntyLayer(this.map);
                                             window._foundMapPickerInstance = this.map;
 
                                             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -732,4 +733,5 @@ new class extends Component {
 @endpush
 @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ asset('js/map/vn-sovereignty-layer.js') }}"></script>
 @endpush
