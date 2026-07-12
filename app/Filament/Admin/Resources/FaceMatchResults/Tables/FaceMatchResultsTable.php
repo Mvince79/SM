@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\FaceMatchResults\Tables;
 
 use App\Models\FaceMatchResult;
+use App\Models\Province;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
@@ -36,11 +37,14 @@ class FaceMatchResultsTable
                 Tables\Columns\TextColumn::make('missingChild.full_name')
                     ->label('Trẻ mất tích')
                     ->description(fn (FaceMatchResult $record): string => $record->missingChild?->case_code ?? '—')
-                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas(
-                        'missingChild',
-                        fn ($q) => $q->where('full_name', 'like', "%{$search}%")
-                            ->orWhere('case_code', 'like', "%{$search}%")
-                    ))
+                    ->searchable(
+                        query: fn (Builder $query, string $search) => $query->whereHas(
+                            'missingChild',
+                            fn ($q) => $q
+                                ->where('full_name', 'like', "%{$search}%")
+                                ->orWhere('case_code', 'like', "%{$search}%")
+                        )
+                    )
                     ->weight('bold'),
 
                 Tables\Columns\TextColumn::make('found_id')
@@ -51,7 +55,9 @@ class FaceMatchResultsTable
 
                 Tables\Columns\TextColumn::make('score')
                     ->label('Độ khớp AI')
-                    ->formatStateUsing(fn ($state): string => number_format((float) $state * 100, 2) . '%')
+                    ->formatStateUsing(
+                        fn ($state): string => number_format((float) $state * 100, 2) . '%'
+                    )
                     ->badge()
                     ->color(fn ($state): string => match (true) {
                         (float) $state >= config('face_match.high_confidence_threshold', 0.85) => 'success',
@@ -121,7 +127,10 @@ class FaceMatchResultsTable
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Tạo lúc')
                     ->since()
-                    ->tooltip(fn (FaceMatchResult $record): string => $record->created_at?->format('d/m/Y H:i:s') ?? '')
+                    ->tooltip(
+                        fn (FaceMatchResult $record): string =>
+                            $record->created_at?->format('d/m/Y H:i:s') ?? ''
+                    )
                     ->sortable(),
             ])
             ->filters([
@@ -149,6 +158,47 @@ class FaceMatchResultsTable
                         'MANUAL' => 'Manual',
                     ]),
 
+                SelectFilter::make('gender')
+                    ->label('Giới tính AI')
+                    ->options([
+                        'MALE' => 'Nam',
+                        'FEMALE' => 'Nữ',
+                        'UNKNOWN' => 'Không xác định',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (blank($data['value'] ?? null)) {
+                            return $query;
+                        }
+
+                        return $query->whereHas(
+                            'missingPhoto',
+                            fn (Builder $photoQuery) => $photoQuery
+                                ->where('detected_gender', $data['value'])
+                        );
+                    }),
+
+                SelectFilter::make('province_id')
+                    ->label('Tỉnh/Thành phố')
+                    ->options(
+                        fn (): array => Province::query()
+                            ->orderBy('name')
+                            ->pluck('name', 'id')
+                            ->all()
+                    )
+                    ->searchable()
+                    ->preload()
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (blank($data['value'] ?? null)) {
+                            return $query;
+                        }
+
+                        return $query->whereHas(
+                            'missingChild',
+                            fn (Builder $missingChildQuery) => $missingChildQuery
+                                ->where('province_id', $data['value'])
+                        );
+                    }),
+
                 Tables\Filters\Filter::make('score_range')
                     ->label('Khoảng điểm AI')
                     ->schema([
@@ -156,6 +206,7 @@ class FaceMatchResultsTable
                             ->label('Từ %')
                             ->numeric()
                             ->placeholder('70'),
+
                         TextInput::make('score_to')
                             ->label('Đến %')
                             ->numeric()
@@ -165,11 +216,19 @@ class FaceMatchResultsTable
                         return $query
                             ->when(
                                 filled($data['score_from'] ?? null),
-                                fn (Builder $query) => $query->where('score', '>=', ((float) $data['score_from']) / 100)
+                                fn (Builder $query) => $query->where(
+                                    'score',
+                                    '>=',
+                                    ((float) $data['score_from']) / 100
+                                )
                             )
                             ->when(
                                 filled($data['score_to'] ?? null),
-                                fn (Builder $query) => $query->where('score', '<=', ((float) $data['score_to']) / 100)
+                                fn (Builder $query) => $query->where(
+                                    'score',
+                                    '<=',
+                                    ((float) $data['score_to']) / 100
+                                )
                             );
                     }),
 
@@ -178,6 +237,7 @@ class FaceMatchResultsTable
                     ->schema([
                         DatePicker::make('created_from')
                             ->label('Từ ngày'),
+
                         DatePicker::make('created_until')
                             ->label('Đến ngày'),
                     ])
@@ -185,11 +245,19 @@ class FaceMatchResultsTable
                         return $query
                             ->when(
                                 filled($data['created_from'] ?? null),
-                                fn (Builder $query) => $query->whereDate('created_at', '>=', $data['created_from'])
+                                fn (Builder $query) => $query->whereDate(
+                                    'created_at',
+                                    '>=',
+                                    $data['created_from']
+                                )
                             )
                             ->when(
                                 filled($data['created_until'] ?? null),
-                                fn (Builder $query) => $query->whereDate('created_at', '<=', $data['created_until'])
+                                fn (Builder $query) => $query->whereDate(
+                                    'created_at',
+                                    '<=',
+                                    $data['created_until']
+                                )
                             );
                     }),
             ])
@@ -228,12 +296,17 @@ class FaceMatchResultsTable
                             FaceMatchResult::where('missing_id', $record->missing_id)
                                 ->where('id', '!=', $record->id)
                                 ->where('status', 'PENDING')
-                                ->update(['status' => 'DISMISSED']);
+                                ->update([
+                                    'status' => 'DISMISSED',
+                                ]);
 
                             activity('admin')
                                 ->causedBy(Auth::id())
                                 ->performedOn($record)
-                                ->withProperties(['missing_id' => $record->missing_id, 'found_id' => $record->found_id])
+                                ->withProperties([
+                                    'missing_id' => $record->missing_id,
+                                    'found_id' => $record->found_id,
+                                ])
                                 ->log('Xác nhận khớp khuôn mặt bằng AI');
                         });
 
@@ -247,7 +320,9 @@ class FaceMatchResultsTable
                     ->hidden(fn (FaceMatchResult $record): bool => $record->status !== 'PENDING')
                     ->requiresConfirmation()
                     ->modalHeading('Bác bỏ kết quả AI match')
-                    ->modalDescription('Kết quả này sẽ được đánh dấu là không chính xác và job AI chạy lại sẽ không tự mở lại kết quả đã bác bỏ.')
+                    ->modalDescription(
+                        'Kết quả này sẽ được đánh dấu là không chính xác và job AI chạy lại sẽ không tự mở lại kết quả đã bác bỏ.'
+                    )
                     ->modalSubmitActionLabel('Bác bỏ')
                     ->action(function (FaceMatchResult $record): void {
                         $record->update([
