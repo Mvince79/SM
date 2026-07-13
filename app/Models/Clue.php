@@ -55,6 +55,11 @@ class Clue extends Model
         return $this->belongsTo(User::class, 'verified_by');
     }
 
+    public function volunteerAssignments()
+    {
+        return $this->hasMany(VolunteerAssignment::class);
+    }
+
     public function replies()
     {
         return $this->hasMany(Clue::class, 'parent_id')->with('user')->oldest();

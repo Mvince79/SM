@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\MissingChildApiController;
 use App\Http\Controllers\Api\V1\MapDataController;
+use App\Http\Controllers\Api\V1\VolunteerAssignmentController;
 use App\Http\Controllers\Api\Internal\FaceMatchController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -69,6 +70,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('/clues', [\App\Http\Controllers\Api\V1\ClueApiController::class, 'store'])
             ->name('clues.store')
             ->middleware('throttle:60,1');
+
+        Route::get('/volunteer/nearby-clues', [VolunteerAssignmentController::class, 'nearbyClues'])
+            ->name('volunteer.nearby-clues');
+        Route::post('/volunteer/assignments', [VolunteerAssignmentController::class, 'store'])
+            ->name('volunteer.assignments.store');
+        Route::patch('/volunteer/assignments/{assignment}', [VolunteerAssignmentController::class, 'update'])
+            ->name('volunteer.assignments.update');
     });
 });
 
