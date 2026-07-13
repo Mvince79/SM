@@ -26,6 +26,7 @@ class FoundChildRequest extends FormRequest
             'special_marks' => 'nullable|string',
             'current_location' => 'nullable|string|max:300',
             'handover_agency' => 'nullable|string|max:200',
+            'idempotency_key' => 'nullable|uuid',
         ];
     }
 
@@ -43,6 +44,7 @@ class FoundChildRequest extends FormRequest
             'special_marks' => 'dấu hiệu đặc biệt',
             'current_location' => 'vị trí hiện tại',
             'handover_agency' => 'cơ quan/nơi bàn giao',
+            'idempotency_key' => 'mã chống gửi trùng',
         ];
     }
 

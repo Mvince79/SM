@@ -5,10 +5,11 @@ use Livewire\WithFileUploads;
 use App\Models\FoundChild;
 use App\Models\Photo;
 use App\Models\Province;
+use App\Traits\HasIdempotency;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 new class extends Component {
+    use HasIdempotency;
     use WithFileUploads;
 
     public int $step = 1;
@@ -32,6 +33,8 @@ new class extends Component {
 
     // ── Bước 3 — Xác nhận & Cam kết ──────────────────────────────────────────
     public bool $agreed = false;
+    public bool $isSubmitting = false;
+    public string $idempotencyKey = '';
 
     public $provinces;
 
@@ -40,6 +43,7 @@ new class extends Component {
     {
         $this->provinces = Province::where('is_active', 1)->orderBy('name')->get();
         $this->found_date = now()->toDateString();
+        $this->idempotencyKey = $this->generateIdempotencyKey();
     }
 
     // ── Validate từng bước ───────────────────────────────────────────────────
@@ -175,48 +179,66 @@ new class extends Component {
     // ── Submit ───────────────────────────────────────────────────────────────
     public function submit(): void
     {
-        $this->validate($this->rulesStep3(), $this->messagesStep3());
-
-        if ($this->found_date && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->found_date)) {
-            $this->found_date = now()->toDateString();
+        if ($this->isSubmitting) {
+            return;
         }
 
-        $item = DB::transaction(function () {
-            $item = FoundChild::create([
-                'user_id' => Auth::id(),
-                'province_id' => (int) $this->province_id,
-                'found_date' => $this->found_date ?: now()->toDateString(),
-                'found_time' => preg_match('/^\d{2}:\d{2}/', $this->found_time ?? '') ? $this->found_time : null,
-                'gender_estimate' => $this->gender_estimate ?: 'UNKNOWN',
-                'age_estimate' => $this->age_estimate !== '' ? (int) $this->age_estimate : null,
-                'current_location' => $this->current_location ?: null,
-                'handover_agency' => $this->handover_agency ?: null,
-                'lat' => $this->lat !== '' ? (float) $this->lat : null,
-                'lng' => $this->lng !== '' ? (float) $this->lng : null,
-                'condition_desc' => $this->condition_desc ?: null,
-                'clothes_desc' => $this->clothes_desc ?: null,
-                'special_marks' => $this->special_marks,
-                'status' => 'PENDING',
-            ]);
+        $this->isSubmitting = true;
 
-            foreach ($this->photos as $index => $photo) {
-                $path = $photo->storePublicly("found-children/{$item->id}", 'public');
-                Photo::create([
-                    'model_type' => FoundChild::class,
-                    'model_id' => $item->id,
-                    'path_original' => $path,
-                    'file_size' => $photo->getSize(),
-                    'mime_type' => $photo->getMimeType(),
-                    'is_primary' => $index === 0 ? 1 : 0,
-                    'sort_order' => $index,
-                ]);
+        try {
+            $this->validate($this->rulesStep3(), $this->messagesStep3());
+
+            if ($this->found_date && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->found_date)) {
+                $this->found_date = now()->toDateString();
             }
 
-            return $item;
-        });
+            if ($this->idempotencyKey === '') {
+                $this->idempotencyKey = $this->generateIdempotencyKey();
+            }
 
-        session()->flash('success', 'Đã gửi hồ sơ tìm được thành công! Hồ sơ đang chờ xét duyệt.');
-        $this->redirect(route('found-children.show', $item->id));
+            $result = $this->resolveIdempotent($this->idempotencyKey, FoundChild::class, Auth::id(), function () {
+                $item = FoundChild::create([
+                    'user_id' => Auth::id(),
+                    'province_id' => (int) $this->province_id,
+                    'found_date' => $this->found_date ?: now()->toDateString(),
+                    'found_time' => preg_match('/^\d{2}:\d{2}/', $this->found_time ?? '') ? $this->found_time : null,
+                    'gender_estimate' => $this->gender_estimate ?: 'UNKNOWN',
+                    'age_estimate' => $this->age_estimate !== '' ? (int) $this->age_estimate : null,
+                    'current_location' => $this->current_location ?: null,
+                    'handover_agency' => $this->handover_agency ?: null,
+                    'lat' => $this->lat !== '' ? (float) $this->lat : null,
+                    'lng' => $this->lng !== '' ? (float) $this->lng : null,
+                    'condition_desc' => $this->condition_desc ?: null,
+                    'clothes_desc' => $this->clothes_desc ?: null,
+                    'special_marks' => $this->special_marks,
+                    'status' => 'PENDING',
+                ]);
+
+                foreach ($this->photos as $index => $photo) {
+                    $path = $photo->storePublicly("found-children/{$item->id}", 'public');
+                    Photo::create([
+                        'model_type' => FoundChild::class,
+                        'model_id' => $item->id,
+                        'path_original' => $path,
+                        'file_size' => $photo->getSize(),
+                        'mime_type' => $photo->getMimeType(),
+                        'is_primary' => $index === 0 ? 1 : 0,
+                        'sort_order' => $index,
+                    ]);
+                }
+
+                return $item;
+            });
+
+            if (! $result['was_duplicate']) {
+                session()->flash('success', 'Đã gửi hồ sơ tìm được thành công! Hồ sơ đang chờ xét duyệt.');
+            }
+
+            $this->idempotencyKey = $this->generateIdempotencyKey();
+            $this->redirect(route('found-children.show', $result['resource_id']));
+        } finally {
+            $this->isSubmitting = false;
+        }
     }
 };
 ?>
@@ -716,6 +738,7 @@ new class extends Component {
                 </button>
             @else
                 <button type="button" wire:click="submit" wire:loading.attr="disabled" wire:target="submit"
+                    @disabled($isSubmitting)
                     class="px-6 py-3 rounded-2xl bg-primary text-white font-extrabold text-sm hover:bg-primary-dark shadow-md shadow-primary/20 transition-all flex items-center gap-2">
                     <span wire:loading wire:target="submit"
                         class="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
