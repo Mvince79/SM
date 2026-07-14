@@ -24,6 +24,7 @@ class CreateMissingFormIdempotencyTest extends TestCase
             'contact_phone' => '0905123456',
             'contact_relation' => 'Mẹ',
             'agreed' => true,
+            'agreedDataPolicy' => true,
         ];
     }
 
@@ -42,6 +43,7 @@ class CreateMissingFormIdempotencyTest extends TestCase
 
         // Gửi lần 1
         $component->call('submit');
+        $component->assertHasNoErrors(); 
         $this->assertSame(1, MissingChild::count());
 
         // Gửi lần 2 với CÙNG idempotencyKey (giả lập double-click)
