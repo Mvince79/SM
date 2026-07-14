@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Livewire\Chat\ChatBox;
 use Livewire\Volt\Volt;
+use Illuminate\Support\Facades\Gate;
 // ── Auth (register, login, OTP, Google OAuth, logout) ──────────────────────
 require __DIR__ . '/auth.php';
 
@@ -56,7 +57,13 @@ Route::prefix('legal')->name('legal.')->group(function () {
     Route::view('/privacy-policy', 'legal.privacy-policy')->name('privacy');
     Route::view('/child-data-policy', 'legal.child-data-policy')->name('child-data');
 });
+Route::middleware(['auth'])
+    ->get('/volunteer/dashboard', function () {
+        Gate::authorize('access-volunteer-features');
 
+        return view('volunteer.dashboard');
+    })
+    ->name('volunteer.dashboard');
 // ── Routes cần đăng nhập + email đã xác thực + không bị BAN ────────────────
 Route::middleware(['auth', 'email.verified'])->group(function () {
     Route::prefix('/profile')->name('profile.')->group(function () {

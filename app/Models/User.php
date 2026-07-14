@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -160,6 +161,10 @@ class User extends Authenticatable implements FilamentUser
     public function fcmTokens()
     {
         return $this->hasMany(FcmToken::class);
+    }
+    public function volunteerAssignments(): HasMany
+    {
+        return $this->hasMany(VolunteerAssignment::class);
     }
 
     public function isVolunteer(): bool

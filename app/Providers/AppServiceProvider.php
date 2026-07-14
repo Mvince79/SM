@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Livewire\Volunteer\AssignmentBoard;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,10 +26,24 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Register Policy
-        \Illuminate\Support\Facades\Gate::policy(\App\Models\MissingChild::class, \App\Policies\MissingChildPolicy::class);
+        Gate::policy(
+            \App\Models\MissingChild::class,
+            \App\Policies\MissingChildPolicy::class
+        );
 
         // Register Observer
-        \App\Models\MissingChild::observe(\App\Observers\MissingChildObserver::class);
-        \App\Models\Photo::observe(\App\Observers\PhotoObserver::class);
+        \App\Models\MissingChild::observe(
+            \App\Observers\MissingChildObserver::class
+        );
+
+        \App\Models\Photo::observe(
+            \App\Observers\PhotoObserver::class
+        );
+
+        // Register Livewire component
+        Livewire::component(
+            'volunteer.assignment-board',
+            AssignmentBoard::class
+        );
     }
 }

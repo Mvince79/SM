@@ -47,13 +47,13 @@ class UsersTable
                 TextColumn::make('status')
                     ->label('Trạng thái')
                     ->badge()
-                    ->color(fn ($state) => match ($state) {
+                    ->color(fn($state) => match ($state) {
                         'ACTIVE' => 'success',
                         'BANNED' => 'danger',
                         'PENDING' => 'warning',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn ($state) => match ($state) {
+                    ->formatStateUsing(fn($state) => match ($state) {
                         'ACTIVE' => 'Hoạt động',
                         'BANNED' => 'Bị khóa',
                         'PENDING' => 'Chờ kích hoạt',
@@ -70,20 +70,35 @@ class UsersTable
                 TextColumn::make('last_active_at')
                     ->label('Hoạt động cuối')
                     ->date('d/m/Y')
-                    ->description(fn (User $record): ?string => $record->last_active_at?->format('H:i'))
+                    ->description(fn(User $record): ?string => $record->last_active_at?->format('H:i'))
                     ->placeholder('—')
                     ->sortable()
                     ->alignCenter(),
-
                 SelectColumn::make('role')
                     ->label('Vai trò')
                     ->options([
                         'USER' => 'Người dùng',
+                        'VOLUNTEER' => 'Tình nguyện viên',
                         'MODERATOR' => 'Kiểm duyệt viên',
                         'ADMIN' => 'Quản trị viên',
                     ])
                     ->selectablePlaceholder(false)
-                    ->disabled(fn (): bool => ! Auth::check() || Auth::user()->role !== 'ADMIN'),
+                    ->disabled(fn(): bool => ! Auth::check() || Auth::user()->role !== 'ADMIN'),
+
+                TextColumn::make('completed_volunteer_assignments_count')
+                    ->label('Nhiệm vụ hoàn thành')
+                    ->counts([
+                        'volunteerAssignments' => fn(Builder $query): Builder =>
+                        $query->whereIn('status', [
+                            'VERIFIED',
+                            'COULD_NOT_VERIFY',
+                        ]),
+                    ])
+                    ->badge()
+                    ->color('success')
+                    ->sortable()
+                    ->alignCenter()
+                    ->visibleFrom('lg'),
 
                 TextColumn::make('created_at')
                     ->label('Ngày đăng ký')
@@ -107,6 +122,7 @@ class UsersTable
                     ->options([
                         'ADMIN' => 'Quản trị viên',
                         'MODERATOR' => 'Kiểm duyệt viên',
+                        'VOLUNTEER' => 'Tình nguyện viên',
                         'USER' => 'Người dùng',
                     ])
                     ->native(false)
@@ -132,12 +148,12 @@ class UsersTable
 
                 Filter::make('email_verified')
                     ->label('Đã xác minh email')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('email_verified_at'))
+                    ->query(fn(Builder $query): Builder => $query->whereNotNull('email_verified_at'))
                     ->columnSpan(1),
 
                 Filter::make('google_login')
                     ->label('Đăng nhập Google')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('google_id'))
+                    ->query(fn(Builder $query): Builder => $query->whereNotNull('google_id'))
                     ->columnSpan(1),
             ])
             ->filtersLayout(FiltersLayout::Modal)
@@ -149,7 +165,7 @@ class UsersTable
                 'xl' => 2,
             ])
             ->filtersTriggerAction(
-                fn (Action $action): Action => $action
+                fn(Action $action): Action => $action
                     ->button()
                     ->label('Bộ lọc')
                     ->icon('heroicon-o-funnel')
@@ -160,7 +176,7 @@ class UsersTable
                 Action::make('ban')
                     ->label('Khóa')
                     ->color('danger')
-                    ->visible(fn (User $record): bool => $record->status !== 'BANNED')
+                    ->visible(fn(User $record): bool => $record->status !== 'BANNED')
                     ->form([
                         Textarea::make('ban_reason')
                             ->label('Lý do khóa')
@@ -176,7 +192,7 @@ class UsersTable
                 Action::make('unban')
                     ->label('Mở khóa')
                     ->color('success')
-                    ->visible(fn (User $record): bool => $record->status === 'BANNED')
+                    ->visible(fn(User $record): bool => $record->status === 'BANNED')
                     ->action(function (User $record): void {
                         $record->update([
                             'status' => 'ACTIVE',
