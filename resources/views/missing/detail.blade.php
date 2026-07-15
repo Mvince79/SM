@@ -426,7 +426,7 @@
                 @else
                     {{-- Guest CTA --}}
                     <div class="border border-brand/20 rounded-2xl p-5 bg-brand/5 text-center space-y-3">
-                        <p class="text-2xl"><x-heroicon-o-lock-closed class="w-6 h-6 text-slate-400" /></p>
+                        <p class="text-2xl text-center"><x-heroicon-o-lock-closed class="w-6 h-6 text-slate-400" /></p>
                         <p class="text-sm font-bold text-slate-700">Đăng nhập để xem gợi ý AI</p>
                         <a href="{{ route('auth.login') }}"
                             class="inline-block bg-brand text-white text-xs font-black px-5 py-2.5 rounded-xl hover:bg-brand-dark transition-colors">
@@ -434,6 +434,8 @@
                         </a>
                     </div>
                 @endauth
+
+                @livewire('missing.handover-suggestion-card', ['caseId' => $case->id])
 
                 <!-- CLUES SECTION -->
                 <div class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-premium">
