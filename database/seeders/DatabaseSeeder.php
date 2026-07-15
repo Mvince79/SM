@@ -26,7 +26,8 @@ class DatabaseSeeder extends Seeder
             UsersSeeder::class,
             MissingChildrenSeeder::class,
             PhotosSeeder::class,
-            CluesSeeder::class
+            CluesSeeder::class,
+            HandoverPointsSeeder::class,
         ]);
     }
 }
