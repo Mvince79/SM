@@ -3,8 +3,31 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class NotificationEvent extends Model
 {
-    //
+    public const TYPE_FACE_MATCH_CONFIRMED = 'FACE_MATCH_CONFIRMED';
+
+    protected $fillable = [
+        'event_type',
+        'subject_type',
+        'subject_id',
+        'payload',
+        'triggered_by_user_id',
+        'occurred_at',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'payload' => 'array',
+            'occurred_at' => 'datetime',
+        ];
+    }
+
+    public function subject(): MorphTo
+    {
+        return $this->morphTo();
+    }
 }
