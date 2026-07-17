@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -94,7 +94,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function isVerified(): bool
     {
-        return !is_null($this->email_verified_at) && $this->status === 'ACTIVE';
+        return ! is_null($this->email_verified_at) && $this->status === 'ACTIVE';
     }
 
     /**
@@ -102,7 +102,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function hasPassword(): bool
     {
-        return !is_null($this->password);
+        return ! is_null($this->password);
     }
 
     public function getAvatarUrlAttribute($value): string
@@ -112,12 +112,14 @@ class User extends Authenticatable implements FilamentUser
             if (str_starts_with($value, 'http')) {
                 return $value;
             }
+
             // Path local → trả về URL storage
-            return asset('storage/' . $value);
+            return asset('storage/'.$value);
         }
 
         // Fallback: UI Avatar từ tên
         $name = urlencode($this->full_name ?? 'User');
+
         return "https://ui-avatars.com/api/?name={$name}&background=FF3B30&color=fff&size=128&bold=true";
     }
 
@@ -158,10 +160,21 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(Message::class, 'receiver_id');
     }
 
+    public function assignedAdminChats(): HasMany
+    {
+        return $this->hasMany(AdminChatAssignment::class, 'admin_user_id');
+    }
+
+    public function requestedAdminChats(): HasMany
+    {
+        return $this->hasMany(AdminChatAssignment::class, 'requester_user_id');
+    }
+
     public function fcmTokens()
     {
         return $this->hasMany(FcmToken::class);
     }
+
     public function volunteerAssignments(): HasMany
     {
         return $this->hasMany(VolunteerAssignment::class);
@@ -181,7 +194,7 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessVolunteerFeatures(): bool
     {
         return $this->isVolunteer()
-            && !$this->isBanned()
+            && ! $this->isBanned()
             && $this->kyc_status === 'VERIFIED';
     }
 
