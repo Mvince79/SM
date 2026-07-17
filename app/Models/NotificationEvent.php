@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class NotificationEvent extends Model
@@ -29,5 +30,10 @@ class NotificationEvent extends Model
     public function subject(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function recipients(): HasMany
+    {
+        return $this->hasMany(NotificationRecipient::class);
     }
 }

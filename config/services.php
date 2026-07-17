@@ -36,6 +36,12 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI', 'http://127.0.0.1:8000/auth/google/callback'),
     ],
 
+    'firebase' => [
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'credentials' => env('GOOGLE_APPLICATION_CREDENTIALS'),
+        'access_token' => env('FIREBASE_ACCESS_TOKEN'),
+    ],
+
     'ekyc' => [
         'provider' => env('EKYC_PROVIDER', 'tesseract'), // fpt_ai | vnpt | tesseract
         'queue' => env('EKYC_QUEUE', 'kyc'),

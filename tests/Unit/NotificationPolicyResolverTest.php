@@ -64,7 +64,7 @@ class NotificationPolicyResolverTest extends TestCase
 
         app(NotificationPolicyResolver::class)->resolve(
             $this->faceMatchConfirmedEvent(),
-            new User(['role' => 'VOLUNTEER'])
+            new User(['role' => 'UNREGISTERED_ROLE'])
         );
     }
 

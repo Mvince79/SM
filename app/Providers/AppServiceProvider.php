@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Livewire\Volunteer\AssignmentBoard;
+use App\Services\Notification\Contracts\FcmPushSender;
+use App\Services\Notification\FcmHttpV1PushSender;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -18,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\RateLimiterService::class);
         $this->app->singleton(\App\Services\GoogleAuthService::class);
         $this->app->singleton(\App\Services\QrCodeService::class);
+        $this->app->bind(FcmPushSender::class, FcmHttpV1PushSender::class);
     }
 
     /**
@@ -38,6 +41,10 @@ class AppServiceProvider extends ServiceProvider
 
         \App\Models\Photo::observe(
             \App\Observers\PhotoObserver::class
+        );
+
+        \App\Models\FaceMatchResult::observe(
+            \App\Observers\FaceMatchResultObserver::class
         );
 
         // Register Livewire component

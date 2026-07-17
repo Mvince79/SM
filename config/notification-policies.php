@@ -9,6 +9,7 @@ return [
     'strategies' => [
         NotificationEvent::TYPE_FACE_MATCH_CONFIRMED => [
             'USER' => FaceMatchConfirmedForFamilyStrategy::class,
+            'VOLUNTEER' => FaceMatchConfirmedForFamilyStrategy::class,
             'THIRD_PARTY_VERIFIER' => FaceMatchConfirmedForVerifierStrategy::class,
             'ADMIN' => FaceMatchConfirmedForAdminStrategy::class,
             'MODERATOR' => FaceMatchConfirmedForAdminStrategy::class,
