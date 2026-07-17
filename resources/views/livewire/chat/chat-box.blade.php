@@ -78,8 +78,8 @@
                         </a>
                     @endif
 
-                    @if ($message->body)
-                        <div>{{ $message->body }}</div>
+                    @if ($message->display_body)
+                        <div>{{ $message->display_body }}</div>
                     @endif
 
                     @if ($message->from_user_id == auth()->id())
