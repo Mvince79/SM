@@ -26,6 +26,8 @@ new class extends Component
     public function markAsRead(string $notificationId): void
     {
         Auth::user()->notifications()->whereKey($notificationId)->first()?->markAsRead();
+
+        $this->redirect(route('notifications.show', $notificationId));
     }
 
     #[On('echo-private:user.{userId},.notification.received')]
@@ -58,11 +60,11 @@ new class extends Component
     @else
         @foreach (['today' => 'Hôm nay', 'week' => 'Tuần này', 'older' => 'Cũ hơn'] as $key => $label)
             @if ($this->groups[$key]->isNotEmpty())
-                <div>
+                <div wire:key="group-{{ $key }}">
                     <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">{{ $label }}</h3>
                     <div class="space-y-2">
                         @foreach ($this->groups[$key] as $n)
-                            <div wire:click="markAsRead('{{ $n->id }}')"
+                            <div wire:key="notification-{{ $n->id }}" wire:click="markAsRead('{{ $n->id }}')"
                                 class="flex gap-3 p-4 rounded-2xl border cursor-pointer transition-colors
                                     {{ $n->read_at ? 'bg-white border-slate-200/85' : 'bg-primary/5 border-primary/20' }}">
                                 <div

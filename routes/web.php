@@ -48,9 +48,6 @@ Route::prefix('stats')->name('stats.')->group(function () {
     Route::get('/', [StatsController::class, 'index'])->name('index');
 });
 
-Route::get('/notifications', fn() => view('notifications.center'))
-    ->middleware('auth')->name('notifications.center');
-
 Route::post('/watch-area', [WatchAreaController::class, 'store'])->name('watch-area.store');
 Route::delete('/watch-area', [WatchAreaController::class, 'destroy'])->name('watch-area.destroy');
 
@@ -59,6 +56,7 @@ Route::prefix('legal')->name('legal.')->group(function () {
     Route::view('/privacy-policy', 'legal.privacy-policy')->name('privacy');
     Route::view('/child-data-policy', 'legal.child-data-policy')->name('child-data');
 });
+
 Route::middleware(['auth'])
     ->get('/volunteer/dashboard', function () {
         Gate::authorize('access-volunteer-features');
@@ -66,6 +64,7 @@ Route::middleware(['auth'])
         return view('volunteer.dashboard');
     })
     ->name('volunteer.dashboard');
+
 // ── Routes cần đăng nhập + email đã xác thực + không bị BAN ────────────────
 Route::middleware(['auth', 'email.verified'])->group(function () {
     Route::prefix('/profile')->name('profile.')->group(function () {
@@ -94,6 +93,12 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
         'update' => 'found-children.update',
         'destroy' => 'found-children.destroy',
     ]);
+
+    Route::prefix('/notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'center'])->name('center');
+        Route::get('/{notification}', [NotificationController::class, 'show'])->name('show');
+        Route::patch('/{notification}/read', [NotificationController::class, 'read'])->name('read');
+    });
 
     // Upload photo for a FoundChild
     Route::post('found-children/{foundChild}/photos', [\App\Http\Controllers\FoundChildController::class, 'storePhoto'])
