@@ -15,7 +15,7 @@ use App\Models\Province;
 use App\Models\ThirdPartyVerifierProfile;
 use App\Models\User;
 use App\Services\Notification\ConfirmedMatchRecipientFinder;
-use App\Services\Notification\NotificationPolicyResolver;
+use App\Services\Notification\NotificationDeliveryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
@@ -34,7 +34,7 @@ class DispatchMatchConfirmedNotificationsJobTest extends TestCase
 
         $job->handle(
             app(ConfirmedMatchRecipientFinder::class),
-            app(NotificationPolicyResolver::class),
+            app(NotificationDeliveryService::class),
         );
 
         $event = NotificationEvent::query()->sole();
@@ -53,7 +53,7 @@ class DispatchMatchConfirmedNotificationsJobTest extends TestCase
 
         $job->handle(
             app(ConfirmedMatchRecipientFinder::class),
-            app(NotificationPolicyResolver::class),
+            app(NotificationDeliveryService::class),
         );
 
         $this->assertSame(1, NotificationEvent::count());

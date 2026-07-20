@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\DispatchProvinceCaseApprovedNotificationsJob;
 use App\Models\MissingChild;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -37,7 +38,7 @@ class MissingChildObserver
                 ? (int) substr($maxCode, -5) + 1
                 : 1;
 
-            return $prefix . str_pad($sequence, 5, '0', STR_PAD_LEFT);
+            return $prefix.str_pad($sequence, 5, '0', STR_PAD_LEFT);
         });
     }
 
@@ -59,7 +60,7 @@ class MissingChildObserver
 
             Log::info("MissingChild Observer: review_level={$reviewLevel} for {$missingChild->case_code}");
         } catch (\Throwable $e) {
-            Log::warning('Set review_level failed: ' . $e->getMessage());
+            Log::warning('Set review_level failed: '.$e->getMessage());
         }
 
         Log::info("MissingChild Observer (created): Generated case_code {$missingChild->case_code} for child ID {$missingChild->id}");
@@ -68,7 +69,7 @@ class MissingChildObserver
         try {
             $qrService = app(\App\Services\QrCodeService::class);
             // Per spec: QR should point to /missing/{case_code}
-            $detailUrl = url('/missing/' . $missingChild->case_code);
+            $detailUrl = url('/missing/'.$missingChild->case_code);
             $path = $qrService->generate($detailUrl, $missingChild->case_code);
 
             // Save relative path into model without firing events
@@ -76,7 +77,7 @@ class MissingChildObserver
             $missingChild->saveQuietly();
             Log::info("MissingChild Observer: QR code generated at {$path} for {$missingChild->case_code}");
         } catch (\Throwable $e) {
-            Log::warning('QR generation failed: ' . $e->getMessage());
+            Log::warning('QR generation failed: '.$e->getMessage());
         }
     }
 
@@ -85,6 +86,10 @@ class MissingChildObserver
      */
     public function updated(MissingChild $missingChild): void
     {
+        if ($missingChild->wasChanged('status') && $missingChild->status === 'APPROVED') {
+            DispatchProvinceCaseApprovedNotificationsJob::dispatch($missingChild->getKey());
+        }
+
         try {
             activity()
                 ->performedOn($missingChild)
@@ -95,7 +100,7 @@ class MissingChildObserver
                 ])
                 ->log("Đã cập nhật tin tìm kiếm trẻ thất lạc: {$missingChild->full_name} ({$missingChild->case_code})");
         } catch (\Throwable $e) {
-            Log::warning("Activity log failed: " . $e->getMessage());
+            Log::warning('Activity log failed: '.$e->getMessage());
         }
 
         Log::info("MissingChild Observer (updated): Updated child ID {$missingChild->id} ({$missingChild->case_code})");

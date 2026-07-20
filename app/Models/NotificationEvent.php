@@ -10,6 +10,8 @@ class NotificationEvent extends Model
 {
     public const TYPE_FACE_MATCH_CONFIRMED = 'FACE_MATCH_CONFIRMED';
 
+    public const TYPE_CASE_APPROVED_IN_PROVINCE = 'CASE_APPROVED_IN_PROVINCE';
+
     protected $fillable = [
         'event_type',
         'subject_type',
