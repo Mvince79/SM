@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Listeners\BroadcastNotificationReceived;
 use App\Livewire\Volunteer\AssignmentBoard;
 use App\Services\Notification\Contracts\FcmPushSender;
 use App\Services\Notification\FcmHttpV1PushSender;
+use Illuminate\Notifications\Events\NotificationSent;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -52,5 +55,7 @@ class AppServiceProvider extends ServiceProvider
             'volunteer.assignment-board',
             AssignmentBoard::class
         );
+
+        Event::listen(NotificationSent::class, BroadcastNotificationReceived::class);
     }
 }

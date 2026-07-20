@@ -19,7 +19,6 @@ require __DIR__ . '/auth.php';
 // ── Trang chủ (public) ──────────────────────────────────────────────────────
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-
 Route::prefix('missing')->name('missing.')->group(function () {
     Route::get('/', [MissingController::class, 'index'])->name('index');
 
@@ -48,6 +47,9 @@ Route::prefix('map')->name('map.')->group(function () {
 Route::prefix('stats')->name('stats.')->group(function () {
     Route::get('/', [StatsController::class, 'index'])->name('index');
 });
+
+Route::get('/notifications', fn() => view('notifications.center'))
+    ->middleware('auth')->name('notifications.center');
 
 Route::post('/watch-area', [WatchAreaController::class, 'store'])->name('watch-area.store');
 Route::delete('/watch-area', [WatchAreaController::class, 'destroy'])->name('watch-area.destroy');

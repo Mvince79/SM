@@ -62,6 +62,11 @@
                     </div>
                 @endforelse
             </div>
+
+            <a href="{{ route('notifications.center') }}"
+                class="block text-center text-sm font-bold text-primary py-3 border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                Xem tất cả thông báo
+            </a>
         </div>
     </div>
 @endauth
