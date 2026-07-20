@@ -1,14 +1,14 @@
 <?php
 
-use App\Http\Controllers\Api\V1\MissingChildApiController;
-use App\Http\Controllers\Api\V1\MapDataController;
-use App\Http\Controllers\Api\V1\VolunteerAssignmentController;
 use App\Http\Controllers\Api\Internal\FaceMatchController;
+use App\Http\Controllers\Api\V1\ChatbotController;
+use App\Http\Controllers\Api\V1\KycController;
+use App\Http\Controllers\Api\V1\MapDataController;
+use App\Http\Controllers\Api\V1\MissingChildApiController;
+use App\Http\Controllers\Api\V1\StatsApiController;
+use App\Http\Controllers\Api\V1\VolunteerAssignmentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\V1\StatsApiController;
-use App\Http\Controllers\Api\V1\KycController;
-
 
 Route::prefix('internal')
     ->middleware('internal.key')
@@ -32,11 +32,14 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             ->name('map-data.index');
         Route::get('/stats', [StatsApiController::class, 'index'])
             ->name('stats.index');
+
+        Route::post('/chatbot/message', [ChatbotController::class, 'reply'])
+            ->name('chatbot.message');
     });
 
     Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
         Route::post('/kyc/submit', [KycController::class, 'store'])
-            ->name('kyc.submit');   
+            ->name('kyc.submit');
     });
 
     // ────────────────────────────────────────────────────────────────────────────
