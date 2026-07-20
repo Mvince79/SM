@@ -47,6 +47,9 @@ class ProcessKycJob implements ShouldQueue
             'ocr_provider' => $result['ocr_provider'],
             'ocr_raw_response' => $ocrForStorage,
             'face_match_score' => $result['face_match_score'],
+            'review_level' => $result['face_match_score'] >= (float) config('face_match.high_confidence_threshold', 0.85)
+                ? 'STANDARD'
+                : 'ENHANCED',
         ]);
 
         if (filled($ocrForStorage['full_name'] ?? null)) {

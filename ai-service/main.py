@@ -14,7 +14,14 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from starlette import status
 
-from models.schemas import CompareRequest, CompareResponse, DetectFaceResponse, EncodeResponse, HealthResponse
+from models.schemas import (
+    CompareRequest,
+    CompareResponse,
+    DetectFaceResponse,
+    EncodeResponse,
+    HealthResponse,
+    VerifyResponse,
+)
 from services.face_service import FaceService, NoFaceDetectedError
 
 load_dotenv()
@@ -149,6 +156,59 @@ async def compare(payload: CompareRequest) -> CompareResponse:
     logger.info("face comparison completed", extra={"score": round(score, 4), "model": MODEL_NAME})
 
     return CompareResponse(score=score, is_matched=is_matched, model=MODEL_NAME)
+
+
+@app.post("/verify", response_model=VerifyResponse, dependencies=[Depends(require_internal_key)])
+async def verify(
+    id_document: UploadFile = File(...),
+    selfie: UploadFile = File(...),
+) -> VerifyResponse:
+    uploads = {
+        "id_document": id_document,
+        "selfie": selfie,
+    }
+    temp_paths: dict[str, str] = {}
+
+    try:
+        for field, upload in uploads.items():
+            if upload.content_type not in {"image/jpeg", "image/png"}:
+                raise HTTPException(
+                    status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                    detail=f"unsupported_media_type:{field}",
+                )
+
+            contents = await upload.read()
+            if len(contents) > MAX_UPLOAD_BYTES:
+                raise HTTPException(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    detail=f"file_too_large:{field}",
+                )
+
+            suffix = ".png" if upload.content_type == "image/png" else ".jpg"
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as temp_file:
+                temp_file.write(contents)
+                temp_paths[field] = temp_file.name
+
+        try:
+            id_encoding = await run_in_threadpool(face_service.encode, temp_paths["id_document"])
+            selfie_encoding = await run_in_threadpool(face_service.encode, temp_paths["selfie"])
+        except NoFaceDetectedError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="no_face_detected",
+            ) from None
+
+        score = await run_in_threadpool(face_service.compare, id_encoding, selfie_encoding)
+        is_matched = score >= SCORE_THRESHOLD
+        logger.info("selfie verification completed", extra={"score": round(score, 4), "model": MODEL_NAME})
+
+        return VerifyResponse(score=score, is_matched=is_matched, model=MODEL_NAME)
+    finally:
+        for temp_path in temp_paths.values():
+            try:
+                os.remove(temp_path)
+            except OSError:
+                logger.warning("Could not remove temporary upload", extra={"path": temp_path})
 
 
 if __name__ == "__main__":

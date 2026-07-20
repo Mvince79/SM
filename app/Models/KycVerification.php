@@ -25,6 +25,7 @@ class KycVerification extends Model
         'ocr_provider',
         'ocr_raw_response',
         'face_match_score',
+        'review_level',
         'status',
         'reviewed_by',
         'verified_at',

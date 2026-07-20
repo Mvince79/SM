@@ -37,6 +37,7 @@ class ProcessKycJobTest extends TestCase
         $user->refresh();
 
         $this->assertSame('VERIFIED', $kyc->status);
+        $this->assertSame('STANDARD', $kyc->review_level);
         $this->assertSame('CCCD_12', $kyc->id_type);
         $this->assertSame('Nguyen Van Khang', $kyc->full_name_on_id);
         $this->assertSame('2000-01-01', $kyc->dob_on_id->format('Y-m-d'));
@@ -66,6 +67,7 @@ class ProcessKycJobTest extends TestCase
         $user->refresh();
 
         $this->assertSame('PENDING', $kyc->status);
+        $this->assertSame('ENHANCED', $kyc->review_level);
         $this->assertSame('PENDING', $user->kyc_status);
     }
 

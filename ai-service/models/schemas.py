@@ -36,3 +36,9 @@ class CompareResponse(BaseModel):
     score: float = Field(ge=0.0, le=1.0)
     is_matched: bool
     model: str
+
+
+class VerifyResponse(BaseModel):
+    score: float = Field(ge=0.0, le=1.0)
+    is_matched: bool
+    model: str

@@ -100,6 +100,44 @@ class FaceMatchApiTest(unittest.TestCase):
         self.assertGreaterEqual(response.json()["score"], 0.99)
         self.assertTrue(response.json()["is_matched"])
 
+    def test_verify_compares_id_document_with_selfie(self) -> None:
+        with (
+            patch.object(
+                main.face_service,
+                "encode",
+                side_effect=[[0.1] * 512, [0.2] * 512],
+            ) as encode,
+            patch.object(main.face_service, "compare", return_value=0.92) as compare,
+        ):
+            response = self.client.post(
+                "/verify",
+                headers={"X-Internal-Key": "test-key"},
+                files={
+                    "id_document": ("id.jpg", b"fake id bytes", "image/jpeg"),
+                    "selfie": ("selfie.png", b"fake selfie bytes", "image/png"),
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["score"], 0.92)
+        self.assertTrue(response.json()["is_matched"])
+        self.assertEqual(encode.call_count, 2)
+        compare.assert_called_once()
+
+    def test_verify_returns_422_when_an_image_has_no_face(self) -> None:
+        with patch.object(main.face_service, "encode", side_effect=NoFaceDetectedError()):
+            response = self.client.post(
+                "/verify",
+                headers={"X-Internal-Key": "test-key"},
+                files={
+                    "id_document": ("id.jpg", b"fake id bytes", "image/jpeg"),
+                    "selfie": ("selfie.jpg", b"fake selfie bytes", "image/jpeg"),
+                },
+            )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()["detail"], "no_face_detected")
+
     def test_request_timeout_returns_408(self) -> None:
         previous_timeout = main.REQUEST_TIMEOUT_SECONDS
         main.REQUEST_TIMEOUT_SECONDS = 0.01

@@ -26,7 +26,7 @@ class FaceMatchService
     {
         $absolutePath = Storage::disk($disk)->path($storagePath);
 
-        if (!is_file($absolutePath)) {
+        if (! is_file($absolutePath)) {
             throw new RuntimeException("Photo file not found: {$storagePath}");
         }
 
@@ -52,8 +52,8 @@ class FaceMatchService
             ];
         }
 
-        if (!$response->successful()) {
-            throw new AIServiceUnavailableException('AI encode request failed with status ' . $response->status());
+        if (! $response->successful()) {
+            throw new AIServiceUnavailableException('AI encode request failed with status '.$response->status());
         }
 
         return [
@@ -95,7 +95,7 @@ class FaceMatchService
         }
 
         if (! $response->successful()) {
-            throw new AIServiceUnavailableException('AI detect-face request failed with status ' . $response->status());
+            throw new AIServiceUnavailableException('AI detect-face request failed with status '.$response->status());
         }
 
         return [
@@ -113,11 +113,73 @@ class FaceMatchService
             'encoding_b' => $encodingB,
         ]);
 
-        if (!$response->successful()) {
-            throw new AIServiceUnavailableException('AI compare request failed with status ' . $response->status());
+        if (! $response->successful()) {
+            throw new AIServiceUnavailableException('AI compare request failed with status '.$response->status());
         }
 
         return [
+            'score' => (float) $response->json('score'),
+            'is_matched' => (bool) $response->json('is_matched'),
+            'model' => $response->json('model', config('face_match.model')),
+        ];
+    }
+
+    /**
+     * Compare an identity-document portrait with a selfie in one AI request.
+     *
+     * @return array{has_face: bool, score: float, is_matched: bool, model: string}
+     */
+    public function verifyImages(
+        string $idDocumentPath,
+        string $selfiePath,
+        string $disk = 'private',
+    ): array {
+        $idDocumentAbsolutePath = Storage::disk($disk)->path($idDocumentPath);
+        $selfieAbsolutePath = Storage::disk($disk)->path($selfiePath);
+
+        foreach ([$idDocumentAbsolutePath, $selfieAbsolutePath] as $absolutePath) {
+            if (! is_file($absolutePath)) {
+                throw new RuntimeException('Photo file not found: '.basename($absolutePath));
+            }
+        }
+
+        $idDocumentHandle = fopen($idDocumentAbsolutePath, 'rb');
+        $selfieHandle = fopen($selfieAbsolutePath, 'rb');
+
+        try {
+            $response = $this->client()
+                ->attach('id_document', $idDocumentHandle, basename($idDocumentPath), [
+                    'Content-Type' => mime_content_type($idDocumentAbsolutePath) ?: 'application/octet-stream',
+                ])
+                ->attach('selfie', $selfieHandle, basename($selfiePath), [
+                    'Content-Type' => mime_content_type($selfieAbsolutePath) ?: 'application/octet-stream',
+                ])
+                ->post('/verify');
+        } finally {
+            if (is_resource($idDocumentHandle)) {
+                fclose($idDocumentHandle);
+            }
+
+            if (is_resource($selfieHandle)) {
+                fclose($selfieHandle);
+            }
+        }
+
+        if ($response->status() === 422) {
+            return [
+                'has_face' => false,
+                'score' => 0.0,
+                'is_matched' => false,
+                'model' => config('face_match.model'),
+            ];
+        }
+
+        if (! $response->successful()) {
+            throw new AIServiceUnavailableException('AI verify request failed with status '.$response->status());
+        }
+
+        return [
+            'has_face' => true,
             'score' => (float) $response->json('score'),
             'is_matched' => (bool) $response->json('is_matched'),
             'model' => $response->json('model', config('face_match.model')),
@@ -128,7 +190,7 @@ class FaceMatchService
     {
         $key = config('face_match.internal_key');
 
-        if (!$key) {
+        if (! $key) {
             throw new RuntimeException('FACE_MATCH_INTERNAL_KEY is not configured.');
         }
 

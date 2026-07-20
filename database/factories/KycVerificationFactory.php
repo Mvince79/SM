@@ -23,6 +23,7 @@ class KycVerificationFactory extends Factory
             'ocr_provider' => null,
             'ocr_raw_response' => null,
             'face_match_score' => null,
+            'review_level' => 'STANDARD',
             'status' => 'PENDING',
             'reviewed_by' => null,
             'verified_at' => null,

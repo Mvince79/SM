@@ -30,7 +30,7 @@ class EkycService
     public function verify(KycVerification $kyc): array
     {
         $ocrResult = $this->recognizeIdentityDocument($kyc);
-        $faceScore = $this->matchFace($kyc);
+        $faceScore = $this->matchSelfieWithId($kyc);
         $nameMatches = $this->namesMatch(
             $ocrResult['full_name'] ?? null,
             $kyc->user?->full_name
@@ -75,25 +75,19 @@ class EkycService
         };
     }
 
-    private function matchFace(KycVerification $kyc): float
+    public function matchSelfieWithId(KycVerification $kyc): float
     {
         if (! $this->faceMatchService->isHealthy()) {
             throw new AIServiceUnavailableException('AI face match service is unavailable.');
         }
 
-        $idPhoto = $this->faceMatchService->encode($kyc->front_image_path, 'private');
-        $selfiePhoto = $this->faceMatchService->encode($kyc->selfie_path, 'private');
-
-        if (! $idPhoto['has_face'] || ! $selfiePhoto['has_face']) {
-            return 0.0;
-        }
-
-        $comparison = $this->faceMatchService->compare(
-            $idPhoto['encoding'],
-            $selfiePhoto['encoding']
+        $verification = $this->faceMatchService->verifyImages(
+            $kyc->front_image_path,
+            $kyc->selfie_path,
+            'private',
         );
 
-        return (float) $comparison['score'];
+        return $verification['has_face'] ? (float) $verification['score'] : 0.0;
     }
 
     private function ocrViaFptAi(KycVerification $kyc): array
