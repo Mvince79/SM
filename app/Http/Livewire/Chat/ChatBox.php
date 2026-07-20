@@ -2,7 +2,9 @@
 
 namespace App\Http\Livewire\Chat;
 
+use App\Events\AdminChatMessageSent;
 use App\Events\MessageSent;
+use App\Models\AdminChatAssignment;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\MessageSanitizerService;
@@ -90,6 +92,12 @@ class ChatBox extends Component
             return;
         }
 
+        if (! $this->isAssignedConversationAllowed()) {
+            $this->addError('body', 'Cuộc chat này đang được một quản trị viên khác phụ trách.');
+
+            return;
+        }
+
         $attachmentPath = null;
         $attachmentType = null;
 
@@ -109,9 +117,42 @@ class ChatBox extends Component
 
         broadcast(new MessageSent($message))->toOthers();
 
+        $assignment = AdminChatAssignment::query()
+            ->where('requester_user_id', $message->from_user_id)
+            ->where('admin_user_id', $message->to_user_id)
+            ->where('status', AdminChatAssignment::STATUS_ACTIVE)
+            ->first();
+
+        if ($assignment) {
+            broadcast(new AdminChatMessageSent($assignment, $message))->toOthers();
+        }
+
         $this->reset(['body', 'photo']);
         $this->dispatch('message-sent');
         $this->dispatch('scroll-to-bottom');
+    }
+
+    private function isAssignedConversationAllowed(): bool
+    {
+        $currentUser = auth()->user();
+        $receiver = User::query()->find($this->receiverId);
+
+        if (! $currentUser || ! $receiver) {
+            return false;
+        }
+
+        if ($currentUser->isAdmin() === $receiver->isAdmin()) {
+            return true;
+        }
+
+        $admin = $currentUser->isAdmin() ? $currentUser : $receiver;
+        $requester = $currentUser->isAdmin() ? $receiver : $currentUser;
+        $assignment = AdminChatAssignment::query()
+            ->where('requester_user_id', $requester->getKey())
+            ->where('status', AdminChatAssignment::STATUS_ACTIVE)
+            ->first();
+
+        return ! $assignment || $assignment->admin_user_id === $admin->getKey();
     }
 
     public function markAsRead(): void

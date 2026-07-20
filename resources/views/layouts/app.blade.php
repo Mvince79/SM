@@ -80,6 +80,14 @@
     @if (auth()->check())
         <script>
             window.authUserId = {{ auth()->id() }};
+            window.adminChatAssignmentIds = @json(
+                auth()->user()->isAdmin()
+                    ? auth()->user()->assignedAdminChats()
+                        ->where('status', \App\Models\AdminChatAssignment::STATUS_ACTIVE)
+                        ->pluck('id')
+                        ->all()
+                    : []
+            );
         </script>
     @endif
 
