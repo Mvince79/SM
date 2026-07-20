@@ -3,7 +3,7 @@
 namespace App\Services\Notification;
 
 use App\Jobs\SendFcmNotificationJob;
-use App\Mail\RoleBasedNotificationMail;
+use App\Mail\DynamicNotificationMail;
 use App\Models\NotificationEvent;
 use App\Models\NotificationRecipient;
 use App\Models\User;
@@ -51,11 +51,10 @@ class NotificationDeliveryService
             SendFcmNotificationJob::dispatch($recipient->getKey());
 
             if (filled($user->email)) {
-                Mail::to($user->email)->queue(new RoleBasedNotificationMail(
-                    $content['title'],
-                    $content['body'],
-                    $content['action_url'],
-                ));
+                $recipient->setRelation('event', $event);
+                $recipient->setRelation('user', $user);
+
+                Mail::to($user->email)->queue(new DynamicNotificationMail($recipient));
             }
 
             $delivered++;

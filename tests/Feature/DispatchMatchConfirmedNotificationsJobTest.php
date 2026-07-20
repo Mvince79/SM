@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Jobs\DispatchMatchConfirmedNotificationsJob;
 use App\Jobs\SendFcmNotificationJob;
-use App\Mail\RoleBasedNotificationMail;
+use App\Mail\DynamicNotificationMail;
 use App\Models\FaceMatchResult;
 use App\Models\FoundChild;
 use App\Models\HandoverPoint;
@@ -49,7 +49,7 @@ class DispatchMatchConfirmedNotificationsJobTest extends TestCase
         );
 
         Queue::assertPushed(SendFcmNotificationJob::class, 4);
-        Mail::assertQueued(RoleBasedNotificationMail::class, 4);
+        Mail::assertQueued(DynamicNotificationMail::class, 4);
 
         $job->handle(
             app(ConfirmedMatchRecipientFinder::class),
@@ -59,7 +59,7 @@ class DispatchMatchConfirmedNotificationsJobTest extends TestCase
         $this->assertSame(1, NotificationEvent::count());
         $this->assertSame(4, NotificationRecipient::count());
         Queue::assertPushed(SendFcmNotificationJob::class, 4);
-        Mail::assertQueued(RoleBasedNotificationMail::class, 4);
+        Mail::assertQueued(DynamicNotificationMail::class, 4);
     }
 
     public function test_job_uses_notification_queue_and_retry_policy(): void

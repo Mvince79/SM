@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Jobs\DispatchProvinceCaseApprovedNotificationsJob;
 use App\Jobs\SendFcmNotificationJob;
-use App\Mail\RoleBasedNotificationMail;
+use App\Mail\DynamicNotificationMail;
 use App\Models\MissingChild;
 use App\Models\NotificationEvent;
 use App\Models\NotificationRecipient;
@@ -97,14 +97,14 @@ class ProvinceCaseApprovedNotificationTest extends TestCase
             $recipientUserIds,
         );
         Queue::assertPushed(SendFcmNotificationJob::class, 2);
-        Mail::assertQueued(RoleBasedNotificationMail::class, 2);
+        Mail::assertQueued(DynamicNotificationMail::class, 2);
 
         $job->handle(app(NotificationDeliveryService::class));
 
         $this->assertSame(1, NotificationEvent::count());
         $this->assertSame(2, NotificationRecipient::count());
         Queue::assertPushed(SendFcmNotificationJob::class, 2);
-        Mail::assertQueued(RoleBasedNotificationMail::class, 2);
+        Mail::assertQueued(DynamicNotificationMail::class, 2);
     }
 
     public function test_job_uses_notification_queue_and_retry_policy(): void
