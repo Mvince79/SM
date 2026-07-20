@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\ProcessKycJob;
 use App\Models\KycVerification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -17,6 +19,7 @@ class KycSubmitTest extends TestCase
     public function test_submit_kyc_creates_pending_record_and_updates_user_status(): void
     {
         Storage::fake('private');
+        Queue::fake([ProcessKycJob::class]);
 
         /** @var \App\Models\User $user */
         $user = User::factory()->create(['kyc_status' => 'NONE']);
@@ -39,6 +42,12 @@ class KycSubmitTest extends TestCase
         ]);
 
         $this->assertSame('PENDING', $user->fresh()->kyc_status);
+
+        $kyc = KycVerification::query()->where('user_id', $user->id)->sole();
+        Queue::assertPushed(
+            ProcessKycJob::class,
+            fn (ProcessKycJob $job): bool => $job->kycVerificationId === $kyc->id
+        );
 
         // id_number không được lưu plaintext trong DB
         // [FIX] đổi \DB:: -> DB:: (dùng use Illuminate\Support\Facades\DB; ở trên)

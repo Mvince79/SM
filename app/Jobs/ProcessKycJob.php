@@ -5,13 +5,13 @@ namespace App\Jobs;
 use App\Models\KycVerification;
 use App\Services\EkycService;
 use App\Support\AIJobFailureNotifier;
+use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class ProcessKycJob implements ShouldQueue
 {
@@ -32,7 +32,7 @@ class ProcessKycJob implements ShouldQueue
     {
         $kyc = KycVerification::query()->find($this->kycVerificationId);
 
-        if (!$kyc || $kyc->status !== 'PENDING') {
+        if (! $kyc || $kyc->status !== 'PENDING') {
             return;
         }
 
@@ -43,10 +43,19 @@ class ProcessKycJob implements ShouldQueue
         $ocrForStorage = collect($result['ocr_raw_response'])->except(['id_number'])->all();
 
         $kyc->forceFill([
+            'id_type' => $result['id_type'] ?? null,
             'ocr_provider' => $result['ocr_provider'],
             'ocr_raw_response' => $ocrForStorage,
             'face_match_score' => $result['face_match_score'],
         ]);
+
+        if (filled($ocrForStorage['full_name'] ?? null)) {
+            $kyc->full_name_on_id = $ocrForStorage['full_name'];
+        }
+
+        if (filled($ocrForStorage['dob'] ?? null)) {
+            $kyc->dob_on_id = $ocrForStorage['dob'];
+        }
 
         if ($result['auto_verifiable']) {
             $kyc->status = 'VERIFIED';

@@ -7,7 +7,6 @@ use App\Models\KycVerification;
 use App\Models\User;
 use App\Services\EkycService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Log;
 use Mockery;
 use Tests\TestCase;
 
@@ -23,9 +22,11 @@ class ProcessKycJobTest extends TestCase
         $mock = Mockery::mock(EkycService::class);
         $mock->shouldReceive('verify')->once()->andReturn([
             'ocr_provider' => 'tesseract',
-            'ocr_raw_response' => ['full_name' => 'Nguyen Van Khang', 'dob' => '01/01/2000'],
+            'ocr_raw_response' => ['full_name' => 'Nguyen Van Khang', 'dob' => '2000-01-01'],
+            'id_type' => 'CCCD_12',
             'face_match_score' => 0.91,
             'name_matches' => true,
+            'id_number_matches' => true,
             'auto_verifiable' => true,
         ]);
         $this->app->instance(EkycService::class, $mock);
@@ -36,6 +37,9 @@ class ProcessKycJobTest extends TestCase
         $user->refresh();
 
         $this->assertSame('VERIFIED', $kyc->status);
+        $this->assertSame('CCCD_12', $kyc->id_type);
+        $this->assertSame('Nguyen Van Khang', $kyc->full_name_on_id);
+        $this->assertSame('2000-01-01', $kyc->dob_on_id->format('Y-m-d'));
         $this->assertNotNull($kyc->verified_at);
         $this->assertSame('VERIFIED', $user->kyc_status);
     }
@@ -49,8 +53,10 @@ class ProcessKycJobTest extends TestCase
         $mock->shouldReceive('verify')->once()->andReturn([
             'ocr_provider' => 'tesseract',
             'ocr_raw_response' => ['full_name' => null],
+            'id_type' => null,
             'face_match_score' => 0.42,
             'name_matches' => false,
+            'id_number_matches' => false,
             'auto_verifiable' => false,
         ]);
 
@@ -72,8 +78,10 @@ class ProcessKycJobTest extends TestCase
         $mock->shouldReceive('verify')->once()->andReturn([
             'ocr_provider' => 'tesseract',
             'ocr_raw_response' => ['id_number' => '001200012345', 'full_name' => 'A'],
+            'id_type' => 'CCCD_12',
             'face_match_score' => 0.5,
             'name_matches' => false,
+            'id_number_matches' => true,
             'auto_verifiable' => false,
         ]);
 

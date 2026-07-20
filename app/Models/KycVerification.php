@@ -14,6 +14,7 @@ class KycVerification extends Model
     protected $table = 'kyc_verifications';
 
     protected $fillable = [
+        'id_type',
         'user_id',
         'id_number',
         'full_name_on_id',
