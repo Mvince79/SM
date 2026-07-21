@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Filament\Admin\Widgets\EscalationQueueWidget;
 use App\Filament\Admin\Widgets\KycPendingStatsWidget;
 use App\Filament\Admin\Widgets\MissingByProvinceChart;
 use App\Filament\Admin\Widgets\RecentMissingWidget;
@@ -17,6 +18,7 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
+            EscalationQueueWidget::class,
             StatsOverviewWidget::class,
             KycPendingStatsWidget::class,
             MissingByProvinceChart::class,
