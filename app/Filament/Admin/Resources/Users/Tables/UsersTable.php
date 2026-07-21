@@ -11,7 +11,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\SelectColumn;
+use App\Filament\Admin\Resources\Users\Actions\ChangeRoleAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -74,16 +74,24 @@ class UsersTable
                     ->placeholder('—')
                     ->sortable()
                     ->alignCenter(),
-                SelectColumn::make('role')
+                TextColumn::make('role')
                     ->label('Vai trò')
-                    ->options([
-                        'USER' => 'Người dùng',
-                        'VOLUNTEER' => 'Tình nguyện viên',
-                        'MODERATOR' => 'Kiểm duyệt viên',
+                    ->badge()
+                    ->formatStateUsing(fn(?string $state): string => match ($state) {
                         'ADMIN' => 'Quản trị viên',
-                    ])
-                    ->selectablePlaceholder(false)
-                    ->disabled(fn(): bool => ! Auth::check() || Auth::user()->role !== 'ADMIN'),
+                        'MODERATOR' => 'Kiểm duyệt viên',
+                        'VOLUNTEER' => 'Tình nguyện viên',
+                        'THIRD_PARTY_VERIFIER' => 'Bên thứ ba xác minh',
+                        'USER' => 'Người dùng',
+                        default => $state ?? 'Không xác định',
+                    })
+                    ->color(fn(?string $state): string => match ($state) {
+                        'ADMIN' => 'danger',
+                        'MODERATOR' => 'warning',
+                        'VOLUNTEER' => 'info',
+                        'THIRD_PARTY_VERIFIER' => 'success',
+                        default => 'gray',
+                    }),
 
                 TextColumn::make('completed_volunteer_assignments_count')
                     ->label('Nhiệm vụ hoàn thành')
@@ -123,6 +131,7 @@ class UsersTable
                         'ADMIN' => 'Quản trị viên',
                         'MODERATOR' => 'Kiểm duyệt viên',
                         'VOLUNTEER' => 'Tình nguyện viên',
+                        'THIRD_PARTY_VERIFIER' => 'Bên thứ ba xác minh',
                         'USER' => 'Người dùng',
                     ])
                     ->native(false)
@@ -172,6 +181,7 @@ class UsersTable
             )
             ->recordActions([
                 EditAction::make(),
+                ChangeRoleAction::make(),
 
                 Action::make('ban')
                     ->label('Khóa')
