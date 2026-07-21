@@ -13,11 +13,14 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Livewire\Chat\ChatBox;
 use Livewire\Volt\Volt;
 use Illuminate\Support\Facades\Gate;
+use App\Http\Controllers\HandoverPointPublicController;
 // ── Auth (register, login, OTP, Google OAuth, logout) ──────────────────────
 require __DIR__ . '/auth.php';
 
 // ── Trang chủ (public) ──────────────────────────────────────────────────────
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/diem-ban-giao', [HandoverPointPublicController::class, 'index'])
+    ->name('handover-points.index');
 
 Route::prefix('missing')->name('missing.')->group(function () {
     Route::get('/', [MissingController::class, 'index'])->name('index');

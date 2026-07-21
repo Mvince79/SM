@@ -35,4 +35,8 @@ class Province extends Model
     {
         return $this->hasMany(MissingChild::class, 'province_id');
     }
+    public function handoverPoints()
+    {
+        return $this->hasMany(HandoverPoint::class, 'province_id');
+    }
 }
