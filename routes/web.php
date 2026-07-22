@@ -52,6 +52,11 @@ Route::prefix('map')->name('map.')->group(function () {
 Route::prefix('stats')->name('stats.')->group(function () {
     Route::get('/', [StatsController::class, 'index'])->name('index');
 });
+Route::view(
+    '/quy-trinh-ban-giao-an-toan',
+    'pages.quy-trinh-ban-giao'
+)->name('safe-handover-process');
+
 
 Route::post('/watch-area', [WatchAreaController::class, 'store'])->name('watch-area.store');
 Route::delete('/watch-area', [WatchAreaController::class, 'destroy'])->name('watch-area.destroy');
