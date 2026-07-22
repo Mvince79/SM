@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use App\Models\FoundChild;
+use App\Models\MissingChild;
 use App\Models\Photo;
 use App\Policies\FoundChildPolicy;
+use App\Policies\HandoverConfirmationPolicy;
+use App\Policies\MissingChildPolicy;
 use App\Policies\VolunteerPolicy;
 use App\Policies\PhotoPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -15,6 +18,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         FoundChild::class => FoundChildPolicy::class,
         Photo::class => PhotoPolicy::class,
+        MissingChild::class => MissingChildPolicy::class,
     ];
 
     public function register(): void
@@ -26,6 +30,7 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        Gate::define('access-volunteer-features', [VolunteerPolicy::class, 'access']);   // ← thêm
+        Gate::define('access-volunteer-features', [VolunteerPolicy::class, 'access']);   
+        Gate::define('confirm-handover', [HandoverConfirmationPolicy::class, 'confirm']);
     }
 }

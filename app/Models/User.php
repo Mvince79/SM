@@ -94,7 +94,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function isVerified(): bool
     {
-        return ! is_null($this->email_verified_at) && $this->status === 'ACTIVE';
+        return !is_null($this->email_verified_at) && $this->status === 'ACTIVE';
     }
 
     /**
@@ -102,7 +102,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function hasPassword(): bool
     {
-        return ! is_null($this->password);
+        return !is_null($this->password);
     }
 
     public function getAvatarUrlAttribute($value): string
@@ -114,7 +114,7 @@ class User extends Authenticatable implements FilamentUser
             }
 
             // Path local → trả về URL storage
-            return asset('storage/'.$value);
+            return asset('storage/' . $value);
         }
 
         // Fallback: UI Avatar từ tên
@@ -194,12 +194,21 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessVolunteerFeatures(): bool
     {
         return $this->isVolunteer()
-            && ! $this->isBanned()
+            && !$this->isBanned()
             && $this->kyc_status === 'VERIFIED';
     }
 
     public function kycVerification()
     {
         return $this->hasOne(KycVerification::class);
+    }
+    public function thirdPartyVerifierProfile()
+    {
+        return $this->hasOne(ThirdPartyVerifierProfile::class);
+    }
+
+    public function isThirdPartyVerifier(): bool
+    {
+        return $this->role === 'THIRD_PARTY_VERIFIER';
     }
 }
