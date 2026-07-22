@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\EscalationQueue;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class NotificationRecipient extends Model
 {
@@ -32,5 +34,10 @@ class NotificationRecipient extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function escalationQueue(): HasOne
+    {
+        return $this->hasOne(EscalationQueue::class);
     }
 }
