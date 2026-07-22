@@ -7,6 +7,7 @@ use App\Http\Controllers\Client\StatsController;
 use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\WatchAreaController;
+use App\Http\Controllers\SitemapController;
 use App\Models\Message;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +22,7 @@ require __DIR__ . '/auth.php';
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/diem-ban-giao', [HandoverPointPublicController::class, 'index'])
     ->name('handover-points.index');
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
 Route::prefix('missing')->name('missing.')->group(function () {
     Route::get('/', [MissingController::class, 'index'])->name('index');
