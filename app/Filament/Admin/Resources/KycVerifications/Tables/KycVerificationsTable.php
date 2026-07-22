@@ -22,8 +22,23 @@ class KycVerificationsTable
                     ->label('Email')
                     ->searchable(),
 
+                TextColumn::make('id_type')
+                    ->label('Loại giấy tờ')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'CMND_9' => 'CMND 9 số',
+                        'CCCD_12' => 'CCCD 12 số',
+                        default => $state ?: 'Chưa xác định',
+                    })
+                    ->color(fn ($state) => match ($state) {
+                        'CMND_9' => 'warning',
+                        'CCCD_12' => 'info',
+                        default => 'gray',
+                    })
+                    ->sortable(),
+
                 TextColumn::make('full_name_on_id')
-                    ->label('Tên trên CCCD')
+                    ->label('Tên trên giấy tờ')
                     ->searchable()
                     ->toggleable(),
 
@@ -34,7 +49,11 @@ class KycVerificationsTable
 
                 TextColumn::make('face_match_score')
                     ->label('Điểm khớp mặt')
-                    ->formatStateUsing(fn ($state) => $state !== null ? number_format((float) $state * 100, 2) . '%' : 'Chưa có')
+                    ->formatStateUsing(
+                        fn ($state) => $state !== null
+                            ? number_format((float) $state * 100, 2) . '%'
+                            : 'Chưa có'
+                    )
                     ->badge()
                     ->sortable(),
 
@@ -73,6 +92,13 @@ class KycVerificationsTable
                         'PENDING' => 'Chờ duyệt',
                         'VERIFIED' => 'Đã xác thực',
                         'REJECTED' => 'Từ chối',
+                    ]),
+
+                SelectFilter::make('id_type')
+                    ->label('Loại giấy tờ')
+                    ->options([
+                        'CMND_9' => 'CMND 9 số',
+                        'CCCD_12' => 'CCCD 12 số',
                     ]),
 
                 SelectFilter::make('ocr_provider')
