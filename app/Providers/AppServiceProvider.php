@@ -50,6 +50,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Observers\FaceMatchResultObserver::class
         );
 
+        \App\Models\User::observe(
+            \App\Observers\UserObserver::class
+        );
+
         // Register Livewire component
         Livewire::component(
             'volunteer.assignment-board',
