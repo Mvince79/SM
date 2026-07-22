@@ -15,6 +15,8 @@ use App\Http\Livewire\Chat\ChatBox;
 use Livewire\Volt\Volt;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\HandoverPointPublicController;
+use App\Http\Controllers\Verifier\HandoverConfirmationController;
+
 // ── Auth (register, login, OTP, Google OAuth, logout) ──────────────────────
 require __DIR__ . '/auth.php';
 
@@ -143,4 +145,11 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
 
         return Storage::disk('private')->response($message->attachment_path);
     })->name('chat.attachment');
+
+    Route::middleware('role:THIRD_PARTY_VERIFIER')->prefix('verifier')->name('verifier.')->group(function () {
+        Route::get('/dashboard', fn() => view('verifier.dashboard'))->name('dashboard');
+        Route::post('/handover/{handoverable}/{type}', [HandoverConfirmationController::class, 'confirm'])
+            ->name('handover.confirm')
+            ->whereIn('type', ['missing', 'found']);
+    });
 });

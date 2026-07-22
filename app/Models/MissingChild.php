@@ -55,6 +55,8 @@ class MissingChild extends Model
         'meta_title',
         'meta_description',
         'og_image_url',
+        'handover_confirmed_at',
+        'handover_confirmed_by',
     ];
 
     protected $casts = [
@@ -86,9 +88,10 @@ class MissingChild extends Model
         $originalSlug = $slug;
         $counter = 2;
 
-        while (static::where('slug', $slug)
-            ->when($missingChild->exists, fn($query) => $query->where('id', '!=', $missingChild->id))
-            ->exists()
+        while (
+            static::where('slug', $slug)
+                ->when($missingChild->exists, fn($query) => $query->where('id', '!=', $missingChild->id))
+                ->exists()
         ) {
             $slug = $originalSlug . '-' . $counter;
             $counter++;
@@ -251,7 +254,7 @@ class MissingChild extends Model
     {
         $user = Auth::user();
 
-        if (! $user) {
+        if (!$user) {
             $fields = ['path_blurred'];
         } elseif ($user->isAdmin() || $user->hasVerifiedKyc()) {
             $fields = ['path_original', 'path_thumb', 'path_blurred'];
@@ -275,7 +278,7 @@ class MissingChild extends Model
 
     private function logOriginalPhotoAccess(Photo $photo, ?User $user): void
     {
-        if (! $user || ! function_exists('activity')) {
+        if (!$user || !function_exists('activity')) {
             return;
         }
 

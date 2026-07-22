@@ -185,6 +185,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === 'VOLUNTEER';
     }
 
+    public function notificationRecipients()
+    {
+        return $this->hasMany(NotificationRecipient::class);
+    }
+
     /**
      * Mọi role khác USER (VOLUNTEER, MODERATOR, ADMIN) đều bắt buộc
      * kyc_status = VERIFIED mới được cấp quyền tương ứng với role đó.

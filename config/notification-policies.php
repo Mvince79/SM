@@ -5,6 +5,7 @@ use App\Services\Notification\Strategies\CaseApprovedInProvinceStrategy;
 use App\Services\Notification\Strategies\FaceMatchConfirmedForAdminStrategy;
 use App\Services\Notification\Strategies\FaceMatchConfirmedForFamilyStrategy;
 use App\Services\Notification\Strategies\FaceMatchConfirmedForVerifierStrategy;
+use App\Services\Notification\Strategies\HandoverReadyForFamilyStrategy;
 
 return [
     'strategies' => [
@@ -18,6 +19,10 @@ return [
         NotificationEvent::TYPE_CASE_APPROVED_IN_PROVINCE => [
             'USER' => CaseApprovedInProvinceStrategy::class,
             'VOLUNTEER' => CaseApprovedInProvinceStrategy::class,
+        ],
+        NotificationEvent::TYPE_HANDOVER_READY => [
+            'USER' => HandoverReadyForFamilyStrategy::class,
+            'VOLUNTEER' => HandoverReadyForFamilyStrategy::class,
         ],
     ],
 ];

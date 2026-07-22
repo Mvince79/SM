@@ -13,28 +13,28 @@ class NotificationController extends Controller
         return view('notifications.center');
     }
 
-    public function show(Request $request, string $notificationId): View
+    public function show(Request $request, int $notificationId): View
     {
         $notification = $request->user()
-            ->notifications()
+            ->notificationRecipients()
             ->whereKey($notificationId)
             ->firstOrFail();
 
         return view('notifications.show', ['notification' => $notification]);
     }
 
-    public function read(Request $request, string $notificationId): JsonResponse
+    public function read(Request $request, int $notificationId): JsonResponse
     {
         $notification = $request->user()
-            ->notifications()
+            ->notificationRecipients()
             ->whereKey($notificationId)
             ->firstOrFail();
 
-        $notification->markAsRead();
+        $notification->update(['read_at' => now()]);
 
         return response()->json([
             'read' => true,
-            'unread_count' => $request->user()->unreadNotifications()->count(),
+            'unread_count' => $request->user()->notificationRecipients()->whereNull('read_at')->count(),
         ]);
     }
 }

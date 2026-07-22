@@ -34,6 +34,8 @@ class FoundChild extends Model
         'approved_at',
         'approved_by',
         'ai_processed_at',
+        'handover_confirmed_at',
+        'handover_confirmed_by',
     ];
 
     protected function casts(): array

@@ -57,7 +57,7 @@
             @auth
                 <x-notification-bell />
 
-                {{-- Avatar dropdown: gộp Quản trị / Xác thực KYC / Hồ sơ / Đăng xuất --}}
+                {{-- Avatar dropdown: gộp Quản trị / Xác thực KYC / Bàn giao xác nhận / Hồ sơ / Đăng xuất --}}
                 <div x-data="{ open: false }" @click.outside="open = false" class="relative">
                     <button type="button" @click="open = !open"
                         class="flex items-center gap-2 group min-w-0 rounded-full pl-1 pr-2.5 py-1 hover:bg-slate-50 transition-colors">
@@ -89,15 +89,22 @@
                             </a>
                         @endif
 
-                        <a href="{{ route('profile.kyc') }}"
-                            class="flex items-center justify-between gap-2.5 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
-                            <span class="flex items-center gap-2.5">
-                                <x-heroicon-o-identification class="w-4 h-4 text-slate-400 shrink-0" /> Xác thực KYC
-                            </span>
-                            @if (Auth::user()->kyc_status !== 'VERIFIED')
+                        @if (Auth::user()->kyc_status !== 'VERIFIED')
+                            <a href="{{ route('profile.kyc') }}"
+                                class="flex items-center justify-between gap-2.5 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                                <span class="flex items-center gap-2.5">
+                                    <x-heroicon-o-identification class="w-4 h-4 text-slate-400 shrink-0" /> Xác thực KYC
+                                </span>
                                 <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
-                            @endif
-                        </a>
+                            </a>
+                        @endif
+
+                        @if (Auth::user()->isThirdPartyVerifier())
+                            <a href="{{ route('verifier.dashboard') }}"
+                                class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                                <x-heroicon-o-clipboard-document-check class="w-4 h-4 text-slate-400 shrink-0" /> Bàn giao xác nhận
+                            </a>
+                        @endif
 
                         <a href="{{ route('profile.index') }}"
                             class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
@@ -189,10 +196,23 @@
                     </a>
                 @endif
 
-                <a href="{{ route('profile.kyc') }}"
-                    class="text-center font-bold text-slate-700 hover:bg-slate-50 py-3 rounded-xl border border-slate-200 transition-all">
-                    Xác thực KYC
-                </a>
+                @if (Auth::user()->kyc_status !== 'VERIFIED')
+                    <a href="{{ route('profile.kyc') }}"
+                        class="col-span-2 flex items-center justify-center gap-2 text-center font-bold
+                               text-slate-700 hover:bg-slate-50 py-3 rounded-xl border border-slate-200 transition-all">
+                        <x-heroicon-o-identification class="w-5 h-5" />
+                        Xác thực KYC
+                    </a>
+                @endif
+
+                @if (Auth::user()->isThirdPartyVerifier())
+                    <a href="{{ route('verifier.dashboard') }}"
+                        class="col-span-2 flex items-center justify-center gap-2 text-center font-bold
+                               text-slate-700 hover:bg-slate-50 py-3 rounded-xl border border-slate-200 transition-all">
+                        <x-heroicon-o-clipboard-document-check class="w-5 h-5" />
+                        Bàn giao xác nhận
+                    </a>
+                @endif
 
                 <a href="{{ route('profile.index') }}"
                     class="text-center font-bold text-slate-700 hover:bg-slate-50 py-3 rounded-xl border border-slate-200 transition-all">

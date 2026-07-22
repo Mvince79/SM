@@ -9,11 +9,11 @@
     <div class="bg-white border border-slate-200/85 rounded-3xl p-6 sm:p-8 shadow-premium">
         <div class="flex items-center gap-4">
             @php
-                $icon = match ($notification->data['type'] ?? '') {
-                    'ai_processing_failed' => 'heroicon-o-exclamation-triangle',
-                    'handover_ready' => 'heroicon-o-check-circle',
-                    'face_match' => 'heroicon-o-face-smile',
-                    'clue_submitted' => 'heroicon-o-light-bulb',
+                $icon = match ($notification->event?->event_type) {
+                    'FACE_MATCH_CONFIRMED' => 'heroicon-o-face-smile',
+                    'HANDOVER_READY' => 'heroicon-o-check-circle',
+                    'CASE_APPROVED', 'CASE_APPROVED_IN_PROVINCE' => 'heroicon-o-document-check',
+                    'CLUE_VERIFIED' => 'heroicon-o-light-bulb',
                     default => 'heroicon-o-bell',
                 };
             @endphp
@@ -22,7 +22,7 @@
             </div>
             <div class="min-w-0">
                 <h1 class="text-lg font-black text-slate-900 leading-snug">
-                    {{ $notification->data['title'] ?? 'Thông báo' }}
+                    {{ $notification->rendered_title }}
                 </h1>
                 <p class="text-xs text-slate-400 font-semibold mt-0.5">
                     {{ $notification->created_at->diffForHumans() }}
@@ -34,11 +34,11 @@
         </div>
 
         <p class="text-sm text-slate-600 leading-relaxed mt-5 pt-5 border-t border-slate-100">
-            {{ $notification->data['message'] ?? 'Không có nội dung chi tiết.' }}
+            {{ $notification->rendered_body }}
         </p>
 
-        @if ($notification->data['url'] ?? null)
-            <a href="{{ $notification->data['url'] }}"
+        @if ($notification->action_url)
+            <a href="{{ $notification->action_url }}"
                 class="mt-6 inline-flex items-center gap-2 bg-primary text-white text-sm font-black px-5 py-3 rounded-xl hover:bg-primary-dark transition-colors">
                 @if (auth()->user()->isAdmin())
                     <x-heroicon-o-shield-check class="w-4 h-4" /> Xem chi tiết (Quản trị)

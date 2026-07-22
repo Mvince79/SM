@@ -14,7 +14,7 @@ new class extends Component
 
     public function getGroupsProperty()
     {
-        $all = Auth::user()->notifications()->latest()->limit(50)->get();
+        $all = Auth::user()->notificationRecipients()->with('event')->latest()->limit(50)->get();
 
         return [
             'today' => $all->filter(fn($n) => $n->created_at->isToday()),
@@ -23,9 +23,10 @@ new class extends Component
         ];
     }
 
-    public function markAsRead(string $notificationId): void
+    public function markAsRead(int $notificationId): void
     {
-        Auth::user()->notifications()->whereKey($notificationId)->first()?->markAsRead();
+        $notification = Auth::user()->notificationRecipients()->whereKey($notificationId)->first();
+        $notification?->update(['read_at' => now()]);
 
         $this->redirect(route('notifications.show', $notificationId));
     }
@@ -36,13 +37,13 @@ new class extends Component
         // Chỉ để re-render khi có thông báo mới qua Reverb, không cần xử lý payload
     }
 
-    public function getIconFor(string $type): string
+    public function getIconFor(string $eventType): string
     {
-        return match ($type) {
-            'ai_processing_failed' => 'heroicon-o-exclamation-triangle',
-            'handover_ready' => 'heroicon-o-check-circle',
-            'face_match' => 'heroicon-o-face-smile',
-            'clue_submitted' => 'heroicon-o-light-bulb',
+        return match ($eventType) {
+            'FACE_MATCH_CONFIRMED' => 'heroicon-o-face-smile',
+            'HANDOVER_READY' => 'heroicon-o-check-circle',
+            'CASE_APPROVED', 'CASE_APPROVED_IN_PROVINCE' => 'heroicon-o-document-check',
+            'CLUE_VERIFIED' => 'heroicon-o-light-bulb',
             default => 'heroicon-o-bell',
         };
     }
@@ -64,18 +65,17 @@ new class extends Component
                     <h3 class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">{{ $label }}</h3>
                     <div class="space-y-2">
                         @foreach ($this->groups[$key] as $n)
-                            <div wire:key="notification-{{ $n->id }}" wire:click="markAsRead('{{ $n->id }}')"
+                            <div wire:key="notification-{{ $n->id }}" wire:click="markAsRead({{ $n->id }})"
                                 class="flex gap-3 p-4 rounded-2xl border cursor-pointer transition-colors
                                     {{ $n->read_at ? 'bg-white border-slate-200/85' : 'bg-primary/5 border-primary/20' }}">
                                 <div
                                     class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                                    <x-dynamic-component :component="$this->getIconFor($n->data['type'] ?? '')"
+                                    <x-dynamic-component :component="$this->getIconFor($n->event?->event_type ?? '')"
                                         class="w-4.5 h-4.5" />
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-bold text-slate-900">{{ $n->data['title'] ?? 'Thông báo' }}
-                                    </p>
-                                    <p class="text-xs text-slate-500 mt-0.5">{{ $n->data['message'] ?? '' }}</p>
+                                    <p class="text-sm font-bold text-slate-900">{{ $n->rendered_title }}</p>
+                                    <p class="text-xs text-slate-500 mt-0.5">{{ $n->rendered_body }}</p>
                                     <p class="text-[10px] text-slate-400 font-semibold mt-1">
                                         {{ $n->created_at->diffForHumans() }}</p>
                                 </div>

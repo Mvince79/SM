@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\EnsureEmailVerified;
+use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\InternalApiKey;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,7 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'email.verified' => EnsureEmailVerified::class,
-            'internal.key' => \App\Http\Middleware\InternalApiKey::class,
+            'internal.key' => InternalApiKey::class,
+            'role' => EnsureUserHasRole::class,
         ]);
 
         $middleware->redirectGuestsTo(fn() => route('auth.login'));

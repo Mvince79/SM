@@ -1,7 +1,7 @@
 @auth
     @php
-        $notifications = auth()->user()->notifications()->latest()->limit(10)->get();
-        $unreadCount = auth()->user()->unreadNotifications()->count();
+        $notifications = auth()->user()->notificationRecipients()->latest()->limit(10)->get();
+        $unreadCount = auth()->user()->notificationRecipients()->whereNull('read_at')->count();
     @endphp
 
     <div class="relative" data-notification-bell>
@@ -30,7 +30,7 @@
             </div>
             <div class="max-h-[calc(100vh-12rem)] overflow-y-auto sm:max-h-[28rem]" data-notification-list>
                 @forelse ($notifications as $notification)
-                    <a href="{{ $notification->data['url'] ?? '#' }}"
+                    <a href="{{ $notification->action_url ?? '#' }}"
                         class="group flex gap-3 border-b border-slate-100 px-4 py-3.5 text-sm transition hover:bg-slate-50 {{ $notification->read_at ? 'bg-white' : 'bg-blue-50/70' }}"
                         data-notification-item data-notification-id="{{ $notification->id }}">
                         <span
@@ -39,10 +39,10 @@
                         </span>
                         <span class="min-w-0 flex-1">
                             <span class="block text-sm font-semibold leading-snug text-slate-900">
-                                {{ $notification->data['title'] ?? 'Thông báo mới' }}
+                                {{ $notification->rendered_title ?? 'Thông báo mới' }}
                             </span>
                             <span class="mt-1 block text-sm leading-relaxed text-slate-600">
-                                {{ $notification->data['message'] ?? 'Bạn có cập nhật mới trong hệ thống.' }}
+                                {{ $notification->rendered_body ?? 'Bạn có cập nhật mới trong hệ thống.' }}
                             </span>
                             <span class="mt-1.5 block text-xs font-medium text-slate-400">
                                 {{ $notification->created_at?->diffForHumans() }}
