@@ -7,6 +7,22 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'TìmTrẻ.vn') — Vì con xứng đáng được về nhà</title>
 
+    @hasSection('og_meta')
+        @yield('og_meta')
+    @else
+        <meta property="og:type" content="website">
+        <meta property="og:site_name" content="TìmTrẻ.vn">
+        <meta property="og:title" content="{{ $__env->yieldContent('title', 'TìmTrẻ.vn') }} — Vì con xứng đáng được về nhà">
+        <meta property="og:description" content="Nền tảng cộng đồng hỗ trợ tìm kiếm và kết nối trẻ em mất tích tại Việt Nam.">
+        <meta property="og:url" content="{{ url()->current() }}">
+        <meta property="og:image" content="{{ asset('images/og-default.jpg') }}">
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $__env->yieldContent('title', 'TìmTrẻ.vn') }} — Vì con xứng đáng được về nhà">
+        <meta name="twitter:description" content="Nền tảng cộng đồng hỗ trợ tìm kiếm và kết nối trẻ em mất tích tại Việt Nam.">
+        <meta name="twitter:image" content="{{ asset('images/og-default.jpg') }}">
+    @endif
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">

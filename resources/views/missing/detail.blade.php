@@ -5,13 +5,26 @@
     <meta name="robots" content="noindex">
     <meta name="description"
         content="{{ $case->meta_description ?: 'Thông tin tìm kiếm trẻ mất tích ' . $case->full_name }}">
-    <meta property="og:title" content="{{ $case->meta_title ?: $case->full_name . ' - Hồ sơ mất tích' }}">
-    <meta property="og:description"
-        content="{{ $case->meta_description ?: 'Thông tin tìm kiếm trẻ mất tích ' . $case->full_name }}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:image" content="{{ $case->og_image_url ?: $case->detail_primary_photo_url ?: $case->thumb_url }}">
 @endpush
+
+@section('og_meta')
+    @php
+        $ogTitle = $case->meta_title ?: $case->full_name . ' - Hồ sơ mất tích';
+        $ogDescription = $case->meta_description ?: 'Thông tin tìm kiếm trẻ mất tích ' . $case->full_name;
+        $ogImage = $case->og_image_url ?: $case->detail_primary_photo_url ?: $case->thumb_url;
+    @endphp
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="TìmTrẻ.vn">
+    <meta property="og:title" content="{{ $ogTitle }}">
+    <meta property="og:description" content="{{ $ogDescription }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:image" content="{{ $ogImage }}">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $ogTitle }}">
+    <meta name="twitter:description" content="{{ $ogDescription }}">
+    <meta name="twitter:image" content="{{ $ogImage }}">
+@endsection
 
 @section('content')
 
@@ -701,16 +714,28 @@
                             </div>
                         </div>
                     @endif
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid grid-cols-3 gap-2">
                         <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(request()->url()) }}"
-                            target="_blank"
-                            class="bg-[#1877F2] text-white text-xs font-extrabold py-3 px-4 rounded-xl hover:bg-[#165ECC] transition-colors shadow-sm text-center">
-                            Facebook
+                            target="_blank" title="Chia sẻ lên Facebook"
+                            class="flex items-center justify-center gap-1.5 bg-[#1877F2] text-white text-xs font-extrabold py-3 px-2 rounded-xl hover:bg-[#165ECC] transition-colors shadow-sm">
+                            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M9 8H6v4h3v12h5V12h3.642l.358-4h-4V6.333c0-1.163.235-1.667 1.412-1.667H18V0h-3.933C10.169 0 9 1.635 9 4.667V8z" />
+                            </svg>
+                            <span>Facebook</span>
+                        </a>
+                        <a href="https://twitter.com/intent/tweet?url={{ urlencode(request()->url()) }}&text={{ urlencode('Tìm bé ' . $case->full_name) }}"
+                            target="_blank" title="Chia sẻ lên Twitter/X"
+                            class="flex items-center justify-center gap-1.5 bg-black text-white text-xs font-extrabold py-3 px-2 rounded-xl hover:bg-slate-800 transition-colors shadow-sm">
+                            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
+                            <span>Twitter/X</span>
                         </a>
                         <a href="https://zalo.me/share/url?url={{ urlencode(request()->url()) }}&title={{ urlencode('Tìm bé ' . $case->full_name) }}"
-                            target="_blank"
-                            class="bg-[#0068FF] text-white text-xs font-extrabold py-3 px-4 rounded-xl hover:bg-[#0051CC] transition-colors shadow-sm text-center">
-                            Zalo
+                            target="_blank" title="Chia sẻ lên Zalo"
+                            class="flex items-center justify-center gap-1.5 bg-[#0068FF] text-white text-xs font-extrabold py-3 px-2 rounded-xl hover:bg-[#0051CC] transition-colors shadow-sm">
+                            <x-heroicon-o-chat-bubble-left-right class="w-4 h-4 shrink-0" />
+                            <span>Zalo</span>
                         </a>
                     </div>
                     <button onclick="navigator.clipboard.writeText(window.location.href); alert('Đã sao chép link hồ sơ!')"
