@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\Users\Actions;
 
 use App\Models\User;
+use App\Services\UserRoleChangeService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
@@ -17,8 +18,7 @@ class ChangeRoleAction
             ->icon('heroicon-o-user-group')
             ->color('warning')
             ->visible(
-                fn (): bool =>
-                    Auth::check()
+                fn (): bool => Auth::check()
                     && Auth::user()->role === 'ADMIN'
             )
             ->fillForm(
@@ -43,7 +43,7 @@ class ChangeRoleAction
             ->modalHeading('Xác nhận đổi vai trò')
             ->modalDescription(
                 'Sau khi đổi vai trò, người dùng sẽ bị đăng xuất khỏi tất cả thiết bị. '
-                . 'Mật khẩu hiện tại của người dùng vẫn được giữ nguyên.'
+                .'Mật khẩu hiện tại của người dùng vẫn được giữ nguyên.'
             )
             ->modalSubmitActionLabel('Xác nhận đổi vai trò')
             ->modalCancelActionLabel('Hủy')
@@ -57,18 +57,18 @@ class ChangeRoleAction
                     return;
                 }
 
-                /*
-                 * TODO I-06:
-                 * Thay đoạn update bên dưới bằng UserRoleChangeService
-                 * sau khi task I-06 được merge.
-                 */
-                $record->update([
-                    'role' => $data['role'],
-                ]);
+                $admin = Auth::user();
+                abort_unless($admin instanceof User, 403);
+
+                app(UserRoleChangeService::class)->changeRole(
+                    $record,
+                    $data['role'],
+                    $admin,
+                );
 
                 Notification::make()
                     ->title('Đã đổi vai trò')
-                    ->body('Vai trò của người dùng đã được cập nhật.')
+                    ->body('Người dùng đã được gửi thông báo và email hướng dẫn đăng nhập lại.')
                     ->success()
                     ->send();
             });

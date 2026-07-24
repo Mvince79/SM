@@ -54,6 +54,7 @@ class DynamicNotificationMail extends Mailable implements ShouldQueue
             NotificationEvent::TYPE_CASE_APPROVED_IN_PROVINCE => 'emails.notifications.case-approved',
             NotificationEvent::TYPE_CLUE_VERIFIED => 'emails.notifications.clue-verified',
             NotificationEvent::TYPE_HANDOVER_READY => 'emails.notifications.handover-ready',
+            NotificationEvent::TYPE_ROLE_CHANGED => 'emails.notifications.role-changed',
             default => throw new InvalidArgumentException(
                 "Không có email template cho notification event [{$eventType}]."
             ),

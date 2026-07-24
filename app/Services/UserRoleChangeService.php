@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\NotificationEvent;
 use App\Models\User;
+use App\Services\Notification\NotificationDeliveryService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -19,6 +21,10 @@ use Illuminate\Support\Facades\Log;
  */
 class UserRoleChangeService
 {
+    public function __construct(
+        private readonly NotificationDeliveryService $notificationDeliveryService,
+    ) {}
+
     public function changeRole(User $user, string $newRole, User $admin): User
     {
         $oldRole = $user->role;
@@ -33,7 +39,22 @@ class UserRoleChangeService
 
             $this->logRoleChange($user, $admin, $oldRole, $newRole);
 
-            return $user->fresh();
+            $changedUser = $user->fresh();
+            $event = NotificationEvent::query()->create([
+                'event_type' => NotificationEvent::TYPE_ROLE_CHANGED,
+                'subject_type' => $changedUser->getMorphClass(),
+                'subject_id' => $changedUser->getKey(),
+                'payload' => [
+                    'old_role' => $oldRole,
+                    'new_role' => $newRole,
+                ],
+                'triggered_by_user_id' => $admin->getKey(),
+                'occurred_at' => now(),
+            ]);
+
+            $this->notificationDeliveryService->deliver($event, [$changedUser]);
+
+            return $changedUser;
         });
     }
 

@@ -18,6 +18,8 @@ class NotificationEvent extends Model
 
     public const TYPE_HANDOVER_READY = 'HANDOVER_READY';
 
+    public const TYPE_ROLE_CHANGED = 'ROLE_CHANGED';
+
     protected $fillable = [
         'event_type',
         'subject_type',

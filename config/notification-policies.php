@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\NotificationEvent;
+use App\Notifications\RoleChangedNotification;
 use App\Services\Notification\Strategies\CaseApprovedInProvinceStrategy;
 use App\Services\Notification\Strategies\FaceMatchConfirmedForAdminStrategy;
 use App\Services\Notification\Strategies\FaceMatchConfirmedForFamilyStrategy;
@@ -23,6 +24,13 @@ return [
         NotificationEvent::TYPE_HANDOVER_READY => [
             'USER' => HandoverReadyForFamilyStrategy::class,
             'VOLUNTEER' => HandoverReadyForFamilyStrategy::class,
+        ],
+        NotificationEvent::TYPE_ROLE_CHANGED => [
+            'USER' => RoleChangedNotification::class,
+            'VOLUNTEER' => RoleChangedNotification::class,
+            'THIRD_PARTY_VERIFIER' => RoleChangedNotification::class,
+            'MODERATOR' => RoleChangedNotification::class,
+            'ADMIN' => RoleChangedNotification::class,
         ],
     ],
 ];
