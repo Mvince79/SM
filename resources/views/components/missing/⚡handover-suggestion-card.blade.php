@@ -27,6 +27,8 @@ new class extends Component
 
 <div>
     @if ($this->confirmedMatch)
+        <x-handover-warning-banner />
+
         <div class="bg-white border border-slate-200/85 rounded-2xl p-5 space-y-3 shadow-premium">
             <div class="flex items-center gap-2">
                 <x-heroicon-o-map-pin class="w-5 h-5 text-primary shrink-0" />

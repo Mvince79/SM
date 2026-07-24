@@ -19,6 +19,8 @@
         </div>
     </div>
 
+    <x-handover-warning-banner />
+
     {{-- Messages --}}
     <div id="chat-container" x-data="{ loadingMore: false }" x-init="$el.scrollTop = $el.scrollHeight"
         @scroll.throttle.500ms="
