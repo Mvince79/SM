@@ -51,6 +51,7 @@ new class extends Component {
     public string $contact_address = '';
     public bool $agreed = false;
     public bool $agreedDataPolicy = false;
+    public bool $agreedFalseReportLiability = false;
 
     public string $idempotencyKey = '';
     public $provinces;
@@ -116,6 +117,7 @@ new class extends Component {
             'contact_phone' => ['required', 'string', 'regex:/^(0|\+84)[0-9]{8,10}$/'],
             'agreed' => ['accepted'],
             'agreedDataPolicy' => ['accepted'],
+            'agreedFalseReportLiability' => ['accepted'],
         ];
     }
 
@@ -127,6 +129,7 @@ new class extends Component {
             'contact_phone.regex' => 'Số điện thoại không hợp lệ.',
             'agreed.accepted' => 'Vui lòng đồng ý cam kết trước khi gửi.',
             'agreedDataPolicy.accepted' => 'Vui lòng đồng ý với Chính sách Bảo vệ Dữ liệu Trẻ em.',
+            'agreedFalseReportLiability.accepted' => 'Vui lòng xác nhận đã hiểu trách nhiệm pháp lý khi khai báo sai sự thật trước khi gửi.',
         ];
     }
 
@@ -267,6 +270,15 @@ new class extends Component {
                         'ip_address' => request()->ip(),
                     ]);
                 }
+
+                // N-02 — checkbox cam kết riêng, tách biệt khỏi 2 consent Sprint 3.5 ở trên.
+                UserConsent::create([
+                    'user_id' => Auth::id(),
+                    'consent_type' => 'FALSE_REPORT_LIABILITY',
+                    'version' => config('legal.versions.FALSE_REPORT_LIABILITY'),
+                    'accepted_at' => now(),
+                    'ip_address' => request()->ip(),
+                ]);
 
                 foreach ($this->photos as $index => $photo) {
                     $path = $photo->storePublicly("missing/{$case->id}", 'public');
@@ -892,6 +904,32 @@ new class extends Component {
                     </label>
                     @error('agreedDataPolicy')
                         <p class="text-danger text-xs font-bold mt-1.5">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- N-02 — Checkbox cam kết thông tin đúng sự thật + cảnh báo trách nhiệm pháp lý
+                     (tách biệt hoàn toàn với 2 checkbox consent Sprint 3.5 ở trên) --}}
+                <div class="bg-red-50 border border-red-200 p-4 rounded-2xl mt-3">
+                    <div class="flex items-start gap-2 mb-2.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                            stroke="currentColor" class="w-4 h-4 text-red-600 shrink-0 mt-0.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                        </svg>
+                        <p class="text-[11px] font-black text-red-600 uppercase tracking-wider">
+                            Cảnh báo trách nhiệm pháp lý
+                        </p>
+                    </div>
+                    <label class="flex items-start gap-2.5 cursor-pointer">
+                        <input type="checkbox" wire:model="agreedFalseReportLiability" class="mt-1 accent-red-600" />
+                        <span class="text-[11px] text-slate-700 leading-relaxed font-bold">
+                            Tôi hiểu rằng việc cố ý khai báo thông tin sai sự thật về một vụ mất tích là hành vi vi
+                            phạm pháp luật và có thể bị xử lý hành chính hoặc truy cứu trách nhiệm hình sự theo quy
+                            định pháp luật Việt Nam, kể cả khi mục đích là trêu đùa hoặc thử nghiệm hệ thống.
+                        </span>
+                    </label>
+                    @error('agreedFalseReportLiability')
+                        <p class="text-red-600 text-xs font-bold mt-1.5">{{ $message }}</p>
                     @enderror
                 </div>
             </div>
