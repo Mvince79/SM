@@ -201,6 +201,13 @@
         border-radius: 12px;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+        .skeleton-shimmer {
+            animation: none;
+            background: #e2e8f0;
+        }
+    }
+
     /* ── No scrollbar ── */
     .no-scrollbar {
         scrollbar-width: none;

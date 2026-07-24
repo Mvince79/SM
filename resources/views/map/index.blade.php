@@ -21,24 +21,8 @@
                      Hiện chưa có nội dung — chỉ đảm bảo z-index đúng vị trí (trên tile, dưới panel UI) sẵn cho khi C-01 hoàn thành. -->
         <div id="map-sovereignty-overlay" class="map-sovereignty-overlay"></div>
 
-        <div id="map-loading" class="absolute inset-0 z-50 flex items-center justify-center bg-white/70">
-
-            <div class="bg-white rounded-2xl shadow-xl px-5 py-4 flex items-center gap-3 border border-slate-200">
-
-                <div class="w-6 h-6 rounded-full border-4 border-slate-200 border-t-red-500 animate-spin">
-                </div>
-
-                <div>
-                    <div class="text-sm font-black text-slate-900">
-                        Đang tải bản đồ
-                    </div>
-
-                    <div class="text-xs text-slate-500">
-                        Vui lòng chờ...
-                    </div>
-                </div>
-
-            </div>
+        <div id="map-loading" class="absolute inset-0 z-50" aria-busy="true">
+            <x-skeletons.map-tiles data-map-loading-skeleton />
         </div>
 
         <!-- C-05: Nút ẩn/hiện 2 panel (filter + widget) — hiện trên MỌI thiết bị.
@@ -133,13 +117,24 @@
             // tileLayer không bao giờ bắn, lớp overlay "Đang tải bản đồ" (z-50) sẽ
             // che kín màn hình vĩnh viễn và chặn MỌI thao tác bấm bên dưới (kể cả
             // nút ẩn/hiện panel). Đặt timeout dự phòng để luôn tự ẩn sau 6s.
-            let mapTilesLoaded = false;
-            const hideLoadingOverlay = function () {
-                mapTilesLoaded = true;
-                loadingEl?.classList.add('hidden');
+            const loadingReasons = new Set(['tiles', 'markers']);
+            const syncLoadingOverlay = function () {
+                const isLoading = loadingReasons.size > 0;
+                loadingEl?.classList.toggle('hidden', !isLoading);
+                loadingEl?.setAttribute('aria-busy', isLoading ? 'true' : 'false');
             };
+            const startLoading = function (reason) {
+                loadingReasons.add(reason);
+                syncLoadingOverlay();
+            };
+            const finishLoading = function (reason) {
+                loadingReasons.delete(reason);
+                syncLoadingOverlay();
+            };
+
             setTimeout(function () {
-                if (!mapTilesLoaded) hideLoadingOverlay();
+                loadingReasons.clear();
+                syncLoadingOverlay();
             }, 6000);
 
             const tileLayer = L.tileLayer(
@@ -151,10 +146,12 @@
             );
 
             tileLayer.on('loading', function () {
-                if (!mapTilesLoaded) loadingEl?.classList.remove('hidden');
+                startLoading('tiles');
             });
 
-            tileLayer.on('load', hideLoadingOverlay);
+            tileLayer.on('load', function () {
+                finishLoading('tiles');
+            });
 
             tileLayer.addTo(map);
 
@@ -183,7 +180,7 @@
             }
 
             function loadMarkers(queryString = '') {
-                loadingEl?.classList.remove('hidden');
+                startLoading('markers');
 
                 fetch('/api/v1/map-data' + queryString)
                     .then(response => response.json())
@@ -256,7 +253,7 @@
                         console.error(error);
                     })
                     .finally(() => {
-                        loadingEl?.classList.add('hidden');
+                        finishLoading('markers');
                     });
             }
 

@@ -9,9 +9,31 @@
 @endphp
 <div class="flex gap-3 items-center bg-white border border-slate-200 rounded-xl p-3">
     {{-- Thumbnail --}}
-    <div class="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100 flex items-center justify-center">
+    <div
+        class="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100 flex items-center justify-center"
         @if($imgUrl)
-            <img src="{{ $imgUrl }}" class="w-full h-full object-cover {{ $auth ? '' : 'blur-sm' }}">
+            x-data="{ imageLoaded: false }"
+            x-init="imageLoaded = $refs.image.complete"
+        @endif
+    >
+        @if($imgUrl)
+            <x-ui.skeleton
+                x-show="!imageLoaded"
+                width="100%"
+                height="100%"
+                rounded="rounded-none"
+                class="absolute inset-0"
+            />
+            <img
+                x-ref="image"
+                x-show="imageLoaded"
+                x-cloak
+                src="{{ $imgUrl }}"
+                alt="Ảnh hồ sơ {{ $found->full_name ?? 'trẻ được tìm thấy' }}"
+                class="w-full h-full object-cover {{ $auth ? '' : 'blur-sm' }}"
+                @load="imageLoaded = true"
+                @error="imageLoaded = true"
+            >
         @else
             <x-heroicon-s-user class="w-6 h-6 text-slate-300" />
         @endif

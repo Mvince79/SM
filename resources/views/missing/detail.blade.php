@@ -390,25 +390,7 @@
                             </div>
                         </div>
                     @elseif($case->primaryPhoto?->ai_status === 'processing')
-                        {{-- Skeleton loading --}}
-                        <div class="border border-brand/20 rounded-2xl p-4 space-y-3 bg-brand/5">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-slate-200 animate-pulse"></div>
-                                <div class="space-y-1 flex-1">
-                                    <div class="h-3 bg-slate-200 rounded animate-pulse w-1/2"></div>
-                                    <div class="h-2 bg-slate-200 rounded animate-pulse w-1/3"></div>
-                                </div>
-                            </div>
-                            @foreach (range(1, 2) as $_)
-                                <div class="flex gap-3 bg-white rounded-xl p-3">
-                                    <div class="w-14 h-14 rounded-lg bg-slate-200 animate-pulse flex-shrink-0"></div>
-                                    <div class="flex-1 space-y-2 pt-1">
-                                        <div class="h-2.5 bg-slate-200 rounded animate-pulse w-1/3"></div>
-                                        <div class="h-2 bg-slate-200 rounded animate-pulse w-1/2"></div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
+                        <x-skeletons.ai-match-list :rows="2" data-ai-match-list-skeleton />
                     @elseif($case->primaryPhoto?->ai_status === 'failed')
                         <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50 text-center space-y-2">
                             <p class="text-2xl">
