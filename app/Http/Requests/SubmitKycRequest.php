@@ -18,7 +18,22 @@ class SubmitKycRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_number' => ['required', 'string', 'regex:/^\d{9}(\d{3})?$/'], // CCCD 12 số hoặc CMND cũ 9 số
+            'id_type' => ['required', 'in:CMND_9,CCCD_12'],
+            'id_number' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    $idType = $this->input('id_type');
+
+                    if ($idType === 'CMND_9' && !preg_match('/^\d{9}$/', $value)) {
+                        $fail('CMND phải gồm đúng 9 chữ số.');
+                    }
+
+                    if ($idType === 'CCCD_12' && !preg_match('/^\d{12}$/', $value)) {
+                        $fail('CCCD phải gồm đúng 12 chữ số.');
+                    }
+                },
+            ],
             'full_name_on_id' => ['nullable', 'string', 'max:255'],
             'dob_on_id' => ['nullable', 'date', 'before:today'],
             'front_image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
@@ -30,8 +45,9 @@ class SubmitKycRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'id_number.required' => 'Vui lòng nhập số CCCD.',
-            'id_number.regex' => 'Số CCCD/CMND không hợp lệ.',
+            'id_type.required' => 'Vui lòng chọn loại giấy tờ (CMND hoặc CCCD).',
+            'id_type.in' => 'Loại giấy tờ không hợp lệ.',
+            'id_number.required' => 'Vui lòng nhập số CCCD/CMND.',
             'front_image.required' => 'Vui lòng tải ảnh mặt trước CCCD.',
             'back_image.required' => 'Vui lòng tải ảnh mặt sau CCCD.',
             'selfie.required' => 'Vui lòng tải ảnh selfie.',

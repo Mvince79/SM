@@ -32,7 +32,7 @@ class StoreHandoverPointRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'legal_authority_note.required_unless' => 'Văn bản xác nhận thẩm quyền pháp lý là bắt buộc với loại điểm này.',
+            'legal_authority_note.required_unless' => 'Cần văn bản xác nhận thẩm quyền cho loại điểm này (trừ Tổng đài 111).',
         ];
     }
 }
