@@ -563,6 +563,7 @@ new class extends Component {
                                             initVnSovereigntyLayer(map);
                                             window._mapPickerInstance = map;
 
+                                            // Theo yêu cầu: bản đồ luôn dùng tile sáng, không đổi theo theme.
                                             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                                                 attribution: '© OpenStreetMap'
                                             }).addTo(map);
@@ -886,7 +887,7 @@ new class extends Component {
                         </span>
                     </label>
                     @error('agreed')
-                        <p class="text-danger text-xs font-bold mt-1.5">{{ $message }}</p>
+                        <p class="text-red-600 text-xs font-bold mt-1.5">{{ $message }}</p>
                     @enderror
                 </div>
 
@@ -903,7 +904,7 @@ new class extends Component {
                         </span>
                     </label>
                     @error('agreedDataPolicy')
-                        <p class="text-danger text-xs font-bold mt-1.5">{{ $message }}</p>
+                        <p class="text-red-600 text-xs font-bold mt-1.5">{{ $message }}</p>
                     @enderror
                 </div>
 

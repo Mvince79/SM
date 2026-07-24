@@ -1,5 +1,13 @@
+@php
+    // PB-UI-10 — giữ theme nhất quán trên các trang auth (login/register).
+    $theme = auth()->check()
+        ? auth()->user()->theme_preference
+        : (in_array(request()->cookie('theme'), ['light', 'dark'], true)
+            ? request()->cookie('theme')
+            : 'light');
+@endphp
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="{{ $theme }}">
 
 <head>
     <meta charset="UTF-8">

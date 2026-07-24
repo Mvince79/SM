@@ -102,11 +102,6 @@ new class extends Component {
                         </span>
 
                         <span
-                            class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border {{ $chipClass }}">
-                            {{ $chipLabel }}
-                        </span>
-
-                        <span
                             class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border flex items-center gap-1
              {{ $post->review_level === 'ENHANCED'
                  ? 'bg-orange-100 text-orange-600 border-orange-200'

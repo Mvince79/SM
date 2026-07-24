@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "./map-widgets.css";
 @import "./map-labels.css";
+@import "./dark-mode.css";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';

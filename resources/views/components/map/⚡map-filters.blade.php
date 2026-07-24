@@ -69,8 +69,13 @@ new class extends Component
 
 <div class="space-y-2" wire:ignore.self>
 
-    {{-- Pill lớn: Thời gian mất tích — dễ bấm nhất trên mobile --}}
-    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+    {{-- Pill lớn: Thời gian mất tích — dễ bấm nhất trên mobile.
+                 < 640px: grid 4 cột đều nhau (grid-cols-4) để 4 nút luôn cùng
+                 kích thước dù nhãn dài ngắn khác nhau ("Tất cả" ngắn hơn hẳn
+                 "24h qua" nếu để tự co theo nội dung sẽ lệch, nhìn lộn xộn).
+                 Từ 640px (sm) trở lên quay lại hàng ngang cuộn ngang như cũ,
+                 vì lúc đó đã đủ chỗ để không cần ép bằng nhau. --}}
+    <div class="grid grid-cols-4 gap-1.5 sm:flex sm:gap-2 sm:overflow-x-auto no-scrollbar pb-1">
         @foreach ([
             'all' => 'Tất cả',
             '24h' => '24h qua',
@@ -80,7 +85,7 @@ new class extends Component
             <button
                 type="button"
                 wire:click="setTimeRange('{{ $value }}')"
-                class="shrink-0 px-4 py-2 rounded-full text-xs font-black whitespace-nowrap transition-colors
+                class="sm:shrink-0 px-2 sm:px-4 py-2 rounded-full text-xs font-black whitespace-nowrap transition-colors text-center
                     {{ $timeRange === $value
                         ? 'bg-primary text-white shadow'
                         : 'bg-white/70 text-slate-600 border border-slate-200/70 hover:bg-white' }}"
@@ -88,20 +93,21 @@ new class extends Component
                 {{ $label }}
             </button>
         @endforeach
-
-        {{-- Nút mở dropdown Bộ lọc khác --}}
-        <button
-            type="button"
-            wire:click="toggleOtherFilters"
-            class="shrink-0 flex items-center gap-1 px-3 py-2 rounded-full text-xs font-black whitespace-nowrap border border-dashed border-slate-300 text-slate-500 hover:bg-white/60 transition-colors"
-        >
-            <x-heroicon-o-adjustments-horizontal class="w-3.5 h-3.5" />
-            Bộ lọc khác
-            @if ($status !== 'all' || $hasNewClue)
-                <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-            @endif
-        </button>
     </div>
+
+    {{-- Nút mở dropdown Bộ lọc khác — tách hàng riêng bên dưới trên mobile
+                 (thay vì chen vào cùng hàng grid-cols-4, sẽ làm 5 phần tử lệch cột) --}}
+    <button
+        type="button"
+        wire:click="toggleOtherFilters"
+        class="w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 px-3 py-2 rounded-full text-xs font-black whitespace-nowrap border border-dashed border-slate-300 text-slate-500 hover:bg-white/60 transition-colors"
+    >
+        <x-heroicon-o-adjustments-horizontal class="w-3.5 h-3.5" />
+        Bộ lọc khác
+        @if ($status !== 'all' || $hasNewClue)
+            <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+        @endif
+    </button>
 
     {{-- Dropdown: Trạng thái + Có manh mối GPS mới nhất --}}
     @if ($otherFiltersOpen)

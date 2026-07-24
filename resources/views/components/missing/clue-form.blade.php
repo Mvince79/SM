@@ -128,6 +128,7 @@
                             this.map = L.map(el || 'clue-map-picker').setView(center, zoom);
                             window._clueMapInstance = this.map;
 
+                            // Theo yêu cầu: bản đồ luôn dùng tile sáng, không đổi theo theme.
                             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                                 attribution: '© OpenStreetMap'
                             }).addTo(this.map);

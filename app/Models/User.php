@@ -36,6 +36,7 @@ class User extends Authenticatable implements FilamentUser
         'otp_code',
         'otp_expires_at',
         'last_active_at',
+        'theme',
     ];
 
     protected $hidden = [
@@ -126,6 +127,14 @@ class User extends Authenticatable implements FilamentUser
     public function getNameAttribute(): ?string
     {
         return $this->full_name;
+    }
+
+    /**
+     * Giao diện sáng/tối đã lưu của user, mặc định 'light' nếu chưa từng chọn.
+     */
+    public function getThemePreferenceAttribute(): string
+    {
+        return in_array($this->theme, ['light', 'dark'], true) ? $this->theme : 'light';
     }
 
     // ─── Relationships ────────────────────────────────────────────────────────

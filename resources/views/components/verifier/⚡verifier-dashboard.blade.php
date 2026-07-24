@@ -42,17 +42,17 @@ new class extends Component
     @else
         @foreach ($this->missingCases->merge($this->foundCases) as $case)
             <div wire:key="case-{{ get_class($case) }}-{{ $case->id }}"
-                class="bg-white border border-slate-200/85 rounded-2xl p-5 flex items-center justify-between">
-                <div>
-                    <p class="font-black text-slate-900 text-sm">{{ $case->full_name ?? $case->case_code }}</p>
+                class="bg-white border border-slate-200/85 rounded-2xl p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="min-w-0">
+                    <p class="font-black text-slate-900 text-sm truncate">{{ $case->full_name ?? $case->case_code }}</p>
                     <p class="text-xs text-slate-400">{{ $case->case_code }}</p>
                 </div>
                 <form method="POST"
                     action="{{ route('verifier.handover.confirm', ['handoverable' => $case->id, 'type' => $case instanceof \App\Models\MissingChild ? 'missing' : 'found']) }}">
                     @csrf
                     <button type="submit"
-                        class="bg-primary text-white text-xs font-black px-4 py-2.5 rounded-xl flex items-center gap-1.5">
-                        <x-heroicon-o-check-circle class="w-4 h-4" /> Xác nhận đã tiếp nhận trẻ
+                        class="w-full sm:w-auto justify-center bg-primary text-white text-xs font-black px-4 py-2.5 rounded-xl flex items-center gap-1.5">
+                        <x-heroicon-o-check-circle class="w-4 h-4 shrink-0" /> Xác nhận đã tiếp nhận trẻ
                     </button>
                 </form>
             </div>

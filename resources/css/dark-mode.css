@@ -1,0 +1,223 @@
+/* ═══════════════════════════════════════════════════════════
+   PB-UI-10 — DARK MODE
+   TìmTrẻ.vn
+
+   Cơ chế: <html data-theme="light|dark"> được set NGAY TỪ SERVER
+   (xem resources/views/layouts/app.blade.php), dựa trên user setting
+   đã lưu trong DB (đăng nhập) hoặc cookie "theme" (khách). Vì vậy
+   giá trị đúng đã có sẵn ở lần render HTML đầu tiên → không có
+   khoảng "flash trắng" giữa lúc trang tải và lúc JS chạy để đổi theme.
+
+   Chỉ khi người dùng bấm toggle (app/Livewire/DarkModeToggle.php),
+   thuộc tính data-theme mới được đổi động qua JS + lưu lại.
+═══════════════════════════════════════════════════════════ */
+
+/* Cho phép dùng tiện ích `dark:` của Tailwind v4 dựa trên [data-theme],
+   thay vì dựa vào prefers-color-scheme của hệ điều hành. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+    color-scheme: light;
+
+    /* ── Semantic surface tokens (light) ── */
+    --color-bg: #f8fafc; /* slate-50 */
+    --color-surface: #ffffff;
+    --color-surface-raised: #ffffff;
+    --color-border: #f1f5f9; /* slate-100 */
+    --color-border-strong: #e2e8f0; /* slate-200 */
+    --color-text: #1e293b; /* slate-800 */
+    --color-text-muted: #64748b; /* slate-500 */
+    --color-text-subtle: #94a3b8; /* slate-400 */
+    --color-scrollbar-thumb: #e2e8f0;
+    --color-scrollbar-thumb-hover: #cbd5e1;
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    /* ── Semantic surface tokens (dark) ── */
+    --color-bg: #0b1120;
+    --color-surface: #111827; /* slate-900-ish */
+    --color-surface-raised: #1a2333;
+    --color-border: #1f2937;
+    --color-border-strong: #334155;
+    --color-text: #e2e8f0; /* slate-200 */
+    --color-text-muted: #94a3b8; /* slate-400 */
+    --color-text-subtle: #64748b; /* slate-500 */
+    --color-scrollbar-thumb: #334155;
+    --color-scrollbar-thumb-hover: #475569;
+}
+
+/* Đổi màu mượt khi toggle, nhưng không animate ở lần render đầu tiên
+   (tránh nháy màu khi vừa tải trang). */
+[data-theme] body,
+[data-theme] .topnav,
+[data-theme] .topnav-auth,
+[data-theme] .card,
+[data-theme] .site-footer {
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BASE — nền & chữ mặc định toàn trang
+═══════════════════════════════════════════════════════════ */
+[data-theme="dark"] body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb);
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-scrollbar-thumb-hover);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOP NAVIGATION
+═══════════════════════════════════════════════════════════ */
+[data-theme="dark"] .topnav,
+[data-theme="dark"] .topnav-auth {
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .brand-logo-text {
+    color: var(--color-text);
+}
+
+/* Nav links dùng text-slate-600 mặc định → làm sáng lại trong dark mode */
+[data-theme="dark"] .topnav .text-slate-600 {
+    color: var(--color-text-muted);
+}
+[data-theme="dark"] .topnav .text-slate-800 {
+    color: var(--color-text);
+}
+[data-theme="dark"] .topnav .hover\:bg-slate-50:hover {
+    background-color: var(--color-surface-raised);
+}
+
+/* Menu mobile (hamburger): các nút "outline" (KYC, Hồ sơ, Trung tâm hỗ trợ,
+   Bàn giao xác nhận, Đăng nhập…) chỉ có border + chữ, không nền → trong
+   dark mode viền quá mờ so với nền drawer, nhìn như "không có gì". Thêm nền
+   riêng + viền đậm hơn để rõ ràng là nút bấm được. (Nút "Đăng xuất"/"+ Báo
+   tin" đã có nền đỏ/brand sẵn nên không cần đụng tới.) */
+[data-theme="dark"] #mobile-menu a.border-slate-200 {
+    background-color: var(--color-surface-raised);
+    border-color: var(--color-border-strong);
+}
+[data-theme="dark"] #mobile-menu a.border-slate-200:hover {
+    background-color: #24304a;
+    border-color: #475569;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CARDS / PANELS DÙNG NỀN TRẮNG
+═══════════════════════════════════════════════════════════ */
+[data-theme="dark"] .bg-white {
+    background-color: var(--color-surface);
+}
+[data-theme="dark"] .bg-slate-50 {
+    background-color: var(--color-bg);
+}
+[data-theme="dark"] .bg-slate-100,
+[data-theme="dark"] .bg-slate-150 {
+    background-color: var(--color-surface-raised);
+}
+[data-theme="dark"] .border-slate-100,
+[data-theme="dark"] .border-slate-150,
+[data-theme="dark"] .border-slate-200 {
+    border-color: var(--color-border);
+}
+/* Biến thể opacity (border-slate-200/40, /50, /70, /80…) — Tailwind v4 sinh ra
+   class riêng cho từng mức opacity nên phải override từng class cụ thể. */
+[data-theme="dark"] .border-slate-200\/40,
+[data-theme="dark"] .border-slate-200\/50,
+[data-theme="dark"] .border-slate-200\/70,
+[data-theme="dark"] .border-slate-200\/80 {
+    border-color: var(--color-border);
+}
+[data-theme="dark"] .text-slate-700,
+[data-theme="dark"] .text-slate-800,
+[data-theme="dark"] .text-slate-900 {
+    color: var(--color-text);
+}
+[data-theme="dark"] .text-slate-500,
+[data-theme="dark"] .text-slate-600 {
+    color: var(--color-text-muted);
+}
+
+/* Footer đã tối màu sẵn (bg-slate-900) — giữ nguyên, không cần override. */
+
+/* ═══════════════════════════════════════════════════════════
+   BẢN ĐỒ (Leaflet) — resources/views/map/index.blade.php,
+   resources/views/missing/detail.blade.php (mini-map)
+═══════════════════════════════════════════════════════════ */
+/* Panel kính mờ nổi trên bản đồ (.glass-premium) đang hard-code nền trắng
+   70% → cần bản tối riêng, nếu không panel sẽ "chỏi" trên nền bản đồ tối. */
+[data-theme="dark"] .glass-premium {
+    background: rgba(17, 24, 39, 0.82);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .glass-premium .text-slate-900,
+[data-theme="dark"] .glass-premium h3,
+[data-theme="dark"] .glass-premium h4 {
+    color: var(--color-text);
+}
+
+/* Overlay "Đang tải bản đồ" cũng hard-code nền trắng. */
+[data-theme="dark"] #map-loading {
+    background-color: rgba(11, 17, 32, 0.75);
+}
+[data-theme="dark"] #map-loading > div {
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+}
+
+/* Theo yêu cầu: bản đồ (Leaflet) LUÔN dùng tile sáng (OpenStreetMap) bất kể
+   trang đang ở light hay dark mode — xem map/index.blade.php,
+   missing/detail.blade.php, clue-form.blade.php, create-missing-form.blade.php
+   (không còn nhánh chọn tile tối CartoDB nữa). Vì vậy không cần filter CSS
+   chỉnh sáng/tối cho tile nữa. Chỉ còn style lại marker/popup/control cho
+   khớp giao diện tối của các panel UI nổi trên bản đồ. */
+[data-theme="dark"] .leaflet-popup-content-wrapper,
+[data-theme="dark"] .leaflet-popup-tip {
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+[data-theme="dark"] .leaflet-control-zoom a {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border-color: var(--color-border) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOGGLE SWITCH (app/Livewire/DarkModeToggle.php)
+═══════════════════════════════════════════════════════════ */
+.theme-toggle {
+    @apply relative inline-flex items-center justify-center w-9 h-9 rounded-full
+           text-slate-500 hover:text-primary hover:bg-slate-50
+           transition-colors duration-200;
+}
+[data-theme="dark"] .theme-toggle {
+    color: var(--color-text-muted);
+}
+[data-theme="dark"] .theme-toggle:hover {
+    color: #ff3b30;
+    background-color: var(--color-surface-raised);
+}
+.theme-toggle .icon-sun {
+    @apply hidden;
+}
+.theme-toggle .icon-moon {
+    @apply block;
+}
+[data-theme="dark"] .theme-toggle .icon-sun {
+    @apply block;
+}
+[data-theme="dark"] .theme-toggle .icon-moon {
+    @apply hidden;
+}

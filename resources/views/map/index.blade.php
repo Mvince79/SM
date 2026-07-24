@@ -27,8 +27,11 @@
 
         <!-- C-05: Nút ẩn/hiện 2 panel (filter + widget) — hiện trên MỌI thiết bị.
                      To hơn (w-16 h-16) + màu nổi bật + z-[60] (CAO HƠN lớp "Đang tải bản đồ" z-50)
-                     để không bao giờ bị lớp loading (hoặc bất kỳ overlay nào khác) đè mất, đảm bảo luôn bấm được. -->
-        <div class="absolute bottom-6 md:bottom-8 left-4 z-[60] flex flex-col items-start gap-1.5 pointer-events-auto">
+                     để không bao giờ bị lớp loading (hoặc bất kỳ overlay nào khác) đè mất, đảm bảo luôn bấm được.
+                     bottom-28: widget chat nổi + hotline 111 (x-floating-chat-widget, mọi trang) cũng
+                     neo góc dưới-trái (bottom-5 left-5) → phải đặt CAO HƠN hẳn để 2 cụm nút không đè
+                     lên nhau (trước để bottom-6/8 nên bị chồng lên đúng vị trí widget chat). -->
+        <div class="absolute bottom-28 md:bottom-32 left-4 z-[60] flex flex-col items-start gap-1.5 pointer-events-auto">
             <span class="bg-slate-900 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow"
                 x-text="panelsOpen ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'"></span>
             <button type="button" @click="panelsOpen = !panelsOpen" aria-label="Ẩn/hiện bộ lọc và widget bản đồ"
@@ -137,13 +140,13 @@
                 syncLoadingOverlay();
             }, 6000);
 
-            const tileLayer = L.tileLayer(
-                'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 19
-                }
-            );
+            // PB-UI-10: theo yêu cầu, bản đồ LUÔN dùng tile sáng (OpenStreetMap)
+            // bất kể trang đang ở light hay dark mode — không đổi sang tile tối
+            // (CartoDB Dark Matter) nữa vì tile tối quá khó nhìn dù đã chỉnh filter.
+            const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            });
 
             tileLayer.on('loading', function () {
                 startLoading('tiles');

@@ -1,5 +1,18 @@
+@php
+    // PB-UI-10 — Dark mode toggle.
+    // Set ngay ở server-side (trước khi render <html>) để không có
+    // "flash trắng": HTML đã đúng theme ngay từ lần vẽ đầu tiên, không
+    // cần chờ JS chạy sau khi tải trang.
+    //   - Đã đăng nhập  → users.theme (đồng bộ đa thiết bị)
+    //   - Khách         → cookie "theme" (lưu 1 năm khi họ từng bấm toggle)
+    $theme = auth()->check()
+        ? auth()->user()->theme_preference
+        : (in_array(request()->cookie('theme'), ['light', 'dark'], true)
+            ? request()->cookie('theme')
+            : 'light');
+@endphp
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="{{ $theme }}">
 
 <head>
     <meta charset="UTF-8">

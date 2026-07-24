@@ -54,6 +54,9 @@
 
         {{-- ── Desktop CTA ── --}}
         <div class="hidden lg:flex items-center gap-4">
+            {{-- PB-UI-10: Dark mode toggle --}}
+            <livewire:dark-mode-toggle :theme="$theme ?? 'light'" />
+
             @auth
                 <x-notification-bell />
 
@@ -154,6 +157,9 @@
                 +
             </a>
 
+            {{-- PB-UI-10: Dark mode toggle --}}
+            <livewire:dark-mode-toggle :theme="$theme ?? 'light'" />
+
             @auth
                 <x-notification-bell />
             @endauth
@@ -220,7 +226,9 @@
                 @endif
 
                 <a href="{{ route('profile.index') }}"
-                    class="text-center font-bold text-slate-700 hover:bg-slate-50 py-3 rounded-xl border border-slate-200 transition-all">
+                    class="col-span-2 flex items-center justify-center gap-2 text-center font-bold
+                           text-slate-700 hover:bg-slate-50 py-3 rounded-xl border border-slate-200 transition-all">
+                    <x-heroicon-o-user-circle class="w-5 h-5" />
                     Hồ sơ
                 </a>
 
@@ -231,7 +239,7 @@
                     Trung tâm hỗ trợ
                 </a>
 
-                <form method="POST" action="{{ route('auth.logout') }}">
+                <form method="POST" action="{{ route('auth.logout') }}" class="col-span-2">
                     @csrf
                     <button type="submit"
                         class="w-full text-center font-bold bg-primary text-white py-3 rounded-xl hover:bg-primary-dark transition-all">

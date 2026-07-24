@@ -658,7 +658,9 @@
                                         }).setView([lat, lng], 15);
 
                                         initVnSovereigntyLayer(map);
+                                        // Theo yêu cầu: bản đồ luôn dùng tile sáng, không đổi theo theme.
                                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                            attribution: '© OpenStreetMap contributors',
                                             maxZoom: 19
                                         }).addTo(map);
 
@@ -1189,8 +1191,9 @@
             });
 
             initVnSovereigntyLayer(map);
+            // Theo yêu cầu: bản đồ luôn dùng tile sáng, không đổi theo theme.
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
+                attribution: '© OpenStreetMap contributors'
             }).addTo(map);
             const icon = L.divIcon({
                 className: '',
