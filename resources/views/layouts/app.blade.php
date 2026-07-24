@@ -230,6 +230,9 @@
         </a>
     </div>
 
+    {{-- ── M-06: Widget chat nổi + hotline khẩn cấp (mọi trang, mọi trạng thái đăng nhập) ── --}}
+    <x-floating-chat-widget />
+
     @auth
         <div class="fixed bottom-6 right-5 z-50 md:bottom-8 md:right-8">
             <button type="button" onclick="openChat()"
