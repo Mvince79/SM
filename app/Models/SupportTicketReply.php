@@ -33,4 +33,9 @@ class SupportTicketReply extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function scopePublicOnly($query)
+    {
+        return $query->where('is_internal_note', false);
+    }
 }

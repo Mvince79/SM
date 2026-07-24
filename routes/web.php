@@ -5,6 +5,7 @@ use App\Http\Controllers\Client\MissingController;
 use App\Http\Controllers\Client\ProfileController;
 use App\Http\Controllers\Client\StatsController;
 use App\Http\Controllers\Client\HomeController;
+use App\Http\Controllers\Client\SupportTicketController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\WatchAreaController;
 use App\Http\Controllers\SitemapController;
@@ -84,6 +85,12 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
         Route::get('/kyc', fn() => view('profile.kyc'))->name('kyc');
     });
 
+    Route::prefix('support')->name('support.')->group(function () {
+        Route::get('/', [SupportTicketController::class, 'index'])->name('index');
+        Route::get('/create', [SupportTicketController::class, 'create'])->name('create');
+        Route::post('/store', [SupportTicketController::class, 'store'])->name('store');
+    });
+
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read'])
         ->name('notifications.read');
 
@@ -91,6 +98,7 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
         Route::get('/create', [MissingController::class, 'create'])->name('create');
         Route::post('/store', [MissingController::class, 'store'])->name('store');
     });
+
     // Profile (Sprint 1 — PB-18)
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.index');
     Route::put('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
