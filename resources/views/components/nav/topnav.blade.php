@@ -23,6 +23,7 @@
         ['route' => 'home', 'label' => 'Trang chủ'],
         ['route' => 'missing.index', 'label' => 'Hồ sơ mất tích'],
         ['route' => 'map.index', 'label' => 'Bản đồ tìm kiếm'],
+        ['route' => 'articles.index', 'label' => 'Bài viết'],
         ['route' => 'stats.index', 'label' => 'Thống kê'],
     ];
 @endphp

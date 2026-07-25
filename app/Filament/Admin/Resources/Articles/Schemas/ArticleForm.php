@@ -46,6 +46,7 @@ class ArticleForm
                         FileUpload::make('cover_image_path')
                             ->label('Ảnh bìa')
                             ->image()
+                            ->disk('public')
                             ->directory('articles/covers')
                             ->imageEditor()
                             ->maxSize(5120),
@@ -59,11 +60,13 @@ class ArticleForm
                             )
                             ->searchable()
                             ->preload()
-                            ->default(fn (): ?int => auth()->id())
+                            ->default(fn(): ?int => auth()->id())
                             ->required(),
 
                         DateTimePicker::make('published_at')
                             ->label('Thời gian xuất bản')
+                            ->helperText('Để trống hoặc chọn giờ tương lai nếu muốn lưu nháp, chưa công khai.')
+                            ->default(now())
                             ->seconds(false),
                     ])
                     ->columns(2),
@@ -110,8 +113,8 @@ class ArticleForm
                                             margin-bottom: 4px;
                                             word-break: break-all;
                                         ">'
-                                            . e($url) .
-                                        '</div>
+                                    . e($url) .
+                                    '</div>
 
                                         <div style="
                                             color: #1a0dab;
@@ -119,16 +122,16 @@ class ArticleForm
                                             line-height: 1.3;
                                             margin-bottom: 4px;
                                         ">'
-                                            . e(Str::limit($title, 60, '...')) .
-                                        '</div>
+                                    . e(Str::limit($title, 60, '...')) .
+                                    '</div>
 
                                         <div style="
                                             color: #4d5156;
                                             font-size: 14px;
                                             line-height: 1.5;
                                         ">'
-                                            . e(Str::limit($description, 160, '...')) .
-                                        '</div>
+                                    . e(Str::limit($description, 160, '...')) .
+                                    '</div>
                                     </div>'
                                 );
                             })

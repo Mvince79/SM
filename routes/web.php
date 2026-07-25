@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Client\ArticleController;
 use App\Http\Controllers\Client\MapController;
 use App\Http\Controllers\Client\MissingController;
 use App\Http\Controllers\Client\ProfileController;
@@ -68,6 +69,11 @@ Route::prefix('legal')->name('legal.')->group(function () {
     Route::view('/terms-of-service', 'legal.terms-of-service')->name('terms');
     Route::view('/privacy-policy', 'legal.privacy-policy')->name('privacy');
     Route::view('/child-data-policy', 'legal.child-data-policy')->name('child-data');
+});
+
+Route::prefix('/articles')->name('articles.')->group(function () {
+    Route::get('/', [ArticleController::class, 'index'])->name('index');
+    Route::get('/{article:slug}', [ArticleController::class, 'show'])->name('show');
 });
 
 Route::middleware(['auth'])
