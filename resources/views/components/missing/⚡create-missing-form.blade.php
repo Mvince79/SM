@@ -703,7 +703,7 @@ new class extends Component {
                 </div>
 
                 @if (count($photos) > 0)
-                    <div class="grid grid-cols-5 gap-3 mt-3">
+                    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mt-3">
                         @foreach ($photos as $index => $photo)
                             <div class="relative group">
                                 <img src="{{ $photo->temporaryUrl() }}"
@@ -722,7 +722,7 @@ new class extends Component {
                 @endif
 
                 {{-- Màu da + Chiều cao + Cân nặng --}}
-                <div class="grid grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="space-y-1.5">
                         <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Màu da</label>
                         <select wire:model="skin_tone"
