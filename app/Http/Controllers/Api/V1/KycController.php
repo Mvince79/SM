@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SubmitKycRequest;
+use App\Jobs\ProcessKycJob;
 use App\Models\KycVerification;
 use Illuminate\Http\JsonResponse;
-use App\Jobs\ProcessKycJob;
 
 class KycController extends Controller
 {
@@ -41,6 +41,7 @@ class KycController extends Controller
 
         $kyc = KycVerification::create([
             'user_id' => $user->id,
+            'id_type' => $request->validated('id_type'),
             'id_number' => $request->validated('id_number'), // mã hóa qua Model mutator
             'full_name_on_id' => $request->validated('full_name_on_id'),
             'dob_on_id' => $request->validated('dob_on_id'),
@@ -51,7 +52,7 @@ class KycController extends Controller
         ]);
 
         $user->forceFill(['kyc_status' => 'PENDING'])->save();
-        
+
         ProcessKycJob::dispatch($kyc->id);
 
         return response()->json([

@@ -1,0 +1,70 @@
+<?php
+
+namespace Tests\Feature\Livewire;
+
+use App\Jobs\ProcessKycJob;
+use App\Models\KycVerification;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
+use Tests\TestCase;
+
+class KycWizardDemoFlowTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_cmnd_and_cccd_demo_profiles_can_complete_all_three_steps(): void
+    {
+        Storage::fake('private');
+        Queue::fake([ProcessKycJob::class]);
+
+        $profiles = [
+            [
+                'id_type' => 'CMND_9',
+                'id_number' => '012345678',
+                'email' => 'wizard.cmnd@example.test',
+            ],
+            [
+                'id_type' => 'CCCD_12',
+                'id_number' => '079092000001',
+                'email' => 'wizard.cccd@example.test',
+            ],
+        ];
+
+        foreach ($profiles as $profile) {
+            $user = User::factory()->create([
+                'email' => $profile['email'],
+                'kyc_status' => 'NONE',
+            ]);
+
+            Livewire::actingAs($user)
+                ->test('profile.kyc-wizard')
+                ->call('selectIdType', $profile['id_type'])
+                ->call('next')
+                ->assertSet('step', 2)
+                ->set('id_number', $profile['id_number'])
+                ->set('front_image', UploadedFile::fake()->image('front.jpg', 900, 600))
+                ->set('back_image', UploadedFile::fake()->image('back.jpg', 900, 600))
+                ->call('next')
+                ->assertHasNoErrors()
+                ->assertSet('step', 3)
+                ->set('selfie', UploadedFile::fake()->image('selfie.jpg', 720, 960))
+                ->call('submit')
+                ->assertHasNoErrors();
+
+            $kyc = KycVerification::query()
+                ->where('user_id', $user->getKey())
+                ->sole();
+
+            $this->assertSame($profile['id_type'], $kyc->id_type);
+            $this->assertSame($profile['id_number'], $kyc->decrypted_id_number);
+            $this->assertSame('PENDING', $kyc->status);
+            $this->assertSame('PENDING', $user->fresh()->kyc_status);
+        }
+
+        Queue::assertPushed(ProcessKycJob::class, 2);
+    }
+}

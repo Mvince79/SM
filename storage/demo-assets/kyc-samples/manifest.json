@@ -1,0 +1,21 @@
+{
+  "task": "O-06",
+  "notice": "Synthetic demo assets only. Not valid identity documents.",
+  "password": "Demo@123456",
+  "profiles": {
+    "cmnd": {
+      "id_type": "CMND_9",
+      "id_number": "012345678",
+      "full_name": "Nguyen Van Demo",
+      "dob": "1992-04-15",
+      "email": "demo.kyc.cmnd@timtre.vn"
+    },
+    "cccd": {
+      "id_type": "CCCD_12",
+      "id_number": "079092000001",
+      "full_name": "Tran Thi Demo",
+      "dob": "1992-09-20",
+      "email": "demo.kyc.cccd@timtre.vn"
+    }
+  }
+}

@@ -25,6 +25,7 @@ class KycSubmitTest extends TestCase
         $user = User::factory()->create(['kyc_status' => 'NONE']);
 
         $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/kyc/submit', [
+            'id_type' => 'CCCD_12',
             'id_number' => '079203001234',
             'full_name_on_id' => $user->full_name ?? 'Nguyen Van A',
             'dob_on_id' => '2000-01-01',
@@ -38,6 +39,7 @@ class KycSubmitTest extends TestCase
 
         $this->assertDatabaseHas('kyc_verifications', [
             'user_id' => $user->id,
+            'id_type' => 'CCCD_12',
             'status' => 'PENDING',
         ]);
 
@@ -64,6 +66,7 @@ class KycSubmitTest extends TestCase
         $user = User::factory()->create(['kyc_status' => 'PENDING']);
 
         $response = $this->actingAs($user, 'sanctum')->postJson('/api/v1/kyc/submit', [
+            'id_type' => 'CCCD_12',
             'id_number' => '079203001234',
             'front_image' => UploadedFile::fake()->image('front.jpg'),
             'back_image' => UploadedFile::fake()->image('back.jpg'),
@@ -80,6 +83,7 @@ class KycSubmitTest extends TestCase
         // [NEW] test bổ sung để khóa lại lỗ hổng đã sửa trong routes/api.php:
         // route /kyc/submit PHẢI nằm sau auth:sanctum, guest gọi phải bị 401.
         $response = $this->postJson('/api/v1/kyc/submit', [
+            'id_type' => 'CCCD_12',
             'id_number' => '079203001234',
             'front_image' => UploadedFile::fake()->image('front.jpg'),
             'back_image' => UploadedFile::fake()->image('back.jpg'),
@@ -95,6 +99,7 @@ class KycSubmitTest extends TestCase
 
         $kyc = KycVerification::create([
             'user_id' => $user->id,
+            'id_type' => 'CCCD_12',
             'id_number' => '079203001234',
             'front_image_path' => 'kyc/1/front.jpg',
             'back_image_path' => 'kyc/1/back.jpg',
