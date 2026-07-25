@@ -225,4 +225,9 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->role === 'THIRD_PARTY_VERIFIER';
     }
+
+    public function verifierProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Models\ThirdPartyVerifierProfile::class, 'user_id');
+    }
 }

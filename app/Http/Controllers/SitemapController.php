@@ -77,9 +77,7 @@ class SitemapController extends Controller
 
     private function foundChildUrls(): array
     {
-        // FoundChild hiện chưa có route public riêng theo case_code trong scope Sprint 4
-        // -> chỉ thêm khi model có cột tương đương (id dùng tạm nếu route tồn tại).
-        if (!\Illuminate\Support\Facades\Route::has('found.show')) {
+        if (!\Illuminate\Support\Facades\Route::has('found-children.show')) {
             return [];
         }
 
@@ -88,7 +86,7 @@ class SitemapController extends Controller
             ->select(['id', 'updated_at'])
             ->get()
             ->map(fn(FoundChild $case) => [
-                'loc' => route('found.show', $case->id),
+                'loc' => route('found-children.show', $case->id),
                 'lastmod' => $case->updated_at?->toAtomString(),
                 'changefreq' => 'daily',
                 'priority' => '0.7',
