@@ -90,12 +90,12 @@
 
                             <!-- Avatar photo container + Gallery -->
                             <div class="w-full sm:w-44 flex-shrink-0" x-data="{
-                                                        open: false,
-                                                        current: 0,
-                                                        photos: {{ Js::from($case->detail_photo_urls) }},
-                                                        prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length },
-                                                        next() { this.current = (this.current + 1) % this.photos.length }
-                                                    }" @keydown.left.window="if(open) prev()"
+                                                            open: false,
+                                                            current: 0,
+                                                            photos: {{ Js::from($case->detail_photo_urls) }},
+                                                            prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length },
+                                                            next() { this.current = (this.current + 1) % this.photos.length }
+                                                        }" @keydown.left.window="if(open) prev()"
                                 @keydown.right.window="if(open) next()" @keydown.escape.window="open = false">
 
                                 <div class="relative overflow-hidden rounded-xl sm:rounded-2xl border-2 border-slate-100 shadow bg-slate-900 group aspect-square cursor-pointer"
@@ -169,7 +169,7 @@
                                         <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                                             <template x-for="(photo, i) in photos" :key="i">
                                                 <img :src="photo" :class="current === i ? 'border-white scale-110' :
-                                                                                'border-transparent opacity-60'"
+                                                                                    'border-transparent opacity-60'"
                                                     class="w-12 h-12 object-cover rounded-lg border-2 cursor-pointer transition-all"
                                                     @click="current = i" />
                                             </template>
@@ -454,6 +454,8 @@
 
                     <!-- Interactive Clue Box Form (Livewire) -->
                     <div id="clue-box-form" class="hidden bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-4">
+                        @livewire('gps-report-button', ['missingId' => $case->id])
+
                         @livewire('missing-child.clue-form', ['missingId' => $case->id])
                     </div>
 
@@ -1215,14 +1217,14 @@
             });
             L.marker([lat, lng], { icon: icon }).addTo(map)
                 .bindPopup(`
-                            <div class='font-bold text-xs p-1 text-slate-900 flex items-center gap-1.5'>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-primary">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                                </svg>
-                                Vị trí mất tích ước tính
-                            </div>
-                        `)
+                                <div class='font-bold text-xs p-1 text-slate-900 flex items-center gap-1.5'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-primary">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                    </svg>
+                                    Vị trí mất tích ước tính
+                                </div>
+                            `)
                 .openPopup();
         });
     </script>
