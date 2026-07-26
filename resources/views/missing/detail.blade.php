@@ -5,6 +5,15 @@
     <meta name="robots" content="noindex">
     <meta name="description"
         content="{{ $case->meta_description ?: 'Thông tin tìm kiếm trẻ mất tích ' . $case->full_name }}">
+    <x-json-ld type="person" :data="[
+            'name' => $case->full_name,
+            'image' => 'https://api.dicebear.com/7.x/thumbs/svg?seed=' . urlencode($case->full_name),
+            'description' => $case->circumstances,
+            'age' => $case->age_estimate ?? \Carbon\Carbon::parse($case->dob)->age,
+            'missing_location' => $case->district . ', ' . $case->address_detail,
+            'missing_date' => \Carbon\Carbon::parse($case->missing_date)->format('d/m/Y'),
+            'case_code' => $case->case_code,
+        ]" />
 @endpush
 
 @section('og_meta')
@@ -81,12 +90,12 @@
 
                             <!-- Avatar photo container + Gallery -->
                             <div class="w-full sm:w-44 flex-shrink-0" x-data="{
-                                                open: false,
-                                                current: 0,
-                                                photos: {{ Js::from($case->detail_photo_urls) }},
-                                                prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length },
-                                                next() { this.current = (this.current + 1) % this.photos.length }
-                                            }" @keydown.left.window="if(open) prev()"
+                                                        open: false,
+                                                        current: 0,
+                                                        photos: {{ Js::from($case->detail_photo_urls) }},
+                                                        prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length },
+                                                        next() { this.current = (this.current + 1) % this.photos.length }
+                                                    }" @keydown.left.window="if(open) prev()"
                                 @keydown.right.window="if(open) next()" @keydown.escape.window="open = false">
 
                                 <div class="relative overflow-hidden rounded-xl sm:rounded-2xl border-2 border-slate-100 shadow bg-slate-900 group aspect-square cursor-pointer"
@@ -160,7 +169,7 @@
                                         <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                                             <template x-for="(photo, i) in photos" :key="i">
                                                 <img :src="photo" :class="current === i ? 'border-white scale-110' :
-                                                                        'border-transparent opacity-60'"
+                                                                                'border-transparent opacity-60'"
                                                     class="w-12 h-12 object-cover rounded-lg border-2 cursor-pointer transition-all"
                                                     @click="current = i" />
                                             </template>
@@ -637,9 +646,10 @@
                     <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
                         <h4 class="font-extrabold text-slate-900 text-sm uppercase tracking-wider">Vị trí mất tích</h4>
                         <div class="relative h-44 rounded-2xl overflow-hidden border border-slate-200">
-                            <div id="mini-map" class="map-container w-full h-full bg-slate-150"
-                                data-lat="{{ $case->lat }}" data-lng="{{ $case->lng }}"></div>
-                            {{-- C-01 hook: mini-map không cần widget/filter (theo DoD C-05), chỉ cần overlay chủ quyền hoạt động đúng --}}
+                            <div id="mini-map" class="map-container w-full h-full bg-slate-150" data-lat="{{ $case->lat }}"
+                                data-lng="{{ $case->lng }}"></div>
+                            {{-- C-01 hook: mini-map không cần widget/filter (theo DoD C-05), chỉ cần overlay chủ quyền hoạt
+                            động đúng --}}
                             <div id="mini-map-sovereignty-overlay" class="map-sovereignty-overlay"></div>
                         </div>
                         <script>
@@ -721,7 +731,8 @@
                             target="_blank" title="Chia sẻ lên Facebook"
                             class="flex items-center justify-center gap-1.5 bg-[#1877F2] text-white text-xs font-extrabold py-3 px-2 rounded-xl hover:bg-[#165ECC] transition-colors shadow-sm">
                             <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M9 8H6v4h3v12h5V12h3.642l.358-4h-4V6.333c0-1.163.235-1.667 1.412-1.667H18V0h-3.933C10.169 0 9 1.635 9 4.667V8z" />
+                                <path
+                                    d="M9 8H6v4h3v12h5V12h3.642l.358-4h-4V6.333c0-1.163.235-1.667 1.412-1.667H18V0h-3.933C10.169 0 9 1.635 9 4.667V8z" />
                             </svg>
                             <span>Facebook</span>
                         </a>
@@ -729,7 +740,8 @@
                             target="_blank" title="Chia sẻ lên Twitter/X"
                             class="flex items-center justify-center gap-1.5 bg-black text-white text-xs font-extrabold py-3 px-2 rounded-xl hover:bg-slate-800 transition-colors shadow-sm">
                             <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                <path
+                                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                             </svg>
                             <span>Twitter/X</span>
                         </a>
@@ -1203,14 +1215,14 @@
             });
             L.marker([lat, lng], { icon: icon }).addTo(map)
                 .bindPopup(`
-                    <div class='font-bold text-xs p-1 text-slate-900 flex items-center gap-1.5'>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-primary">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                        </svg>
-                        Vị trí mất tích ước tính
-                    </div>
-                `)
+                            <div class='font-bold text-xs p-1 text-slate-900 flex items-center gap-1.5'>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-primary">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                </svg>
+                                Vị trí mất tích ước tính
+                            </div>
+                        `)
                 .openPopup();
         });
     </script>

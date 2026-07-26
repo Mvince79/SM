@@ -1,2 +1,16 @@
 User-agent: *
-Disallow:
+Allow: /
+
+Disallow: /profile
+Disallow: /support
+Disallow: /notifications
+Disallow: /chat
+Disallow: /verifier
+Disallow: /volunteer
+Disallow: /admin
+Disallow: /missing/create
+Disallow: /missing/store
+Disallow: /found-children
+Disallow: /watch-area
+
+Sitemap: http://127.0.0.1:8000/sitemap.xml
