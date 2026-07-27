@@ -29,6 +29,8 @@ class DatabaseSeeder extends Seeder
             CluesSeeder::class,
             HandoverPointsSeeder::class,
             DemoVerifierSeeder::class,
+            DemoArticlesSeeder::class,
+
         ]);
     }
 }
