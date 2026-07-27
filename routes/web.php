@@ -18,6 +18,7 @@ use Livewire\Volt\Volt;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\HandoverPointPublicController;
 use App\Http\Controllers\Verifier\HandoverConfirmationController;
+use App\Http\Controllers\HeatmapController;
 
 // ── Auth (register, login, OTP, Google OAuth, logout) ──────────────────────
 require __DIR__ . '/auth.php';
@@ -48,6 +49,9 @@ Route::prefix('missing')->name('missing.')->group(function () {
         ->where('slug', '^(?!create$|store$|detail$|found$)[a-z0-9-]+$')
         ->name('by_slug');
 });
+
+Route::get('/map/heatmap-data', [HeatmapController::class, 'index'])
+    ->name('map.heatmap-data');
 
 Route::prefix('map')->name('map.')->group(function () {
     Route::get('/', [MapController::class, 'index'])->name('index');
