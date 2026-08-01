@@ -116,6 +116,14 @@
                     class="rounded-full border border-slate-200 px-3 py-1.5 text-[11px] font-bold text-slate-600 transition-colors hover:border-primary/40 hover:text-primary">
                     Tôi nên đưa bé đến đâu?
                 </button>
+                <button type="button" @click="sendQuick('KYC cần giấy tờ gì?')"
+                    class="rounded-full border border-slate-200 px-3 py-1.5 text-[11px] font-bold text-slate-600 transition-colors hover:border-primary/40 hover:text-primary">
+                    KYC cần gì?
+                </button>
+                <button type="button" @click="sendQuick('Tôi đăng tin trẻ mất tích như thế nào?')"
+                    class="rounded-full border border-slate-200 px-3 py-1.5 text-[11px] font-bold text-slate-600 transition-colors hover:border-primary/40 hover:text-primary">
+                    Cách đăng tin
+                </button>
             </div>
         </div>
 
@@ -196,7 +204,7 @@
                 if (!this.messages.length) {
                     this.messages.push({
                         role: 'assistant',
-                        content: 'Xin chào! Mình là trợ lý ảo của TìmTrẻ.vn. Bạn có thể hỏi ví dụ “Tôi nên đưa bé đến đâu?” để nhận gợi ý điểm bàn giao an toàn gần bạn. Trường hợp khẩn cấp, hãy gọi ngay hotline 111 bên dưới.',
+                        content: 'Xin chào! Mình là trợ lý ảo của TìmTrẻ.vn. Bạn có thể hỏi về điểm bàn giao an toàn, KYC, AI đối chiếu khuôn mặt, bảo mật dữ liệu, cách đăng tin hoặc liên hệ hỗ trợ. Trường hợp khẩn cấp, hãy gọi ngay hotline 111 bên dưới.',
                     });
                 }
 
