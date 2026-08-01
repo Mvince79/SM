@@ -9,9 +9,22 @@ class ChatbotIntentResolver
     /** @var list<ChatbotIntent> */
     private array $intents;
 
-    public function __construct(HandoverGuidanceIntent $handoverGuidanceIntent)
-    {
-        $this->intents = [$handoverGuidanceIntent];
+    public function __construct(
+        HandoverGuidanceIntent $handoverGuidanceIntent,
+        KycRequirementIntent $kycRequirementIntent,
+        FaceMatchAccuracyIntent $faceMatchAccuracyIntent,
+        DataPrivacyIntent $dataPrivacyIntent,
+        ReportMissingChildIntent $reportMissingChildIntent,
+        SupportTicketIntent $supportTicketIntent,
+    ) {
+        $this->intents = [
+            $handoverGuidanceIntent,
+            $faceMatchAccuracyIntent,
+            $dataPrivacyIntent,
+            $kycRequirementIntent,
+            $reportMissingChildIntent,
+            $supportTicketIntent,
+        ];
     }
 
     /**
