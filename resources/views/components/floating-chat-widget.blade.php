@@ -16,7 +16,7 @@
 <div
     x-data="floatingChatWidget()"
     x-init="init()"
-    class="fixed bottom-5 left-5 z-[9997] flex flex-col items-start gap-3"
+    class="fixed bottom-5 right-5 z-[9997] flex flex-col items-end gap-3"
 >
     {{-- ── Cửa sổ chat nhanh (mở rộng) ── --}}
     <div

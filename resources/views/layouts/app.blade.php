@@ -220,7 +220,7 @@
         </div>
     </footer>
 
-    <div class="fixed bottom-44 right-5 z-40 md:hidden flex flex-col items-end gap-1">
+    <div class="fixed bottom-60 right-5 z-40 md:hidden flex flex-col items-end gap-1">
         <span class="bg-slate-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Gọi 113</span>
         <a href="tel:113" aria-label="Gọi 113 — Cảnh sát cứu hộ"
             class="flex items-center justify-center w-14 h-14
@@ -231,7 +231,7 @@
         </a>
     </div>
 
-    <div class="fixed bottom-24 right-5 z-40 md:hidden flex flex-col items-end gap-1">
+    <div class="fixed bottom-40 right-5 z-40 md:hidden flex flex-col items-end gap-1">
         <span class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Báo tin</span>
         <a href="{{ route('found-children.create') }}" aria-label="Báo tin khẩn cấp tìm trẻ"
             class="flex items-center justify-center w-14 h-14
@@ -247,7 +247,7 @@
     <x-floating-chat-widget />
 
     @auth
-        <div class="fixed bottom-6 right-5 z-50 md:bottom-8 md:right-8">
+        <div class="fixed bottom-24 right-5 z-50 md:right-8">
             <button type="button" onclick="openChat()"
                 class="group flex items-center gap-2
                                        bg-slate-900 text-white
