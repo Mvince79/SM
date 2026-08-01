@@ -71,10 +71,10 @@
                 ">
 
                     @if ($message->attachment_type === 'IMAGE' && $message->attachment_path)
-                        <a href="{{ route('chat.attachment', ['filename' => basename($message->attachment_path)]) }}"
+                        <a href="{{ route('admin-chat.attachment', ['filename' => basename($message->attachment_path)]) }}"
                             target="_blank" class="block {{ $message->body ? 'mb-3' : '' }}">
                             <img
-                                src="{{ route('chat.attachment', ['filename' => basename($message->attachment_path)]) }}"
+                                src="{{ route('admin-chat.attachment', ['filename' => basename($message->attachment_path)]) }}"
                                 alt="Ảnh đính kèm"
                                 class="max-h-48 rounded-xl object-cover md:max-h-64 {{ $message->from_user_id == auth()->id() ? 'ml-auto' : '' }}">
                         </a>

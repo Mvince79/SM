@@ -2,11 +2,12 @@
 
 namespace App\Http\Livewire\Chat;
 
+use App\Models\AdminChatAssignment;
 use App\Models\Message;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Component;
-use Illuminate\Support\Facades\DB;
 
 class ChatList extends Component
 {
@@ -22,27 +23,19 @@ class ChatList extends Component
     {
         $authId = auth()->id();
 
-        $partnerIds = Message::query()
-            ->select(
-                DB::raw("
-                    CASE
-                        WHEN from_user_id = {$authId}
-                        THEN to_user_id
-                        ELSE from_user_id
-                    END AS partner_id
-                ")
-            )
-            ->where(function ($query) use ($authId) {
-                $query
-                    ->where('from_user_id', $authId)
-                    ->orWhere('to_user_id', $authId);
-            })
-            ->groupBy('partner_id')
-            ->pluck('partner_id');
+        $currentUser = auth()->user();
+        $partnerIds = AdminChatAssignment::query()
+            ->where('status', AdminChatAssignment::STATUS_ACTIVE)
+            ->when(
+                $currentUser->isAdmin(),
+                fn ($query) => $query->where('admin_user_id', $authId)->pluck('requester_user_id'),
+                fn ($query) => $query->where('requester_user_id', $authId)->pluck('admin_user_id'),
+            );
 
         $unreadCounts = Message::query()
             ->select('from_user_id', DB::raw('COUNT(*) as unread_count'))
             ->where('to_user_id', $authId)
+            ->whereIn('from_user_id', $partnerIds)
             ->whereNull('read_at')
             ->groupBy('from_user_id')
             ->pluck('unread_count', 'from_user_id');

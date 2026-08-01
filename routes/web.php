@@ -1,27 +1,26 @@
 <?php
 
 use App\Http\Controllers\Client\ArticleController;
+use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\MapController;
 use App\Http\Controllers\Client\MissingController;
 use App\Http\Controllers\Client\ProfileController;
 use App\Http\Controllers\Client\StatsController;
-use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\SupportTicketController;
+use App\Http\Controllers\HandoverPointPublicController;
+use App\Http\Controllers\HeatmapController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\WatchAreaController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\Verifier\HandoverConfirmationController;
+use App\Http\Controllers\WatchAreaController;
+use App\Models\AdminChatAssignment;
 use App\Models\Message;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
-use App\Http\Livewire\Chat\ChatBox;
-use Livewire\Volt\Volt;
-use Illuminate\Support\Facades\Gate;
-use App\Http\Controllers\HandoverPointPublicController;
-use App\Http\Controllers\Verifier\HandoverConfirmationController;
-use App\Http\Controllers\HeatmapController;
 
 // ── Auth (register, login, OTP, Google OAuth, logout) ──────────────────────
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
 
 // ── Trang chủ (public) ──────────────────────────────────────────────────────
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -65,7 +64,6 @@ Route::view(
     'pages.quy-trinh-ban-giao'
 )->name('safe-handover-process');
 
-
 Route::post('/watch-area', [WatchAreaController::class, 'store'])->name('watch-area.store');
 Route::delete('/watch-area', [WatchAreaController::class, 'destroy'])->name('watch-area.destroy');
 
@@ -92,7 +90,7 @@ Route::middleware(['auth'])
 Route::middleware(['auth', 'email.verified'])->group(function () {
     Route::prefix('/profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
-        Route::get('/kyc', fn() => view('profile.kyc'))->name('kyc');
+        Route::get('/kyc', fn () => view('profile.kyc'))->name('kyc');
     });
 
     Route::prefix('support')->name('support.')->group(function () {
@@ -135,22 +133,13 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
     Route::post('found-children/{foundChild}/photos', [\App\Http\Controllers\FoundChildController::class, 'storePhoto'])
         ->name('found-children.photos.store');
 
-    Route::middleware(['auth', 'email.verified'])
-        ->get(
-            '/chat/dev/{missing}/{user}',
-            ChatBox::class
-        )
-        ->name('chat.dev');
-    Route::view('/chat', 'chat.index')
-        ->middleware('auth')
-        ->name('chat.index');
-
-    Route::get('/chat/attachment/{filename}', function (string $filename) {
+    Route::get('/admin-chat/attachment/{filename}', function (string $filename) {
         abort_if(str_contains($filename, '/') || str_contains($filename, '\\'), 404);
 
-        $path = 'chat-attachments/' . $filename;
+        $path = 'chat-attachments/'.$filename;
 
         $message = Message::query()
+            ->with(['sender', 'receiver'])
             ->where('attachment_path', $path)
             ->where('attachment_type', 'IMAGE')
             ->where(function ($query) {
@@ -160,13 +149,25 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
             })
             ->firstOrFail();
 
+        abort_if($message->sender->isAdmin() === $message->receiver->isAdmin(), 404);
+
+        $admin = $message->sender->isAdmin() ? $message->sender : $message->receiver;
+        $requester = $message->sender->isAdmin() ? $message->receiver : $message->sender;
+        $hasActiveAssignment = AdminChatAssignment::query()
+            ->where('admin_user_id', $admin->getKey())
+            ->where('requester_user_id', $requester->getKey())
+            ->where('status', AdminChatAssignment::STATUS_ACTIVE)
+            ->exists();
+
+        abort_unless($hasActiveAssignment, 404);
+
         abort_unless(Storage::disk('private')->exists($message->attachment_path), 404);
 
         return Storage::disk('private')->response($message->attachment_path);
-    })->name('chat.attachment');
+    })->name('admin-chat.attachment');
 
     Route::middleware('role:THIRD_PARTY_VERIFIER')->prefix('verifier')->name('verifier.')->group(function () {
-        Route::get('/dashboard', fn() => view('verifier.dashboard'))->name('dashboard');
+        Route::get('/dashboard', fn () => view('verifier.dashboard'))->name('dashboard');
         Route::post('/handover/{handoverable}/{type}', [HandoverConfirmationController::class, 'confirm'])
             ->name('handover.confirm')
             ->whereIn('type', ['missing', 'found']);

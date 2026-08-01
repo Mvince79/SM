@@ -142,17 +142,17 @@ class ChatBox extends Component
         }
 
         if ($currentUser->isAdmin() === $receiver->isAdmin()) {
-            return true;
+            return false;
         }
 
         $admin = $currentUser->isAdmin() ? $currentUser : $receiver;
         $requester = $currentUser->isAdmin() ? $receiver : $currentUser;
-        $assignment = AdminChatAssignment::query()
-            ->where('requester_user_id', $requester->getKey())
-            ->where('status', AdminChatAssignment::STATUS_ACTIVE)
-            ->first();
 
-        return ! $assignment || $assignment->admin_user_id === $admin->getKey();
+        return AdminChatAssignment::query()
+            ->where('requester_user_id', $requester->getKey())
+            ->where('admin_user_id', $admin->getKey())
+            ->where('status', AdminChatAssignment::STATUS_ACTIVE)
+            ->exists();
     }
 
     public function markAsRead(): void

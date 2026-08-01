@@ -145,6 +145,47 @@ class AdminChatRealtimeIsolationTest extends TestCase
         Event::assertNotDispatched(MessageSent::class);
     }
 
+    public function test_two_regular_users_cannot_continue_a_direct_conversation(): void
+    {
+        Event::fake([
+            AdminChatMessageSent::class,
+            MessageSent::class,
+        ]);
+
+        $sender = User::factory()->create();
+        $receiver = User::factory()->create();
+
+        Livewire::actingAs($sender)
+            ->test(ChatBox::class, [
+                'missing' => null,
+                'user' => $receiver->id,
+            ])
+            ->set('body', 'Tiếp tục chat trực tiếp')
+            ->call('send')
+            ->assertHasErrors(['body']);
+
+        $this->assertDatabaseCount('messages', 0);
+        Event::assertNotDispatched(AdminChatMessageSent::class);
+        Event::assertNotDispatched(MessageSent::class);
+    }
+
+    public function test_user_cannot_message_an_admin_without_an_active_assignment(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $requester = User::factory()->create();
+
+        Livewire::actingAs($requester)
+            ->test(ChatBox::class, [
+                'missing' => null,
+                'user' => $admin->id,
+            ])
+            ->set('body', 'Chưa được phân công')
+            ->call('send')
+            ->assertHasErrors(['body']);
+
+        $this->assertDatabaseCount('messages', 0);
+    }
+
     private function assignment(User $admin, User $requester): AdminChatAssignment
     {
         return AdminChatAssignment::query()->create([
