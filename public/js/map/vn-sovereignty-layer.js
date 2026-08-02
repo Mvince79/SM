@@ -7,19 +7,17 @@
             {
                 type: 'Feature',
                 properties: {
-                    name: 'Quần đảo Hoàng Sa',
-                    fullName: 'Quần đảo Hoàng Sa — TP Đà Nẵng, Việt Nam',
-                    type: 'area',
+                    type: 'mask',
                 },
                 geometry: {
                     type: 'Polygon',
                     coordinates: [
                         [
-                            [110.8, 15.3],
-                            [113.3, 15.3],
-                            [113.3, 17.8],
-                            [110.8, 17.8],
-                            [110.8, 15.3],
+                            [111.65, 16.88],
+                            [112.45, 16.88],
+                            [112.45, 17.18],
+                            [111.65, 17.18],
+                            [111.65, 16.88],
                         ],
                     ],
                 },
@@ -47,11 +45,11 @@
                     type: 'Polygon',
                     coordinates: [
                         [
-                            [111.5, 6.5],
-                            [116.8, 6.5],
-                            [116.8, 12.3],
-                            [111.5, 12.3],
-                            [111.5, 6.5],
+                            [111.55, 16.95],
+                            [112.70, 16.95],
+                            [112.70, 17.45],
+                            [111.55, 17.45],
+                            [111.55, 16.95],
                         ],
                     ],
                 },
@@ -89,16 +87,16 @@
                 width: 190px;
                 transform: translate(-50%, -50%);
                 padding: 4px 6px;
-                border: 1px solid rgba(185, 28, 28, 0.85);
-                border-radius: 5px;
-                background: rgba(255, 255, 255, 0.92);
-                color: #991b1b;
+                border: 1px solid rgba(100, 116, 139, 0.45);
+                border-radius: 6px;
+                background: rgba(255, 255, 255, 0.9);
+                color: #334155;
                 font-size: 11px;
-                font-weight: 700;
+                font-weight: 600;
                 line-height: 1.35;
                 text-align: center;
                 white-space: normal;
-                box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+                box-shadow: 0 1px 4px rgba(15, 23, 42, 0.16);
                 pointer-events: none;
             }
 
@@ -141,19 +139,24 @@
             pane: 'vnSovereigntyPane',
 
             style(feature) {
-                if (feature.properties.type !== 'area') {
-                    return {};
+                if (feature.properties.type === 'mask') {
+                    return {
+                        stroke: false,
+                        fillColor: '#aad3df',
+                        fillOpacity: 1,
+                        interactive: false,
+                    };
                 }
 
-                return {
-                    color: '#dc2626',
-                    weight: 1.5,
-                    opacity: 0.9,
-                    fillColor: '#ef4444',
-                    fillOpacity: 0.08,
-                    dashArray: '6 5',
-                    interactive: false,
-                };
+                if (feature.properties.type === 'area') {
+                    return {
+                        stroke: false,
+                        fill: false,
+                        interactive: false,
+                    };
+                }
+
+                return {};
             },
 
             pointToLayer(feature, latlng) {
