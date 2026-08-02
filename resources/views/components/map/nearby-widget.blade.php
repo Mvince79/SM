@@ -1,7 +1,7 @@
 @props(['radiusOptions' => [5, 10, 20, 50]])
 
 <div x-data="nearbyWidget()" x-init="init()"
-     class="glass-premium rounded-3xl shadow-premium border border-slate-200/50 p-4 sm:p-5 space-y-3 w-full sm:w-72 pointer-events-auto">
+    class="glass-premium rounded-3xl shadow-premium border border-slate-200/50 p-4 sm:p-5 space-y-3 w-full sm:w-72 pointer-events-auto">
 
     <div class="flex items-center justify-between border-b border-slate-200/40 pb-2">
         <h3 class="font-black text-slate-900 text-sm flex items-center gap-1.5">
@@ -47,13 +47,13 @@
     </template>
 
     {{-- Panel danh sách bên hông --}}
-    <div x-show="showList" x-cloak @click.self="showList = false"
-         class="fixed inset-0 z-[55] bg-black/30"></div>
+    <div x-show="showList" x-cloak @click.self="showList = false" class="fixed inset-0 z-[55] bg-black/30"></div>
 
-    <div x-show="showList" x-cloak
-         x-transition:enter="transition ease-out duration-250" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
-         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
-         class="fixed inset-y-0 right-0 z-[60] w-full sm:w-96 bg-white shadow-2xl overflow-y-auto">
+    <div x-show="showList" x-cloak x-transition:enter="transition ease-out duration-250"
+        x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        class="fixed inset-y-0 right-0 z-[60] w-full sm:w-96 bg-white shadow-2xl overflow-y-auto">
         <div class="p-5 space-y-3">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h4 class="font-black text-slate-900 text-sm">
@@ -66,108 +66,146 @@
 
             <template x-for="kid in children" :key="kid.id">
                 <a :href="kid.url"
-                   class="flex gap-3 items-center p-3 rounded-2xl border border-slate-100 hover:border-primary/40 hover:bg-primary/5 transition-colors">
+                    class="flex gap-3 items-center p-3 rounded-2xl border border-slate-100 hover:border-primary/40 hover:bg-primary/5 transition-colors">
                     <img :src="kid.thumb_url" :alt="kid.name"
-                         class="w-12 h-12 rounded-xl object-cover border border-slate-200 flex-shrink-0" />
+                        class="w-12 h-12 rounded-xl object-cover border border-slate-200 flex-shrink-0" />
                     <div class="min-w-0">
                         <div class="font-extrabold text-slate-900 text-xs truncate" x-text="kid.name"></div>
                         <div class="text-[10px] text-slate-400 font-bold"
-                             x-text="(kid.age ? kid.age + ' tuổi · ' : '') + (kid.province_name ?? '')"></div>
+                            x-text="(kid.age ? kid.age + ' tuổi · ' : '') + (kid.province_name ?? '')"></div>
                     </div>
                 </a>
             </template>
 
             <template x-if="!locating && children.length === 0">
-                <p class="text-xs text-slate-400 font-semibold text-center py-10">Không có bé nào trong bán kính này.</p>
+                <p class="text-xs text-slate-400 font-semibold text-center py-10">Không có bé nào trong bán kính này.
+                </p>
             </template>
         </div>
     </div>
 </div>
 
 <script>
-document.addEventListener('alpine:init', () => {
-    Alpine.data('nearbyWidget', () => ({
-        lat: null,
-        lng: null,
-        radius: 10,
-        count: 0,
-        children: [],
-        locating: true,
-        locationError: null,
-        usingDefaultLocation: false,
-        showList: false,
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('nearbyWidget', () => ({
+            lat: null,
+            lng: null,
+            radius: 10,
+            count: 0,
+            children: [],
+            locating: true,
+            locationError: null,
+            usingDefaultLocation: false,
+            showList: false,
 
-        init() {
-            // Vị trí mặc định: trung tâm Việt Nam (khớp tâm bản đồ chính),
-            // dùng khi không lấy được GPS thật của trình duyệt.
-            const DEFAULT_LAT = 16.0544;
-            const DEFAULT_LNG = 108.2022;
+            init() {
+                let settled = false;
+                let fallbackTimer = null;
 
-            const useDefaultLocation = (message) => {
-                this.lat = DEFAULT_LAT;
-                this.lng = DEFAULT_LNG;
-                this.locating = false;
-                this.usingDefaultLocation = true;
-                this.locationError = message ?? null;
-                this.fetchNearby();
-            };
+                window.addEventListener('map-user-location-found', (event) => {
+                    if (fallbackTimer) {
+                        clearTimeout(fallbackTimer);
+                    }
 
-            if (!navigator.geolocation) {
-                useDefaultLocation('Trình duyệt không hỗ trợ định vị, đang hiển thị theo vị trí mặc định.');
-                return;
-            }
-
-            // Fallback cứng: nếu sau 12s mà getCurrentPosition không gọi
-            // callback nào (thành công lẫn lỗi) - trường hợp trình duyệt
-            // chặn quyền định vị âm thầm - thì tự chuyển sang vị trí mặc
-            // định thay vì loading vô hạn.
-            let settled = false;
-            const fallbackTimer = setTimeout(() => {
-                if (settled) return;
-                settled = true;
-                useDefaultLocation('Không lấy được vị trí của bạn, đang hiển thị theo vị trí mặc định.');
-            }, 12000);
-
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    clearTimeout(fallbackTimer);
-                    if (settled) return;
                     settled = true;
-                    this.lat = pos.coords.latitude;
-                    this.lng = pos.coords.longitude;
+
+                    this.lat = event.detail.lat;
+                    this.lng = event.detail.lng;
                     this.locating = false;
-                    // Debug: log toạ độ + độ chính xác (m) mà trình duyệt trả về.
-                    // Trên desktop, geolocation thường định vị qua Wi-Fi/IP
-                    // (không phải GPS thật) nên có thể lệch xa vị trí thực,
-                    // đặc biệt khi dùng VPN hoặc ISP đăng ký IP ở khu vực khác.
-                    console.log('[nearbyWidget] Vị trí trình duyệt trả về:', {
+                    this.usingDefaultLocation = false;
+                    this.locationError = null;
+
+                    console.log('[nearbyWidget] Dùng vị trí từ bản đồ:', {
                         lat: this.lat,
                         lng: this.lng,
-                        accuracy_m: pos.coords.accuracy,
                     });
-                    this.fetchNearby();
-                },
-                () => {
-                    clearTimeout(fallbackTimer);
-                    if (settled) return;
-                    settled = true;
-                    useDefaultLocation('Không thể xác định vị trí của bạn, đang hiển thị theo vị trí mặc định.');
-                },
-                { enableHighAccuracy: true, timeout: 10000 } // giống pattern map-picker trong create-missing-form
-            );
-        },
 
-        async fetchNearby() {
-            if (this.lat === null || this.lng === null) return;
-            try {
-                const res = await fetch(`/api/v1/map-data?radius=${this.radius}&lat=${this.lat}&lng=${this.lng}`);
-                const json = await res.json();
-                this.count = json.count ?? 0;
-                this.children = json.data ?? [];
-            } catch (e) {
-                console.error('Lỗi tải dữ liệu nearby-widget:', e);
-            }
-        },
-    }));
-});
+                    this.fetchNearby();
+                });
+
+                const DEFAULT_LAT = 16.0544;
+                const DEFAULT_LNG = 108.2022;
+
+                const useDefaultLocation = (message) => {
+                    if (settled) {
+                        return;
+                    }
+
+                    settled = true;
+                    this.lat = DEFAULT_LAT;
+                    this.lng = DEFAULT_LNG;
+                    this.locating = false;
+                    this.usingDefaultLocation = true;
+                    this.locationError = message ?? null;
+                    this.fetchNearby();
+                };
+
+                if (!navigator.geolocation) {
+                    useDefaultLocation(
+                        'Trình duyệt không hỗ trợ định vị, đang hiển thị theo vị trí mặc định.'
+                    );
+                    return;
+                }
+
+                fallbackTimer = setTimeout(() => {
+                    useDefaultLocation(
+                        'Không lấy được vị trí của bạn, đang hiển thị theo vị trí mặc định.'
+                    );
+                }, 12000);
+
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        if (settled) {
+                            return;
+                        }
+
+                        clearTimeout(fallbackTimer);
+                        settled = true;
+
+                        this.lat = pos.coords.latitude;
+                        this.lng = pos.coords.longitude;
+                        this.locating = false;
+                        this.usingDefaultLocation = false;
+                        this.locationError = null;
+
+                        this.fetchNearby();
+                    },
+                    () => {
+                        useDefaultLocation(
+                            'Không thể xác định vị trí của bạn, đang hiển thị theo vị trí mặc định.'
+                        );
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                    }
+                );
+            },
+
+            async fetchNearby() {
+                if (this.lat === null || this.lng === null) return;
+
+                try {
+                    const res = await fetch(
+                        `/api/v1/map-data?radius=${this.radius}&lat=${this.lat}&lng=${this.lng}`
+                    );
+
+                    const json = await res.json();
+
+                    this.count = json.count ?? 0;
+                    this.children = json.data ?? [];
+
+                    window.dispatchEvent(new CustomEvent('nearby-radius-changed', {
+                        detail: {
+                            radius: this.radius,
+                            lat: this.lat,
+                            lng: this.lng,
+                        },
+                    }));
+                } catch (e) {
+                    console.error('Lỗi tải dữ liệu nearby-widget:', e);
+                }
+            },
+        }));
+    });
 </script>
