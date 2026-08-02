@@ -16,29 +16,39 @@ class KycVerificationInfolist
             ->components([
 
                 Section::make('Ảnh xác thực')
+                    ->icon('heroicon-o-identification')
                     ->schema([
-
                         Grid::make(3)
                             ->schema([
-
                                 ImageEntry::make('front_image_path')
                                     ->label('CCCD mặt trước')
                                     ->disk('public')
-                                    ->height(250),
+                                    ->height(260)
+                                    ->extraImgAttributes([
+                                        'style' => 'width:100%;height:260px;object-fit:cover;border-radius:12px;cursor:zoom-in;',
+                                    ])
+                                    ->openUrlInNewTab(),
 
                                 ImageEntry::make('back_image_path')
                                     ->label('CCCD mặt sau')
                                     ->disk('public')
-                                    ->height(250),
+                                    ->height(260)
+                                    ->extraImgAttributes([
+                                        'style' => 'width:100%;height:260px;object-fit:cover;border-radius:12px;cursor:zoom-in;',
+                                    ])
+                                    ->openUrlInNewTab(),
 
                                 ImageEntry::make('selfie_path')
                                     ->label('Ảnh Selfie')
                                     ->disk('public')
-                                    ->height(250),
-
+                                    ->height(260)
+                                    ->extraImgAttributes([
+                                        'style' => 'width:100%;height:260px;object-fit:cover;border-radius:12px;cursor:zoom-in;',
+                                    ])
+                                    ->openUrlInNewTab(),
                             ]),
-
-                    ]),
+                    ])
+                    ->columnSpanFull(),
 
                 Section::make('Thông tin KYC')
                     ->schema([
@@ -56,7 +66,7 @@ class KycVerificationInfolist
                                     ->label('Số CCCD')
                                     ->copyable()
                                     ->placeholder('Không có'),
-                                    
+
                                 TextEntry::make('full_name_on_id')
                                     ->label('Họ tên trên CCCD'),
 

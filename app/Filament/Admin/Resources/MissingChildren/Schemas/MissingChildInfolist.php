@@ -10,6 +10,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontFamily;
 use Filament\Support\Enums\FontWeight;
+use Filament\Infolists\Components\ViewEntry;
 
 class MissingChildInfolist
 {
@@ -17,6 +18,25 @@ class MissingChildInfolist
     {
         return $schema->components([
 
+            // ══════════════════════════════════════════════════════════════
+            // HERO PHOTO — Ảnh trẻ được đặt đầu tiên để admin nhận diện ngay
+            // ══════════════════════════════════════════════════════════════
+            Section::make()
+                ->schema([
+                    ViewEntry::make('hero_photo')
+                        ->hiddenLabel()
+                        ->state(function (MissingChild $record): array {
+                            $photosCount = $record->photos()->count();
+
+                            return [
+                                'url' => $record->detail_primary_photo_url,
+                                'other_count' => max(0, $photosCount - 1),
+                            ];
+                        })
+                        ->view('filament.infolists.missing-child-hero-photo')
+                        ->columnSpanFull(),
+                ])
+                ->columnSpanFull(),
             // ══════════════════════════════════════════════════════════════
             // BLOCK 1 — Thông tin trẻ (full width)
             // Full width: thông tin quan trọng nhất, admin đọc đầu tiên
@@ -209,8 +229,8 @@ class MissingChildInfolist
                                 ->url(
                                     fn(MissingChild $record): ?string =>
                                     $record->lat && $record->lng
-                                    ? "https://www.google.com/maps/search/?api=1&query={$record->lat},{$record->lng}"
-                                    : null
+                                        ? "https://www.google.com/maps/search/?api=1&query={$record->lat},{$record->lng}"
+                                        : null
                                 )
                                 ->openUrlInNewTab()
                                 ->color(
