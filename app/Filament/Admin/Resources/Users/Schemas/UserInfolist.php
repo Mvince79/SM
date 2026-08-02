@@ -7,6 +7,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Infolists\Components\ImageEntry;
 
 class UserInfolist
 {
@@ -14,6 +15,24 @@ class UserInfolist
     {
         return $schema
             ->components([
+                Section::make()
+                    ->schema([
+                        ImageEntry::make('avatar_url')
+                            ->hiddenLabel()
+                            ->circular()
+                            ->height(120)
+                            ->width(120)
+                            ->defaultImageUrl(
+                                fn(User $record): string =>
+                                'https://ui-avatars.com/api/?name='
+                                    . urlencode($record->full_name ?: 'User')
+                                    . '&size=160&background=e2e8f0&color=64748b'
+                            )
+                            ->extraImgAttributes([
+                                'style' => 'object-fit: cover; border: 3px solid #e5e7eb;',
+                            ]),
+                    ])
+                    ->columnSpanFull(),
                 Section::make('Thông tin cơ bản')
                     ->schema([
                         Grid::make(3)->schema([

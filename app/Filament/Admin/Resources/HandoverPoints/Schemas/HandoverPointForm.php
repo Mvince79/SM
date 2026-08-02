@@ -18,7 +18,35 @@ class HandoverPointForm
     public static function configure(Schema $schema): Schema
     {
         return $schema
+
             ->components([
+                Section::make('Văn bản xác nhận thẩm quyền')
+                    ->description(
+                        'Ảnh sẽ hiển thị bản xem trước; PDF có thể mở hoặc tải xuống.'
+                    )
+                    ->icon('heroicon-o-document-check')
+                    ->schema([
+                        FileUpload::make('verification_document_path')
+                            ->label('Văn bản xác nhận thẩm quyền')
+                            ->helperText(
+                                'Chấp nhận PDF, JPG, JPEG hoặc PNG. Dung lượng tối đa 5 MB.'
+                            )
+                            ->disk('public')
+                            ->directory('handover-points/verification-documents')
+                            ->acceptedFileTypes([
+                                'application/pdf',
+                                'image/jpeg',
+                                'image/png',
+                            ])
+                            ->maxSize(5120)
+                            ->openable()
+                            ->downloadable()
+                            ->previewable()
+                            ->imagePreviewHeight('350')
+                            ->visibility('public')
+                            ->columnSpanFull(),
+                    ])
+                    ->columnSpanFull(),
                 Section::make('Thông tin điểm bàn giao')
                     ->description(
                         'Thông tin đơn vị có thẩm quyền tiếp nhận và hỗ trợ bàn giao trẻ an toàn.'
@@ -47,7 +75,7 @@ class HandoverPointForm
                         Select::make('province_id')
                             ->label('Tỉnh/Thành phố')
                             ->options(
-                                fn (): array => Province::query()
+                                fn(): array => Province::query()
                                     ->orderBy('name')
                                     ->pluck('name', 'id')
                                     ->all()
@@ -82,32 +110,13 @@ class HandoverPointForm
                                 'Bắt buộc đối với các điểm bàn giao, ngoại trừ Tổng đài Quốc gia 111.'
                             )
                             ->required(
-                                fn (Get $get): bool => $get('type') !== 'HOTLINE_111'
+                                fn(Get $get): bool => $get('type') !== 'HOTLINE_111'
                             )
                             ->hidden(
-                                fn (Get $get): bool => $get('type') === 'HOTLINE_111'
+                                fn(Get $get): bool => $get('type') === 'HOTLINE_111'
                             )
                             ->rows(4)
                             ->maxLength(2000)
-                            ->columnSpanFull(),
-
-                        FileUpload::make('verification_document_path')
-                            ->label('Văn bản xác nhận thẩm quyền')
-                            ->helperText(
-                                'Chấp nhận PDF, JPG, JPEG hoặc PNG. Dung lượng tối đa 5 MB.'
-                            )
-                            ->disk('public')
-                            ->directory('handover-points/verification-documents')
-                            ->acceptedFileTypes([
-                                'application/pdf',
-                                'image/jpeg',
-                                'image/png',
-                            ])
-                            ->maxSize(5120)
-                            ->openable()
-                            ->downloadable()
-                            ->previewable()
-                            ->visibility('public')
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
