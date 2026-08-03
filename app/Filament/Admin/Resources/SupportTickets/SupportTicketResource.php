@@ -19,7 +19,13 @@ class SupportTicketResource extends Resource
 {
     protected static ?string $model = SupportTicket::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedLifebuoy;
+
+    protected static ?string $navigationLabel = 'Yêu Cầu Hỗ Trợ';
+
+    protected static ?string $modelLabel = 'Yêu Cầu Hỗ Trợ';
+
+    protected static ?string $pluralModelLabel = 'Yêu Cầu Hỗ Trợ';
 
     public static function form(Schema $schema): Schema
     {

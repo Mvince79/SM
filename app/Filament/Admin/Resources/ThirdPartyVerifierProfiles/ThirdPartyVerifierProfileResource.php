@@ -21,11 +21,11 @@ class ThirdPartyVerifierProfileResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedIdentification;
 
-    protected static ?string $navigationLabel = 'Hồ sơ Verifier';
+    protected static ?string $navigationLabel = 'Hồ Sơ Xác Minh Bên Thứ Ba';
 
-    protected static ?string $modelLabel = 'hồ sơ Verifier';
+    protected static ?string $modelLabel = 'Hồ Sơ Xác Minh Bên Thứ Ba';
 
-    protected static ?string $pluralModelLabel = 'Hồ sơ Verifier';
+    protected static ?string $pluralModelLabel = 'Hồ Sơ Xác Minh Bên Thứ Ba';
 
     protected static string|UnitEnum|null $navigationGroup = 'Bàn giao an toàn';
     protected static ?int $navigationSort = 2;

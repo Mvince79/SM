@@ -18,7 +18,13 @@ class HandoverPointResource extends Resource
 {
     protected static ?string $model = HandoverPoint::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMapPin;
+
+    protected static ?string $navigationLabel = 'Điểm Bàn Giao An Toàn';
+
+    protected static ?string $modelLabel = 'Điểm Bàn Giao An Toàn';
+
+    protected static ?string $pluralModelLabel = 'Điểm Bàn Giao An Toàn';
 
     public static function form(Schema $schema): Schema
     {

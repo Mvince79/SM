@@ -23,29 +23,30 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
 class FoundChildResource extends Resource
 {
     protected static ?string $model = FoundChild::class;
 
-    protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedCheckBadge;
 
     protected static UnitEnum|string|null $navigationGroup = 'Nội dung';
 
     public static function getModelLabel(): string
     {
-        return 'hồ sơ trẻ tìm được';
+        return 'Hồ Sơ Trẻ Đã Tìm Thấy';
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'hồ sơ trẻ tìm được';
+        return 'Hồ Sơ Trẻ Đã Tìm Thấy';
     }
 
     public static function getNavigationLabel(): string
     {
-        return 'Hồ sơ trẻ tìm được';
+        return 'Hồ Sơ Trẻ Đã Tìm Thấy';
     }
 
     public static function form(Schema $schema): Schema
@@ -79,7 +80,7 @@ class FoundChildResource extends Resource
                 ->label('Ảnh chính')
                 ->image()
                 ->disk('public')
-                ->directory(fn ($record) => 'found_children/'.($record?->id ?? 'tmp'))
+                ->directory(fn($record) => 'found_children/' . ($record?->id ?? 'tmp'))
                 ->multiple()
                 ->maxFiles(20)
                 ->imagePreviewHeight(80),
@@ -141,12 +142,12 @@ class FoundChildResource extends Resource
                         DatePicker::make('from')->label('Từ ngày'),
                         DatePicker::make('until')->label('Đến ngày'),
                     ])
-                    ->query(fn (Builder $query, array $data): Builder => $query
-                        ->when(filled($data['from'] ?? null), fn (Builder $query): Builder => $query->whereDate('found_date', '>=', $data['from']))
-                        ->when(filled($data['until'] ?? null), fn (Builder $query): Builder => $query->whereDate('found_date', '<=', $data['until']))),
+                    ->query(fn(Builder $query, array $data): Builder => $query
+                        ->when(filled($data['from'] ?? null), fn(Builder $query): Builder => $query->whereDate('found_date', '>=', $data['from']))
+                        ->when(filled($data['until'] ?? null), fn(Builder $query): Builder => $query->whereDate('found_date', '<=', $data['until']))),
                 Filter::make('ai_processed')
                     ->label('Đã AI xử lý')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('ai_processed_at')),
+                    ->query(fn(Builder $query): Builder => $query->whereNotNull('ai_processed_at')),
             ])
             ->actions([
                 Action::make('approve')
@@ -154,8 +155,8 @@ class FoundChildResource extends Resource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->visible(fn (FoundChild $record): bool => $record->status === 'PENDING')
-                    ->action(fn (FoundChild $record) => $record->update([
+                    ->visible(fn(FoundChild $record): bool => $record->status === 'PENDING')
+                    ->action(fn(FoundChild $record) => $record->update([
                         'status' => 'APPROVED',
                         'approved_at' => now(),
                         'approved_by' => Auth::id(),
