@@ -2,9 +2,11 @@
 
 namespace App\Filament\Admin\Resources\HandoverPoints\Tables;
 
+use App\Filament\Admin\Resources\HandoverPoints\Schemas\HandoverPointInfolist;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -24,12 +26,20 @@ class HandoverPointsTable
                 TextColumn::make('type')
                     ->label('Loại')
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                    ->formatStateUsing(fn(?string $state): string => match ($state) {
                         'POLICE_STATION' => 'Công an',
-                        'SOCIAL_SUPPORT_CENTER' => 'Trung tâm bảo trợ',
-                        'HOTLINE_111' => 'Tổng đài 111',
+                        'COMMUNE_PEOPLE_COMMITTEE' => 'UBND xã/phường',
+                        'HOTLINE_111' => 'Tổng đài Quốc gia 111',
+                        'NGO' => 'Tổ chức NGO',
+                        'OTHER' => 'Đơn vị khác',
+                        // TODO Khang: giữ tạm case cũ này phòng dữ liệu legacy còn dùng giá trị
+                        // này (version Form cũ). Kiểm tra DB trước khi xóa hẳn:
+                        // SELECT COUNT(*) FROM handover_points WHERE type = 'SOCIAL_SUPPORT_CENTER';
+                        // Nếu = 0, xóa dòng dưới đây.
+                        'SOCIAL_SUPPORT_CENTER' => 'Trung tâm bảo trợ (legacy)',
                         default => $state ?? 'Không xác định',
                     })
+                    ->color(fn(?string $state): string => HandoverPointInfolist::typeColor($state))
                     ->sortable(),
 
                 TextColumn::make('province.name')
@@ -66,8 +76,10 @@ class HandoverPointsTable
                     ->label('Loại điểm bàn giao')
                     ->options([
                         'POLICE_STATION' => 'Công an',
-                        'SOCIAL_SUPPORT_CENTER' => 'Trung tâm bảo trợ',
-                        'HOTLINE_111' => 'Tổng đài 111',
+                        'COMMUNE_PEOPLE_COMMITTEE' => 'UBND xã/phường',
+                        'HOTLINE_111' => 'Tổng đài Quốc gia 111',
+                        'NGO' => 'Tổ chức NGO',
+                        'OTHER' => 'Đơn vị khác',
                     ]),
 
                 SelectFilter::make('province_id')
@@ -84,6 +96,7 @@ class HandoverPointsTable
                     ]),
             ])
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([

@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\SupportTickets\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -28,14 +29,14 @@ class SupportTicketsTable
                 TextColumn::make('category')
                     ->label('Danh mục')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'BUG' => 'Báo lỗi',
                         'COMPLAINT' => 'Khiếu nại',
                         'FEEDBACK' => 'Góp ý',
                         'FRAUD_SUSPECT' => 'Nghi ngờ lừa đảo',
                         default => $state,
                     })
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'BUG' => 'danger',
                         'COMPLAINT' => 'warning',
                         'FEEDBACK' => 'info',
@@ -52,13 +53,13 @@ class SupportTicketsTable
                 TextColumn::make('priority')
                     ->label('Ưu tiên')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'LOW' => 'Thấp',
                         'MEDIUM' => 'Trung bình',
                         'HIGH' => 'Cao',
                         default => $state,
                     })
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'LOW' => 'gray',
                         'MEDIUM' => 'warning',
                         'HIGH' => 'danger',
@@ -69,14 +70,14 @@ class SupportTicketsTable
                 TextColumn::make('status')
                     ->label('Trạng thái')
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'OPEN' => 'Đang mở',
                         'IN_PROGRESS' => 'Đang xử lý',
                         'RESOLVED' => 'Đã giải quyết',
                         'CLOSED' => 'Đã đóng',
                         default => $state,
                     })
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'OPEN' => 'warning',
                         'IN_PROGRESS' => 'info',
                         'RESOLVED' => 'success',
@@ -135,6 +136,8 @@ class SupportTicketsTable
                     ->preload(),
             ])
             ->recordActions([
+                ViewAction::make()
+                    ->label('Xem'),
                 EditAction::make()
                     ->label('Xử lý'),
             ])

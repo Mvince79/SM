@@ -6,7 +6,9 @@ use App\Filament\Admin\Resources\SupportTickets\RelationManagers\RepliesRelation
 use App\Filament\Admin\Resources\SupportTickets\Pages\CreateSupportTicket;
 use App\Filament\Admin\Resources\SupportTickets\Pages\EditSupportTicket;
 use App\Filament\Admin\Resources\SupportTickets\Pages\ListSupportTickets;
+use App\Filament\Admin\Resources\SupportTickets\Pages\ViewSupportTicket;
 use App\Filament\Admin\Resources\SupportTickets\Schemas\SupportTicketForm;
+use App\Filament\Admin\Resources\SupportTickets\Schemas\SupportTicketInfolist;
 use App\Filament\Admin\Resources\SupportTickets\Tables\SupportTicketsTable;
 use App\Models\SupportTicket;
 use BackedEnum;
@@ -19,11 +21,19 @@ class SupportTicketResource extends Resource
 {
     protected static ?string $model = SupportTicket::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedLifebuoy;
+    protected static ?string $navigationLabel = 'Yêu Cầu Hỗ Trợ';
+    protected static ?string $modelLabel = 'Yêu cầu hỗ trợ';
+    protected static ?string $pluralModelLabel = 'Yêu cầu hỗ trợ';
 
     public static function form(Schema $schema): Schema
     {
         return SupportTicketForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return SupportTicketInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
@@ -43,6 +53,7 @@ class SupportTicketResource extends Resource
         return [
             'index' => ListSupportTickets::route('/'),
             'create' => CreateSupportTicket::route('/create'),
+            'view' => ViewSupportTicket::route('/{record}'),
             'edit' => EditSupportTicket::route('/{record}/edit'),
         ];
     }

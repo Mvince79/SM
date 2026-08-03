@@ -13,6 +13,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class RepliesRelationManager extends RelationManager
 {
@@ -72,7 +73,7 @@ class RepliesRelationManager extends RelationManager
                     ->label('Thêm phản hồi')
                     ->modalHeading('Thêm phản hồi hoặc ghi chú')
                     ->mutateDataUsing(function (array $data): array {
-                        $data['user_id'] = auth()->id();
+                        $data['user_id'] = Auth::id();
 
                         return $data;
                     }),
@@ -80,11 +81,11 @@ class RepliesRelationManager extends RelationManager
             ->recordActions([
                 EditAction::make()
                     ->label('Sửa')
-                    ->visible(fn (Model $record): bool => $record->user_id === auth()->id()),
+                    ->visible(fn (Model $record): bool => $record->user_id === Auth::id()),
 
                 DeleteAction::make()
                     ->label('Xóa')
-                    ->visible(fn (Model $record): bool => $record->user_id === auth()->id()),
+                    ->visible(fn (Model $record): bool => $record->user_id === Auth::id()),
             ])
             ->emptyStateHeading('Chưa có phản hồi')
             ->emptyStateDescription(

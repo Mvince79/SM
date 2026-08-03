@@ -76,7 +76,7 @@ class SupportTicketForm
                             ->relationship(
                                 name: 'assignedAdmin',
                                 titleAttribute: 'full_name',
-                                modifyQueryUsing: fn (Builder $query): Builder => $query
+                                modifyQueryUsing: fn(Builder $query): Builder => $query
                                     ->where('role', 'ADMIN'),
                             )
                             ->searchable()

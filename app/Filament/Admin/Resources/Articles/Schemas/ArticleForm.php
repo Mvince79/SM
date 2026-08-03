@@ -14,6 +14,8 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
+use Filament\Infolists\Components\TextEntry;
 
 class ArticleForm
 {
@@ -60,7 +62,7 @@ class ArticleForm
                             )
                             ->searchable()
                             ->preload()
-                            ->default(fn(): ?int => auth()->id())
+                            ->default(fn(): ?int => Auth::id())
                             ->required(),
 
                         DateTimePicker::make('published_at')
@@ -85,9 +87,10 @@ class ArticleForm
                             ->maxLength(160)
                             ->live(),
 
-                        Placeholder::make('seo_preview')
+                        TextEntry::make('seo_preview')
+                            ->hiddenLabel()
                             ->label('Xem trước kết quả Google')
-                            ->content(function (callable $get): HtmlString {
+                            ->state(function (callable $get): HtmlString {
                                 $title = $get('meta_title')
                                     ?: $get('title')
                                     ?: 'Tiêu đề bài viết';
@@ -135,6 +138,7 @@ class ArticleForm
                                     </div>'
                                 );
                             })
+                            ->html()
                             ->columnSpanFull(),
                     ]),
             ]);

@@ -5,7 +5,9 @@ namespace App\Filament\Admin\Resources\Articles;
 use App\Filament\Admin\Resources\Articles\Pages\CreateArticle;
 use App\Filament\Admin\Resources\Articles\Pages\EditArticle;
 use App\Filament\Admin\Resources\Articles\Pages\ListArticles;
+use App\Filament\Admin\Resources\Articles\Pages\ViewArticle;
 use App\Filament\Admin\Resources\Articles\Schemas\ArticleForm;
+use App\Filament\Admin\Resources\Articles\Schemas\ArticleInfolist;
 use App\Filament\Admin\Resources\Articles\Tables\ArticlesTable;
 use App\Models\Article;
 use BackedEnum;
@@ -18,11 +20,19 @@ class ArticleResource extends Resource
 {
     protected static ?string $model = Article::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedNewspaper;
+    protected static ?string $navigationLabel = 'Bài Viết';
+    protected static ?string $modelLabel = 'Bài viết';
+    protected static ?string $pluralModelLabel = 'Bài viết';
 
     public static function form(Schema $schema): Schema
     {
         return ArticleForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return ArticleInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
@@ -42,6 +52,7 @@ class ArticleResource extends Resource
         return [
             'index' => ListArticles::route('/'),
             'create' => CreateArticle::route('/create'),
+            'view' => ViewArticle::route('/{record}'),
             'edit' => EditArticle::route('/{record}/edit'),
         ];
     }
