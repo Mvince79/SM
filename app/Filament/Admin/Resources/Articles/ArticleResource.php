@@ -25,6 +25,8 @@ class ArticleResource extends Resource
     protected static ?string $modelLabel = 'Bài viết';
     protected static ?string $pluralModelLabel = 'Bài viết';
 
+    
+
     public static function form(Schema $schema): Schema
     {
         return ArticleForm::configure($schema);

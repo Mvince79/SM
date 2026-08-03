@@ -25,6 +25,7 @@ class HandoverPointResource extends Resource
     protected static ?string $modelLabel = 'Điểm bàn giao';
     protected static ?string $pluralModelLabel = 'Điểm bàn giao';
 
+
     public static function form(Schema $schema): Schema
     {
         return HandoverPointForm::configure($schema);

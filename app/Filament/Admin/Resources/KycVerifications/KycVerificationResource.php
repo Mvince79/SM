@@ -21,11 +21,11 @@ class KycVerificationResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
-    protected static ?string $navigationLabel = 'Xác thực KYC';
+    protected static ?string $navigationLabel = 'Xác Thực Danh Tính (KYC)';
 
-    protected static ?string $modelLabel = 'xác thực KYC';
+    protected static ?string $modelLabel = 'Xác Thực Danh Tính (KYC)';
 
-    protected static ?string $pluralModelLabel = 'xác thực KYC';
+    protected static ?string $pluralModelLabel = 'Xác Thực Danh Tính (KYC)';
 
     public static function getNavigationGroup(): ?string
     {
@@ -74,4 +74,4 @@ class KycVerificationResource extends Resource
             'view' => ViewKycVerification::route('/{record}'),
         ];
     }
-}   
+}

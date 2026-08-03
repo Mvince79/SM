@@ -26,6 +26,7 @@ class SupportTicketResource extends Resource
     protected static ?string $modelLabel = 'Yêu cầu hỗ trợ';
     protected static ?string $pluralModelLabel = 'Yêu cầu hỗ trợ';
 
+
     public static function form(Schema $schema): Schema
     {
         return SupportTicketForm::configure($schema);
