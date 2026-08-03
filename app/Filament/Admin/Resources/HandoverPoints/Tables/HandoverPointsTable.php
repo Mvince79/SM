@@ -24,10 +24,12 @@ class HandoverPointsTable
                 TextColumn::make('type')
                     ->label('Loại')
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                    ->formatStateUsing(fn(?string $state): string => match ($state) {
                         'POLICE_STATION' => 'Công an',
-                        'SOCIAL_SUPPORT_CENTER' => 'Trung tâm bảo trợ',
-                        'HOTLINE_111' => 'Tổng đài 111',
+                        'COMMUNE_PEOPLE_COMMITTEE' => 'UBND xã/phường',
+                        'HOTLINE_111' => 'Tổng đài Quốc gia 111',
+                        'NGO' => 'Tổ chức NGO',
+                        'OTHER' => 'Đơn vị khác',
                         default => $state ?? 'Không xác định',
                     })
                     ->sortable(),
@@ -66,8 +68,10 @@ class HandoverPointsTable
                     ->label('Loại điểm bàn giao')
                     ->options([
                         'POLICE_STATION' => 'Công an',
-                        'SOCIAL_SUPPORT_CENTER' => 'Trung tâm bảo trợ',
-                        'HOTLINE_111' => 'Tổng đài 111',
+                        'COMMUNE_PEOPLE_COMMITTEE' => 'UBND xã/phường',
+                        'HOTLINE_111' => 'Tổng đài Quốc gia 111',
+                        'NGO' => 'Tổ chức NGO',
+                        'OTHER' => 'Đơn vị khác',
                     ]),
 
                 SelectFilter::make('province_id')
