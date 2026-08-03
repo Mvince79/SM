@@ -247,6 +247,18 @@
     <x-floating-chat-widget />
 
     @auth
+        @php
+            $hasActiveAdminChat = \App\Models\AdminChatAssignment::query()
+                ->where('status', \App\Models\AdminChatAssignment::STATUS_ACTIVE)
+                ->when(
+                    auth()->user()->isAdmin(),
+                    fn ($query) => $query->where('admin_user_id', auth()->id()),
+                    fn ($query) => $query->where('requester_user_id', auth()->id()),
+                )
+                ->exists();
+        @endphp
+
+        @if ($hasActiveAdminChat)
         <div class="fixed bottom-24 right-5 z-50 md:right-8">
             <button type="button" onclick="openChat()"
                 class="group flex items-center gap-2
@@ -263,10 +275,12 @@
                 <span>Chat</span>
             </button>
         </div>
+        @endif
     @endauth
 
     {{-- ── Chat Modal ── --}}
     @auth
+        @if ($hasActiveAdminChat)
         <div id="chat-modal"
             class="hidden fixed inset-0 z-[9999] flex items-stretch justify-center sm:items-end sm:justify-end sm:p-6">
 
@@ -288,7 +302,7 @@
 
                 <button type="button" onclick="closeChat()"
                     class="absolute right-3 top-3 z-20
-                                           flex h-9 w-9 items-center justify-center
+                                           flex h-11 w-11 items-center justify-center sm:h-9 sm:w-9
                                            rounded-full border border-slate-200 bg-white/95
                                            text-slate-500 shadow-sm transition
                                            hover:bg-slate-50 hover:text-slate-900"
@@ -299,6 +313,7 @@
                 @livewire('chat.chat-container')
             </div>
         </div>
+        @endif
     @endauth
 
     <script>

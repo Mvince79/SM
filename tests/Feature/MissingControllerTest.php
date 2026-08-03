@@ -183,6 +183,42 @@ class MissingControllerTest extends TestCase
         $response->assertViewHas('case');
     }
 
+    public function test_detail_displays_missing_location_map_when_coordinates_exist(): void
+    {
+        $missing = MissingChild::first();
+        $missing->update([
+            'lat' => 10.7769,
+            'lng' => 106.7009,
+            'address_detail' => 'Chợ Bến Thành',
+            'district' => 'Quận 1',
+        ]);
+
+        $response = $this->get('/missing/detail?id='.$missing->id);
+
+        $response->assertOk()
+            ->assertSee('Vị trí mất tích')
+            ->assertSee('id="mini-map"', false)
+            ->assertSee('Chợ Bến Thành');
+        $this->assertSame(1, substr_count($response->getContent(), "L.map('mini-map'"));
+    }
+
+    public function test_detail_still_displays_missing_location_when_coordinates_are_absent(): void
+    {
+        $missing = MissingChild::first();
+        $missing->update([
+            'lat' => null,
+            'lng' => null,
+            'address_detail' => 'Bến xe Miền Đông',
+        ]);
+
+        $this->get('/missing/detail?id='.$missing->id)
+            ->assertOk()
+            ->assertSee('Vị trí mất tích')
+            ->assertSee('Hồ sơ chưa có tọa độ bản đồ chính xác.')
+            ->assertSee('Bến xe Miền Đông')
+            ->assertDontSee('id="mini-map"', false);
+    }
+
     /**
      * Test: Non-APPROVED case not accessible (if logged out)
      */

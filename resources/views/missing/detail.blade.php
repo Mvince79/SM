@@ -568,7 +568,7 @@
                         lạc</h4>
                     @guest
                         <p class="text-xs text-slate-400 leading-relaxed font-semibold">Số điện thoại liên hệ đang được ẩn.
-                            Đăng nhập để mở tính năng chat nội bộ và kết nối với gia đình.</p>
+                            Đăng nhập để xem thông tin liên hệ đã được người đăng cung cấp.</p>
                         <a href="{{ route('auth.login') }}"
                             class="block w-full bg-slate-900 text-white font-extrabold text-xs py-3.5 rounded-2xl text-center hover:bg-slate-800 shadow transition-colors uppercase tracking-widest">
                             Đăng nhập để liên hệ
@@ -589,11 +589,6 @@
                                 <p class="text-xs text-slate-400 leading-relaxed font-semibold">Liên hệ nội bộ sẽ được mở cho
                                     tài khoản đã đăng nhập.</p>
                             @endif
-                            <button type="button"
-                                onclick="Livewire.dispatch('openChat', { userId: {{ $case->user_id }}, missingId: {{ $case->id }} }); openChat();"
-                                class="block w-full mt-3 bg-primary text-white text-center font-extrabold py-3 rounded-2xl hover:bg-primary-dark transition">
-                                <x-heroicon-o-chat-bubble-left-right class="w-4 h-4 inline" /> Chat với người đăng tin
-                            </button>
                         </div>
                     @endguest
 
@@ -644,9 +639,23 @@
                 </form>
 
                 <!-- Interactive Mini map tracking location -->
-                @if ($case->lat && $case->lng)
-                    <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
-                        <h4 class="font-extrabold text-slate-900 text-sm uppercase tracking-wider">Vị trí mất tích</h4>
+                @php
+                    $hasMissingCoordinates = is_numeric($case->lat)
+                        && is_numeric($case->lng)
+                        && (float) $case->lat >= -90
+                        && (float) $case->lat <= 90
+                        && (float) $case->lng >= -180
+                        && (float) $case->lng <= 180;
+                    $missingAddress = collect([
+                        $case->address_detail,
+                        $case->ward,
+                        $case->district,
+                        $case->province?->name,
+                    ])->filter()->implode(', ');
+                @endphp
+                <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
+                    <h4 class="font-extrabold text-slate-900 text-sm uppercase tracking-wider">Vị trí mất tích</h4>
+                    @if ($hasMissingCoordinates)
                         <div class="relative h-44 rounded-2xl overflow-hidden border border-slate-200">
                             <div id="mini-map" class="map-container w-full h-full bg-slate-150" data-lat="{{ $case->lat }}"
                                 data-lng="{{ $case->lng }}"></div>
@@ -654,63 +663,16 @@
                             động đúng --}}
                             <div id="mini-map-sovereignty-overlay" class="map-sovereignty-overlay"></div>
                         </div>
-                        <script>
-                            (function () {
-                                var el = document.getElementById('mini-map');
-                                if (!el) return;
-                                var lat = parseFloat(el.dataset.lat);
-                                var lng = parseFloat(el.dataset.lng);
-                                if (!lat || !lng) return;
-
-                                function setup() {
-                                    try {
-                                        var map = L.map('mini-map', {
-                                            zoomControl: false,
-                                            scrollWheelZoom: false
-                                        }).setView([lat, lng], 15);
-
-                                        initVnSovereigntyLayer(map);
-                                        // Theo yêu cầu: bản đồ luôn dùng tile sáng, không đổi theo theme.
-                                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                            attribution: '© OpenStreetMap contributors',
-                                            maxZoom: 19
-                                        }).addTo(map);
-
-                                        var lostIcon = L.divIcon({
-                                            className: 'pulse-dot',
-                                            html: '<div style="width:14px;height:14px;background:#FF3B30;border:2px solid white;border-radius:50%;box-shadow:0 0 0 3px rgba(255,59,48,0.3);"></div>',
-                                            iconSize: [14, 14],
-                                            iconAnchor: [7, 7]
-                                        });
-
-                                        L.marker([lat, lng], {
-                                            icon: lostIcon
-                                        }).addTo(map);
-                                    } catch (e) {
-                                        console.error('mini-map init error', e);
-                                    }
-                                }
-
-                                if (window.L) return setup();
-
-                                // load leaflet css+js from CDN then init
-                                var css = document.createElement('link');
-                                css.rel = 'stylesheet';
-                                css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-                                document.head.appendChild(css);
-
-                                var s = document.createElement('script');
-                                s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-                                s.onload = setup;
-                                document.body.appendChild(s);
-                            })();
-                        </script>
-                        <p class="text-[10px] text-slate-400 font-semibold text-center uppercase tracking-wide">
-                            <x-heroicon-o-map-pin class="w-3.5 h-3.5 inline shrink-0" />
-                            {{ collect([$case->address_detail, $case->ward, $case->district, $case->province?->name])->filter()->implode(', ') }}
-                        </p>
-                    </div>
-                @endif
+                    @else
+                        <div class="flex min-h-28 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 text-center">
+                            <p class="text-xs font-semibold text-slate-500">Hồ sơ chưa có tọa độ bản đồ chính xác.</p>
+                        </div>
+                    @endif
+                    <p class="text-[10px] text-slate-500 font-semibold text-center uppercase tracking-wide">
+                        <x-heroicon-o-map-pin class="w-3.5 h-3.5 inline shrink-0" />
+                        {{ $missingAddress ?: 'Chưa cập nhật địa chỉ mất tích' }}
+                    </p>
+                </div>
 
                 <!-- Social sharing -->
                 <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
@@ -1197,6 +1159,11 @@
             const lat = parseFloat(mapEl.dataset.lat);
             const lng = parseFloat(mapEl.dataset.lng);
             if (isNaN(lat) || isNaN(lng)) return;
+            if (!window.L || typeof window.initVnSovereigntyLayer !== 'function') {
+                console.error('Không thể tải thư viện bản đồ vị trí mất tích.');
+                return;
+            }
+
             const map = L.map('mini-map', {
                 center: [lat, lng],
                 zoom: 15,

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\KycVerifications\Schemas;
 
+use App\Models\KycVerification;
 use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
@@ -22,7 +23,10 @@ class KycVerificationInfolist
                             ->schema([
                                 ImageEntry::make('front_image_path')
                                     ->label('CCCD mặt trước')
-                                    ->disk('public')
+                                    ->getStateUsing(fn (KycVerification $record): string => route(
+                                        'admin.kyc-verifications.image',
+                                        ['kycVerification' => $record, 'side' => 'front'],
+                                    ))
                                     ->height(260)
                                     ->extraImgAttributes([
                                         'style' => 'width:100%;height:260px;object-fit:cover;border-radius:12px;cursor:zoom-in;',
@@ -31,7 +35,10 @@ class KycVerificationInfolist
 
                                 ImageEntry::make('back_image_path')
                                     ->label('CCCD mặt sau')
-                                    ->disk('public')
+                                    ->getStateUsing(fn (KycVerification $record): string => route(
+                                        'admin.kyc-verifications.image',
+                                        ['kycVerification' => $record, 'side' => 'back'],
+                                    ))
                                     ->height(260)
                                     ->extraImgAttributes([
                                         'style' => 'width:100%;height:260px;object-fit:cover;border-radius:12px;cursor:zoom-in;',
@@ -40,7 +47,10 @@ class KycVerificationInfolist
 
                                 ImageEntry::make('selfie_path')
                                     ->label('Ảnh Selfie')
-                                    ->disk('public')
+                                    ->getStateUsing(fn (KycVerification $record): string => route(
+                                        'admin.kyc-verifications.image',
+                                        ['kycVerification' => $record, 'side' => 'selfie'],
+                                    ))
                                     ->height(260)
                                     ->extraImgAttributes([
                                         'style' => 'width:100%;height:260px;object-fit:cover;border-radius:12px;cursor:zoom-in;',

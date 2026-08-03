@@ -12,7 +12,7 @@
     </div>
 
     <!-- MAIN ANALYTICS DASHBOARD -->
-    <main class="max-w-7xl mx-auto px-4 py-10 space-y-8">
+    <main class="max-w-7xl min-w-0 mx-auto px-4 py-8 sm:py-10 space-y-6 sm:space-y-8 overflow-x-hidden">
 
         <!-- KPI Stripe-like CARDS GRID -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -61,8 +61,8 @@
         <div class="grid lg:grid-cols-12 gap-6">
 
             <!-- Left: Line chart trends (8 cols) -->
-            <div class="lg:col-span-8 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="min-w-0 lg:col-span-8 bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-premium space-y-4">
+                <div class="flex flex-col items-start gap-2 min-[360px]:flex-row min-[360px]:items-center min-[360px]:justify-between border-b border-slate-100 pb-3">
                     <h3 class="font-extrabold text-slate-800 text-sm uppercase tracking-wider">Xu hướng hồ sơ tiếp nhận
                         theo tháng</h3>
                     <span class="bg-brand/10 text-brand text-[9px] font-black uppercase px-2.5 py-1 rounded-full">Dữ liệu
@@ -70,23 +70,23 @@
                 </div>
 
                 <!-- Chart canvas -->
-                <div class="h-80 relative w-full">
-                    <canvas id="lineChart" class="w-full h-full"></canvas>
+                <div class="h-64 sm:h-80 relative w-full min-w-0 overflow-hidden">
+                    <canvas id="lineChart" class="max-w-full w-full h-full"></canvas>
                 </div>
             </div>
 
             <!-- Right: Donut classifications (4 cols) -->
-            <div class="lg:col-span-4 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-premium space-y-4">
+            <div class="min-w-0 lg:col-span-4 bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-premium space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h3 class="font-extrabold text-slate-800 text-sm uppercase tracking-wider">Tỷ lệ theo khu vực chính</h3>
                 </div>
 
                 <!-- Chart canvas -->
-                <div class="h-64 relative flex items-center justify-center">
-                    <canvas id="donutChart"></canvas>
+                <div class="h-56 sm:h-64 min-w-0 overflow-hidden relative flex items-center justify-center">
+                    <canvas id="donutChart" class="max-w-full"></canvas>
                 </div>
 
-                <div id="provinceLegend" class="grid grid-cols-3 gap-2 text-center text-[10px] pt-2">
+                <div id="provinceLegend" class="grid grid-cols-1 min-[360px]:grid-cols-3 gap-2 text-center text-[10px] pt-2">
                     <div>
                         <span class="font-black text-primary">● Đang tải</span>
                         <div class="font-extrabold text-slate-650 mt-0.5">0%</div>

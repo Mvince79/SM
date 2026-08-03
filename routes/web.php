@@ -14,6 +14,7 @@ use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Verifier\HandoverConfirmationController;
 use App\Http\Controllers\WatchAreaController;
 use App\Models\AdminChatAssignment;
+use App\Models\KycVerification;
 use App\Models\Message;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -85,6 +86,25 @@ Route::middleware(['auth'])
         return view('volunteer.dashboard');
     })
     ->name('volunteer.dashboard');
+
+Route::middleware('auth')->get(
+    '/admin/kyc-verifications/{kycVerification}/images/{side}',
+    function (KycVerification $kycVerification, string $side) {
+        abort_unless(auth()->user()->isAdmin(), 403);
+
+        $path = match ($side) {
+            'front' => $kycVerification->front_image_path,
+            'back' => $kycVerification->back_image_path,
+            'selfie' => $kycVerification->selfie_path,
+            default => null,
+        };
+
+        abort_if(blank($path) || ! Storage::disk('private')->exists($path), 404);
+
+        return Storage::disk('private')->response($path);
+    },
+)->whereIn('side', ['front', 'back', 'selfie'])
+    ->name('admin.kyc-verifications.image');
 
 // ── Routes cần đăng nhập + email đã xác thực + không bị BAN ────────────────
 Route::middleware(['auth', 'email.verified'])->group(function () {

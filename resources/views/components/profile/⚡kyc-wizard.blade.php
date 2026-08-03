@@ -22,6 +22,8 @@ new class extends Component {
     // ── Bước 3 — Selfie ──────────────────────────────────────────────────
     public $selfie = null;
 
+    public bool $selfieCapturedByCamera = false;
+
     public ?KycVerification $kyc = null;
 
     public function mount(): void
@@ -78,6 +80,7 @@ new class extends Component {
     {
         return [
             'selfie' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'selfieCapturedByCamera' => ['accepted'],
         ];
     }
 
@@ -85,6 +88,7 @@ new class extends Component {
     {
         return [
             'selfie.required' => 'Vui lòng chụp ảnh selfie.',
+            'selfieCapturedByCamera.accepted' => 'Ảnh selfie phải được chụp trực tiếp bằng camera.',
             '*.image' => 'File phải là hình ảnh.',
             '*.max' => 'Dung lượng ảnh tối đa 5MB.',
         ];
@@ -146,7 +150,7 @@ new class extends Component {
 
         ProcessKycJob::dispatch($this->kyc->id);
 
-        $this->reset(['step', 'id_type', 'id_number', 'front_image', 'back_image', 'selfie']);
+        $this->reset(['step', 'id_type', 'id_number', 'front_image', 'back_image', 'selfie', 'selfieCapturedByCamera']);
     }
 };
 ?>
@@ -352,8 +356,6 @@ new class extends Component {
                             : 'border-slate-200 bg-slate-50' }}
                         @error('selfie') !border-danger bg-danger-light/40 @enderror">
 
-                    <input type="file" x-ref="fileInput" wire:model="selfie" accept="image/png,image/jpeg"
-                        class="hidden" />
                     <canvas x-ref="canvas" class="hidden"></canvas>
 
                     @if ($this->selfie)
@@ -394,12 +396,12 @@ new class extends Component {
                                     class="w-full rounded-full bg-primary/10 text-primary text-xs font-black py-2.5 flex items-center justify-center gap-2 hover:bg-primary/15 transition-colors">
                                     <x-heroicon-o-camera class="w-4 h-4" /> Chụp bằng camera
                                 </button>
-                                <button type="button" @click="$refs.fileInput.click()"
-                                    class="w-full rounded-full border border-slate-200 bg-white text-slate-700 text-xs font-black py-2.5 flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
-                                    <x-heroicon-o-arrow-up-tray class="w-4 h-4" /> Tải ảnh có sẵn
-                                </button>
+                                <div x-show="cameraSupported === false" x-cloak
+                                    class="rounded-xl bg-amber-50 px-3 py-2 text-center text-[10px] font-bold leading-snug text-amber-700">
+                                    Thiết bị hoặc trình duyệt này không hỗ trợ camera. Vui lòng chuyển sang thiết bị có camera để tiếp tục xác thực.
+                                </div>
                             </div>
-                            <span class="text-[11px] text-slate-400 font-semibold">JPG/PNG, tối đa 5MB</span>
+                            <span class="text-center text-[11px] text-slate-400 font-semibold">Bắt buộc chụp trực tiếp bằng camera trước</span>
                         </div>
                     @endif
 
@@ -454,8 +456,7 @@ new class extends Component {
 
     @script
     <script>
-        // Dùng chung cho cả 3 ô: Mặt trước, Mặt sau, Selfie — copy nguyên từ A-04
-        // (⚡kyc-upload-form.blade.php) để đồng bộ hành vi camera/upload.
+        // Dùng camera cho cả 3 ảnh; riêng selfie chỉ cho phép chụp trực tiếp.
         Alpine.data('kycImageCapture', (fieldName, facingMode = 'environment') => ({
             stage: 'choice', // 'choice' | 'camera' | 'uploading'
             cameraSupported: null,
@@ -492,8 +493,13 @@ new class extends Component {
                 this.stopStream();
                 this.stage = 'uploading';
 
-                canvas.toBlob((blob) => {
+                canvas.toBlob(async (blob) => {
                     const file = new File([blob], fieldName + '.jpg', { type: 'image/jpeg' });
+
+                    if (fieldName === 'selfie') {
+                        await $wire.set('selfieCapturedByCamera', true);
+                    }
+
                     $wire.upload(
                         fieldName,
                         file,
@@ -510,6 +516,9 @@ new class extends Component {
 
             retake() {
                 this.stage = 'choice';
+                if (fieldName === 'selfie') {
+                    $wire.set('selfieCapturedByCamera', false);
+                }
                 $wire.set(fieldName, null);
             },
 

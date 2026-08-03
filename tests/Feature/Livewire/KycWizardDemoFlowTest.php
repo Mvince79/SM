@@ -52,6 +52,7 @@ class KycWizardDemoFlowTest extends TestCase
                 ->assertHasNoErrors()
                 ->assertSet('step', 3)
                 ->set('selfie', UploadedFile::fake()->image('selfie.jpg', 720, 960))
+                ->set('selfieCapturedByCamera', true)
                 ->call('submit')
                 ->assertHasNoErrors();
 
@@ -66,5 +67,45 @@ class KycWizardDemoFlowTest extends TestCase
         }
 
         Queue::assertPushed(ProcessKycJob::class, 2);
+    }
+
+    public function test_selfie_step_only_offers_direct_camera_capture(): void
+    {
+        Storage::fake('private');
+        $user = User::factory()->create(['kyc_status' => 'NONE']);
+
+        Livewire::actingAs($user)
+            ->test('profile.kyc-wizard')
+            ->call('selectIdType', 'CCCD_12')
+            ->call('next')
+            ->set('id_number', '079092000001')
+            ->set('front_image', UploadedFile::fake()->image('front.jpg', 900, 600))
+            ->set('back_image', UploadedFile::fake()->image('back.jpg', 900, 600))
+            ->call('next')
+            ->assertSet('step', 3)
+            ->assertSee('Chụp bằng camera')
+            ->assertSee('Bắt buộc chụp trực tiếp bằng camera trước')
+            ->assertDontSee('Tải ảnh có sẵn')
+            ->assertDontSee('wire:model="selfie"', false);
+    }
+
+    public function test_selfie_upload_is_rejected_without_camera_capture_confirmation(): void
+    {
+        Storage::fake('private');
+        $user = User::factory()->create(['kyc_status' => 'NONE']);
+
+        Livewire::actingAs($user)
+            ->test('profile.kyc-wizard')
+            ->call('selectIdType', 'CCCD_12')
+            ->call('next')
+            ->set('id_number', '079092000001')
+            ->set('front_image', UploadedFile::fake()->image('front.jpg', 900, 600))
+            ->set('back_image', UploadedFile::fake()->image('back.jpg', 900, 600))
+            ->call('next')
+            ->set('selfie', UploadedFile::fake()->image('selfie-from-disk.jpg', 720, 960))
+            ->call('submit')
+            ->assertHasErrors(['selfieCapturedByCamera']);
+
+        $this->assertDatabaseCount('kyc_verifications', 0);
     }
 }

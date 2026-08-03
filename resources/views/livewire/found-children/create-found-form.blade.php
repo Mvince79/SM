@@ -605,7 +605,7 @@ new class extends Component {
                     </div>
 
                     @if (count($photos) > 0)
-                        <div class="grid grid-cols-5 gap-3 mt-2">
+                        <div class="grid grid-cols-3 gap-2 min-[480px]:grid-cols-4 sm:grid-cols-5 sm:gap-3 mt-2">
                             @foreach ($photos as $index => $photo)
                                 <div class="relative group">
                                     <img src="{{ $photo->temporaryUrl() }}"
