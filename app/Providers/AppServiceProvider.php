@@ -42,6 +42,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Observers\MissingChildObserver::class
         );
 
+        \App\Models\FoundChild::observe(
+            \App\Observers\FoundChildObserver::class
+        );
+
         \App\Models\Photo::observe(
             \App\Observers\PhotoObserver::class
         );

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\FoundChild;
 use App\Models\MissingChild;
+use App\Support\CacheTags;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Cache;
  */
 class MapDataController
 {
-    protected const CACHE_TTL = 300; // 5 minutes
+    protected const CACHE_TTL = 180; // 3 minutes
 
     /**
      * Map time_range filter value => số giờ tính từ hiện tại.
@@ -57,13 +58,11 @@ class MapDataController
 
         $cacheKey = $this->getCacheKey($validated);
 
-        if (Cache::has($cacheKey)) {
-            return response()->json(Cache::get($cacheKey));
-        }
-
-        $markers = $this->getMarkers($validated);
-
-        Cache::put($cacheKey, $markers, self::CACHE_TTL);
+        $markers = Cache::tags([CacheTags::MAP_DATA])->remember(
+            $cacheKey,
+            self::CACHE_TTL,
+            fn() => $this->getMarkers($validated)
+        );
 
         return response()->json($markers);
     }
@@ -242,11 +241,11 @@ class MapDataController
                 ? asset('storage/' . $child->primaryPhoto->path_thumb)
                 : (
                     $child->primaryPhoto?->path_original
-                        ? asset(
-                            'storage/'
-                            . $child->primaryPhoto->path_original
-                        )
-                        : $fallbackPhoto
+                    ? asset(
+                        'storage/'
+                        . $child->primaryPhoto->path_original
+                    )
+                    : $fallbackPhoto
                 );
 
             return [
@@ -368,11 +367,7 @@ class MapDataController
         $radius = (float) $filters['radius'];
 
         return $collection
-            ->filter(function ($child) use (
-                $originLat,
-                $originLng,
-                $radius
-            ) {
+            ->filter(function ($child) use ($originLat, $originLng, $radius) {
                 return $this->distanceKm(
                     $originLat,
                     $originLng,
