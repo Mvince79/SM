@@ -1,0 +1,64 @@
+app/Http/Controllers/Client/ArticleController.php:6:use App\Models\Article;
+app/Http/Controllers/Client/ArticleController.php:9:class ArticleController extends Controller
+app/Http/Controllers/Client/ArticleController.php:13:        $articles = Article::published()->latest('published_at')->paginate(12);
+app/Http/Controllers/Client/ArticleController.php:15:        return view('articles.index', compact('articles'));
+app/Http/Controllers/Client/ArticleController.php:18:    public function show(Article $article): View
+app/Http/Controllers/Client/ArticleController.php:20:        abort_unless($article->isPublished(), 404);
+app/Http/Controllers/Client/ArticleController.php:22:        $related = Article::published()
+app/Http/Controllers/Client/ArticleController.php:23:            ->where('id', '!=', $article->id)
+app/Http/Controllers/Client/ArticleController.php:28:        return view('articles.show', compact('article', 'related'));
+app/Http/Controllers/SitemapController.php:5:use App\Models\Article;
+app/Http/Controllers/SitemapController.php:32:            ->concat($this->articleUrls());
+app/Http/Controllers/SitemapController.php:97:    private function articleUrls(): array
+app/Http/Controllers/SitemapController.php:99:        return Article::query()
+app/Http/Controllers/SitemapController.php:104:            ->map(fn(Article $article) => [
+app/Http/Controllers/SitemapController.php:105:                'loc' => url('/bai-viet/' . $article->slug),
+app/Http/Controllers/SitemapController.php:106:                'lastmod' => $article->updated_at?->toAtomString(),
+app/Filament/Admin/Resources/Articles/ArticleResource.php:3:namespace App\Filament\Admin\Resources\Articles;
+app/Filament/Admin/Resources/Articles/ArticleResource.php:5:use App\Filament\Admin\Resources\Articles\Pages\CreateArticle;
+app/Filament/Admin/Resources/Articles/ArticleResource.php:6:use App\Filament\Admin\Resources\Articles\Pages\EditArticle;
+app/Filament/Admin/Resources/Articles/ArticleResource.php:7:use App\Filament\Admin\Resources\Articles\Pages\ListArticles;
+app/Filament/Admin/Resources/Articles/ArticleResource.php:8:use App\Filament\Admin\Resources\Articles\Pages\ViewArticle;
+app/Filament/Admin/Resources/Articles/ArticleResource.php:9:use App\Filament\Admin\Resources\Articles\Schemas\ArticleForm;
+app/Filament/Admin/Resources/Articles/ArticleResource.php:10:use App\Filament\Admin\Resources\Articles\Schemas\ArticleInfolist;
+app/Filament/Admin/Resources/Articles/ArticleResource.php:11:use App\Filament\Admin\Resources\Articles\Tables\ArticlesTable;
+app/Filament/Admin/Resources/Articles/ArticleResource.php:12:use App\Models\Article;
+app/Filament/Admin/Resources/Articles/ArticleResource.php:19:class ArticleResource extends Resource
+app/Filament/Admin/Resources/Articles/ArticleResource.php:21:    protected static ?string $model = Article::class;
+app/Filament/Admin/Resources/Articles/ArticleResource.php:32:        return ArticleForm::configure($schema);
+app/Filament/Admin/Resources/Articles/ArticleResource.php:37:        return ArticleInfolist::configure($schema);
+app/Filament/Admin/Resources/Articles/ArticleResource.php:42:        return ArticlesTable::configure($table);
+app/Filament/Admin/Resources/Articles/ArticleResource.php:55:            'index' => ListArticles::route('/'),
+app/Filament/Admin/Resources/Articles/ArticleResource.php:56:            'create' => CreateArticle::route('/create'),
+app/Filament/Admin/Resources/Articles/ArticleResource.php:57:            'view' => ViewArticle::route('/{record}'),
+app/Filament/Admin/Resources/Articles/ArticleResource.php:58:            'edit' => EditArticle::route('/{record}/edit'),
+app/Filament/Admin/Resources/Articles/Pages/CreateArticle.php:3:namespace App\Filament\Admin\Resources\Articles\Pages;
+app/Filament/Admin/Resources/Articles/Pages/CreateArticle.php:5:use App\Filament\Admin\Resources\Articles\ArticleResource;
+app/Filament/Admin/Resources/Articles/Pages/CreateArticle.php:8:class CreateArticle extends CreateRecord
+app/Filament/Admin/Resources/Articles/Pages/CreateArticle.php:10:    protected static string $resource = ArticleResource::class;
+app/Filament/Admin/Resources/Articles/Pages/EditArticle.php:3:namespace App\Filament\Admin\Resources\Articles\Pages;
+app/Filament/Admin/Resources/Articles/Pages/EditArticle.php:5:use App\Filament\Admin\Resources\Articles\ArticleResource;
+app/Filament/Admin/Resources/Articles/Pages/EditArticle.php:9:class EditArticle extends EditRecord
+app/Filament/Admin/Resources/Articles/Pages/EditArticle.php:11:    protected static string $resource = ArticleResource::class;
+app/Filament/Admin/Resources/Articles/Pages/ListArticles.php:3:namespace App\Filament\Admin\Resources\Articles\Pages;
+app/Filament/Admin/Resources/Articles/Pages/ListArticles.php:5:use App\Filament\Admin\Resources\Articles\ArticleResource;
+app/Filament/Admin/Resources/Articles/Pages/ListArticles.php:9:class ListArticles extends ListRecords
+app/Filament/Admin/Resources/Articles/Pages/ListArticles.php:11:    protected static string $resource = ArticleResource::class;
+app/Filament/Admin/Resources/Articles/Pages/ViewArticle.php:3:namespace App\Filament\Admin\Resources\Articles\Pages;
+app/Filament/Admin/Resources/Articles/Pages/ViewArticle.php:5:use App\Filament\Admin\Resources\Articles\ArticleResource;
+app/Filament/Admin/Resources/Articles/Pages/ViewArticle.php:9:class ViewArticle extends ViewRecord
+app/Filament/Admin/Resources/Articles/Pages/ViewArticle.php:11:    protected static string $resource = ArticleResource::class;
+app/Filament/Admin/Resources/Articles/Schemas/ArticleForm.php:3:namespace App\Filament\Admin\Resources\Articles\Schemas;
+app/Filament/Admin/Resources/Articles/Schemas/ArticleForm.php:20:class ArticleForm
+app/Filament/Admin/Resources/Articles/Schemas/ArticleForm.php:52:                            ->directory('articles/covers')
+app/Filament/Admin/Resources/Articles/Schemas/ArticleInfolist.php:3:namespace App\Filament\Admin\Resources\Articles\Schemas;
+app/Filament/Admin/Resources/Articles/Schemas/ArticleInfolist.php:5:use App\Models\Article;
+app/Filament/Admin/Resources/Articles/Schemas/ArticleInfolist.php:16:class ArticleInfolist
+app/Filament/Admin/Resources/Articles/Schemas/ArticleInfolist.php:55:                            ->state(fn(Article $record): string => $record->published_at ? 'published' : 'draft')
+app/Filament/Admin/Resources/Articles/Schemas/ArticleInfolist.php:81:            // SEO — tái dùng đúng nội dung preview đã có trong ArticleForm
+app/Filament/Admin/Resources/Articles/Schemas/ArticleInfolist.php:99:                        ->state(function (Article $record): HtmlString {
+app/Filament/Admin/Resources/Articles/Schemas/ArticleInfolist.php:133:                            ->badge(fn(Article $record): bool => is_null($record->published_at))
+app/Filament/Admin/Resources/Articles/Schemas/ArticleInfolist.php:134:                            ->formatStateUsing(fn($state, Article $record) => $record->published_at
+app/Filament/Admin/Resources/Articles/Schemas/ArticleInfolist.php:137:                            ->color(fn(Article $record) => $record->published_at ? 'success' : 'warning'),
+app/Filament/Admin/Resources/Articles/Tables/ArticlesTable.php:3:namespace App\Filament\Admin\Resources\Articles\Tables;
+app/Filament/Admin/Resources/Articles/Tables/ArticlesTable.php:14:class ArticlesTable

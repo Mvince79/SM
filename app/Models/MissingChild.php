@@ -58,6 +58,7 @@ class MissingChild extends Model
         'handover_confirmed_at',
         'handover_confirmed_by',
     ];
+    protected $guarded = ['status', 'approved_at', 'approved_by'];
 
     protected $casts = [
         'dob' => 'date',

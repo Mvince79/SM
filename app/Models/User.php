@@ -38,6 +38,7 @@ class User extends Authenticatable implements FilamentUser
         'last_active_at',
         'theme',
     ];
+    protected $guarded = ['role', 'kyc_status', 'status'];
 
     protected $hidden = [
         'password',

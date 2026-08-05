@@ -31,6 +31,7 @@ class KycVerification extends Model
         'verified_at',
         'rejected_reason',
     ];
+    protected $guarded = ['review_level', 'status', 'reviewed_by', 'verified_at'];
 
     // id_number không bao giờ lộ ra mảng/JSON mặc định (toArray, API Resource...)
     protected $hidden = [
