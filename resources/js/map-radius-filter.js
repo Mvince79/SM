@@ -1,8 +1,4 @@
 /**
- * PB-32 — Bộ lọc bán kính bản đồ.
- *
- * Cho phép vẽ một vòng tròn bằng Leaflet Draw và chỉ hiển thị
- * những marker nằm trong bán kính đó.
  *
  * @param {object} map Leaflet map instance
  * @param {object} markersLayer LayerGroup đang hiển thị marker
@@ -15,21 +11,21 @@
  */
 export function createMapRadiusFilter(map, markersLayer) {
     if (!map || !markersLayer) {
-        throw new Error('Thiếu map hoặc markersLayer cho bộ lọc bán kính.');
+        throw new Error("Thiếu map hoặc markersLayer cho bộ lọc bán kính.");
     }
 
     const L = window.L;
 
     if (!L?.Control?.Draw) {
         console.error(
-            'Leaflet Draw chưa được tải. Hãy kiểm tra leaflet.draw.js.'
+            "Leaflet Draw chưa được tải. Hãy kiểm tra leaflet.draw.js.",
         );
 
         return {
-            registerMarker: () => { },
-            clearMarkers: () => { },
-            applyFilter: () => { },
-            reset: () => { },
+            registerMarker: () => {},
+            clearMarkers: () => {},
+            applyFilter: () => {},
+            reset: () => {},
         };
     }
 
@@ -46,7 +42,7 @@ export function createMapRadiusFilter(map, markersLayer) {
      */
     const haversineDistance = (lat1, lng1, lat2, lng2) => {
         const earthRadius = 6371000;
-        const toRadians = (degrees) => degrees * Math.PI / 180;
+        const toRadians = (degrees) => (degrees * Math.PI) / 180;
 
         const latitudeDelta = toRadians(lat2 - lat1);
         const longitudeDelta = toRadians(lng2 - lng1);
@@ -54,8 +50,8 @@ export function createMapRadiusFilter(map, markersLayer) {
         const a =
             Math.sin(latitudeDelta / 2) ** 2 +
             Math.cos(toRadians(lat1)) *
-            Math.cos(toRadians(lat2)) *
-            Math.sin(longitudeDelta / 2) ** 2;
+                Math.cos(toRadians(lat2)) *
+                Math.sin(longitudeDelta / 2) ** 2;
 
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
@@ -75,7 +71,7 @@ export function createMapRadiusFilter(map, markersLayer) {
             center.lat,
             center.lng,
             markerPosition.lat,
-            markerPosition.lng
+            markerPosition.lng,
         );
 
         return distance <= radius;
@@ -109,23 +105,24 @@ export function createMapRadiusFilter(map, markersLayer) {
     };
 
     const reset = () => {
-    if (radiusCircle && map.hasLayer(radiusCircle)) {
-        map.removeLayer(radiusCircle);
-    }
+        if (radiusCircle && map.hasLayer(radiusCircle)) {
+            map.removeLayer(radiusCircle);
+        }
 
-    drawnItems.clearLayers();
-    radiusCircle = null;
+        drawnItems.clearLayers();
+        radiusCircle = null;
 
-    applyFilter();
-};
+        applyFilter();
+    };
+
     const drawControl = new L.Control.Draw({
-        position: 'bottomright',
+        position: "bottomright",
         draw: {
             circle: {
                 shapeOptions: {
-                    color: '#2563eb',
+                    color: "#2563eb",
                     weight: 2,
-                    fillColor: '#3b82f6',
+                    fillColor: "#3b82f6",
                     fillOpacity: 0.12,
                 },
 
@@ -168,17 +165,29 @@ export function createMapRadiusFilter(map, markersLayer) {
     });
 
     map.on(L.Draw.Event.DELETED, (event) => {
-    event.layers.eachLayer((layer) => {
-        if (map.hasLayer(layer)) {
-            map.removeLayer(layer);
-        }
+        event.layers.eachLayer((layer) => {
+            if (map.hasLayer(layer)) {
+                map.removeLayer(layer);
+            }
+        });
+
+        drawnItems.clearLayers();
+        radiusCircle = null;
+
+        applyFilter();
     });
 
-    drawnItems.clearLayers();
-    radiusCircle = null;
+    let zoomRefreshTimeout = null;
+    map.on("zoomend", () => {
+        if (zoomRefreshTimeout) {
+            clearTimeout(zoomRefreshTimeout);
+        }
 
-    applyFilter();
-});
+        zoomRefreshTimeout = setTimeout(() => {
+            applyFilter();
+            zoomRefreshTimeout = null;
+        }, 150);
+    });
 
     return {
         registerMarker,
