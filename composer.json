@@ -17,6 +17,7 @@
         "laravel/sanctum": "^4.3",
         "laravel/socialite": "^5.27",
         "laravel/tinker": "^3.0",
+        "intervention/image": "^3.9",
         "livewire/livewire": "^4.3",
         "predis/predis": "^3.4",
         "pusher/pusher-php-server": "*",

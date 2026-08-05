@@ -27,7 +27,14 @@
                         <div class="mb-3">
                             @php($primary = $item->photos->where('is_primary', 1)->first() ?? $item->photos->first())
                             @if($primary)
-                                <img src="{{ Storage::url($primary->path_original) }}" alt="Ảnh" class="w-full h-40 object-cover rounded mb-2" />
+                                @php($fallbackSrc = Storage::url($primary->path_thumb ?? $primary->path_display ?? $primary->path_original))
+                                <picture>
+                                    @if($primary->path_thumb_webp)
+                                        <source srcset="{{ Storage::url($primary->path_thumb_webp) }}" type="image/webp">
+                                    @endif
+                                    <img src="{{ $fallbackSrc }}" alt="Ảnh" loading="lazy"
+                                         class="w-full h-40 object-cover rounded mb-2" />
+                                </picture>
                             @else
                                 <div class="w-full h-40 bg-gray-100 rounded flex items-center justify-center text-sm text-slate-400 mb-2">Không có ảnh</div>
                             @endif

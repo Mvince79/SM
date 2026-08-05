@@ -16,6 +16,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManager;
 
 class ProcessPhotoJob implements ShouldQueue
 {
@@ -103,6 +104,14 @@ class ProcessPhotoJob implements ShouldQueue
         AIJobFailureNotifier::notifyAdmins($this->photoId, static::class, $exception);
     }
 
+    /**
+     * Tạo các bản ảnh phái sinh (thumb / display / blurred) bằng Intervention Image.
+     *
+     * QUAN TRỌNG (C-04): việc resize/compress ở đây chỉ TẠO THÊM file mới, KHÔNG
+     * đụng vào path_original. Bước detectFace()/encode() ngay sau đó vẫn luôn đọc
+     * từ path_original (hoặc face_crop_path do chính AI service trả về), nên chất
+     * lượng nhận diện khuôn mặt không bị ảnh hưởng bởi việc nén ảnh hiển thị.
+     */
     private function generateDerivatives(Photo $photo): void
     {
         $disk = Storage::disk('public');
@@ -112,74 +121,61 @@ class ProcessPhotoJob implements ShouldQueue
         }
 
         $originalData = $disk->get($photo->path_original);
-        $srcImage = @imagecreatefromstring($originalData);
+        $manager = ImageManager::gd();
 
-        if (! $srcImage) {
+        try {
+            $probe = $manager->read($originalData);
+        } catch (\Throwable $e) {
+            Log::warning('ProcessPhotoJob: cannot decode image for derivatives', [
+                'photo_id' => $photo->id,
+                'message' => $e->getMessage(),
+            ]);
+
             return;
         }
 
-        $origW = imagesx($srcImage);
-        $origH = imagesy($srcImage);
+        $photo->width = $probe->width();
+        $photo->height = $probe->height();
 
-        $photo->width = $origW;
-        $photo->height = $origH;
-
-        $thumbPath = $this->derivePath($photo->path_original, '_thumb');
-        $thumb = $this->cropCenter($srcImage, $origW, $origH, 200, 200);
-        $disk->put($thumbPath, $this->encodeJpeg($thumb, 85));
-        imagedestroy($thumb);
+        // ── 1) Thumbnail 200x200 (crop-fill) — dùng cho list/card, không load ảnh full ──
+        $thumb = $manager->read($originalData)->cover(200, 200);
+        $thumbPath = $this->derivePath($photo->path_original, '_thumb', 'jpg');
+        $disk->put($thumbPath, (string) $thumb->toJpeg(quality: 85));
         $photo->path_thumb = $thumbPath;
 
-        $blurPath = $this->derivePath($photo->path_original, '_blurred');
-        $blurW = 400;
-        $blurH = (int) round($origH * $blurW / max(1, $origW));
-        $blurred = imagecreatetruecolor($blurW, $blurH);
-        imagecopyresampled($blurred, $srcImage, 0, 0, 0, 0, $blurW, $blurH, $origW, $origH);
+        $thumbWebpPath = $this->derivePath($photo->path_original, '_thumb', 'webp');
+        $disk->put($thumbWebpPath, (string) $thumb->toWebp(quality: 85));
+        $photo->path_thumb_webp = $thumbWebpPath;
 
-        for ($i = 0; $i < 5; $i++) {
-            imagefilter($blurred, IMG_FILTER_GAUSSIAN_BLUR);
-        }
+        // ── 2) Display: resize tối đa 1600px chiều dài, quality ~80 ──
+        // Đây là bản thay path_original khi hiển thị cho người dùng (trang chi tiết,
+        // ảnh lớn trong modal...), giúp giảm dung lượng tải về đáng kể.
+        $display = $manager->read($originalData)->scaleDown(width: 1600, height: 1600);
 
-        $disk->put($blurPath, $this->encodeJpeg($blurred, 70));
-        imagedestroy($blurred);
+        $displayJpegBinary = (string) $display->toJpeg(quality: 80);
+        $displayPath = $this->derivePath($photo->path_original, '_display', 'jpg');
+        $disk->put($displayPath, $displayJpegBinary);
+        $photo->path_display = $displayPath;
+        $photo->file_size_display = strlen($displayJpegBinary);
+
+        $displayWebpPath = $this->derivePath($photo->path_original, '_display', 'webp');
+        $disk->put($displayWebpPath, (string) $display->toWebp(quality: 80));
+        $photo->path_display_webp = $displayWebpPath;
+
+        // ── 3) Blurred placeholder nhỏ (giữ nguyên hành vi cũ cho user chưa xác thực) ──
+        $blurred = $manager->read($originalData)->scale(width: 400)->blur(15);
+        $blurPath = $this->derivePath($photo->path_original, '_blurred', 'jpg');
+        $disk->put($blurPath, (string) $blurred->toJpeg(quality: 70));
         $photo->path_blurred = $blurPath;
 
-        imagedestroy($srcImage);
         $photo->save();
     }
 
-    private function derivePath(string $originalPath, string $suffix): string
+    private function derivePath(string $originalPath, string $suffix, string $ext = 'jpg'): string
     {
-        $ext = pathinfo($originalPath, PATHINFO_EXTENSION) ?: 'jpg';
-        $noExt = substr($originalPath, 0, -(strlen($ext) + 1));
+        $origExt = pathinfo($originalPath, PATHINFO_EXTENSION) ?: 'jpg';
+        $noExt = substr($originalPath, 0, -(strlen($origExt) + 1));
 
-        return "{$noExt}{$suffix}.jpg";
-    }
-
-    private function cropCenter(\GdImage $src, int $srcW, int $srcH, int $dstW, int $dstH): \GdImage
-    {
-        $scale = max($dstW / max(1, $srcW), $dstH / max(1, $srcH));
-        $scaledW = (int) round($srcW * $scale);
-        $scaledH = (int) round($srcH * $scale);
-
-        $scaled = imagecreatetruecolor($scaledW, $scaledH);
-        imagecopyresampled($scaled, $src, 0, 0, 0, 0, $scaledW, $scaledH, $srcW, $srcH);
-
-        $x = (int) round(($scaledW - $dstW) / 2);
-        $y = (int) round(($scaledH - $dstH) / 2);
-
-        $dst = imagecreatetruecolor($dstW, $dstH);
-        imagecopy($dst, $scaled, 0, 0, $x, $y, $dstW, $dstH);
-        imagedestroy($scaled);
-
-        return $dst;
-    }
-
-    private function encodeJpeg(\GdImage $img, int $quality = 85): string
-    {
-        ob_start();
-        imagejpeg($img, null, $quality);
-
-        return ob_get_clean();
+        return "{$noExt}{$suffix}.{$ext}";
     }
 }

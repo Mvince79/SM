@@ -17,7 +17,7 @@
                             class="w-12 h-12 rounded-full p-0.5 border-2 {{ $index < 3 ? 'border-primary pulse-dot' : 'border-slate-300' }} flex items-center justify-center transform group-hover:scale-105 transition-all">
                             @if ($kid->primaryPhoto)
                                 <img src="{{ asset('storage/' . $kid->primaryPhoto->path_thumb) }}"
-                                    class="w-full h-full rounded-full object-cover bg-slate-100" alt="" />
+                                    class="w-full h-full rounded-full object-cover bg-slate-100" alt="" loading="lazy" />
                             @else
                                 <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ $kid->id }}&backgroundColor=ffdfbf"
                                     class="w-full h-full rounded-full object-cover bg-slate-100" alt="" />

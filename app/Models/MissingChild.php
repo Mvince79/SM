@@ -208,13 +208,14 @@ class MissingChild extends Model
     }
 
     /**
-     * URL ảnh thumbnail để hiển thị (không vỡ).
-     * Ưu tiên: path_thumb → path_blurred → path_original → DiceBear placeholder.
-     * path_thumb và path_blurred được tạo bởi ProcessPhotoJob.
+     * URL ảnh thumbnail cho lưới/card (list, home, search results).
+     * LUÔN ưu tiên path_thumb (200x200, ~85 quality) bất kể quyền xem của user —
+     * khác với trang chi tiết, grid không cần bản display/original nặng hơn.
+     * Ưu tiên: path_thumb → path_display → path_blurred → path_original → DiceBear.
      */
     public function getThumbUrlAttribute(): string
     {
-        $url = $this->getDetailPrimaryPhotoUrlAttribute();
+        $url = $this->resolveGridThumbUrl();
 
         if ($url) {
             return $url;
@@ -223,6 +224,55 @@ class MissingChild extends Model
         // Fallback: DiceBear avatar (không vỡ ảnh)
         $seed = urlencode($this->full_name);
         return "https://api.dicebear.com/7.x/thumbs/svg?seed={$seed}&backgroundColor=ffdfbf";
+    }
+
+    /**
+     * URL bản WebP của thumbnail (dùng cho <picture><source type="image/webp">).
+     * Trả về null nếu chưa có (ảnh cũ upload trước khi C-04 triển khai) — blade
+     * component tự bỏ qua <source> và dùng img src JPG như bình thường.
+     */
+    public function getThumbWebpUrlAttribute(): ?string
+    {
+        $photo = $this->primaryPhotoForGrid();
+
+        if ($photo && $photo->path_thumb_webp && Storage::disk('public')->exists($photo->path_thumb_webp)) {
+            return asset('storage/' . $photo->path_thumb_webp);
+        }
+
+        return null;
+    }
+
+    private function resolveGridThumbUrl(): ?string
+    {
+        $photo = $this->primaryPhotoForGrid();
+
+        if (!$photo) {
+            return null;
+        }
+
+        foreach (['path_thumb', 'path_display', 'path_blurred', 'path_original'] as $field) {
+            $path = $photo->{$field} ?? null;
+            if ($path && Storage::disk('public')->exists($path)) {
+                return asset('storage/' . $path);
+            }
+        }
+
+        return null;
+    }
+
+    private function primaryPhotoForGrid(): ?Photo
+    {
+        $photo = $this->relationLoaded('primaryPhoto')
+            ? $this->getRelation('primaryPhoto')
+            : $this->primaryPhoto()->first();
+
+        if (!$photo) {
+            $photo = $this->relationLoaded('photos')
+                ? $this->photos->first()
+                : $this->photos()->orderBy('sort_order')->first();
+        }
+
+        return $photo;
     }
 
     public function getDetailPhotoUrlsAttribute(): array
@@ -270,7 +320,10 @@ class MissingChild extends Model
         if (!$user) {
             $fields = ['path_blurred'];
         } elseif ($user->isAdmin() || $user->hasVerifiedKyc()) {
-            $fields = ['path_original', 'path_thumb', 'path_blurred'];
+            // path_display (resize ~1600px, nén ~80% quality) ưu tiên trước path_original
+            // (full-res) để giảm băng thông — path_original chỉ dùng làm fallback cho
+            // các ảnh cũ upload trước khi C-04 triển khai, hoặc khi job chưa xử lý xong.
+            $fields = ['path_display', 'path_original', 'path_thumb', 'path_blurred'];
         } else {
             $fields = ['path_thumb', 'path_blurred'];
         }

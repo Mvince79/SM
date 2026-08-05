@@ -111,7 +111,7 @@ class FoundChild extends Model
             return null;
         }
 
-        foreach (['path_thumb', 'path_original'] as $field) {
+        foreach (['path_thumb', 'path_display', 'path_original'] as $field) {
             $path = $photo->{$field} ?? null;
             if ($path && Storage::disk('public')->exists($path)) {
                 return asset('storage/' . $path);

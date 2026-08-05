@@ -12,11 +12,17 @@
     {{-- Ảnh --}}
     <a href="{{ route('missing.detail', $case->id) }}"
        class="block group relative overflow-hidden aspect-[4/3] bg-slate-900">
-        <img src="{{ $case->thumb_url }}"
-             class="w-full h-full object-cover transform group-hover:scale-105 transition-premium
-                    {{ $isFound ? 'grayscale opacity-90' : '' }}"
-             alt="Ảnh {{ $case->full_name }}"
-             onerror="this.src='https://api.dicebear.com/7.x/thumbs/svg?seed={{ urlencode($case->full_name) }}&backgroundColor=ffdfbf'"/>
+        <picture>
+            @if($case->thumb_webp_url)
+                <source srcset="{{ $case->thumb_webp_url }}" type="image/webp">
+            @endif
+            <img src="{{ $case->thumb_url }}"
+                 class="w-full h-full object-cover transform group-hover:scale-105 transition-premium
+                        {{ $isFound ? 'grayscale opacity-90' : '' }}"
+                 alt="Ảnh {{ $case->full_name }}"
+                 loading="lazy"
+                 onerror="this.src='https://api.dicebear.com/7.x/thumbs/svg?seed={{ urlencode($case->full_name) }}&backgroundColor=ffdfbf'"/>
+        </picture>
 
         {{-- Badge trạng thái --}}
         @if($isFound)
