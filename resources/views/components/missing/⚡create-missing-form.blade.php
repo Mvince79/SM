@@ -5,7 +5,6 @@ use Livewire\WithFileUploads;
 use App\Models\MissingChild;
 use App\Models\Photo;
 use App\Models\Province;
-use App\Jobs\ProcessPhotoJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Traits\HasIdempotency;
@@ -291,7 +290,11 @@ new class extends Component {
                         'is_primary' => $index === 0 ? 1 : 0,
                         'sort_order' => $index,
                     ]);
-                    ProcessPhotoJob::dispatch($case->id, $path);
+                    // KHÔNG tự dispatch ProcessPhotoJob ở đây: App\Observers\PhotoObserver
+                    // đã tự động dispatch đúng photo_id ngay khi Photo::create() chạy ở
+                    // trên (xem AppServiceProvider::boot() -> Photo::observe(...)).
+                    // Dòng dispatch cũ ở đây truyền nhầm $case->id (id hồ sơ, không phải
+                    // id ảnh) nên vừa sai vừa dispatch trùng job — đã xoá.
                 }
 
                 return $case;

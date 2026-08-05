@@ -3,18 +3,10 @@
 namespace App\Traits;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\ValidationException;
 
 trait HasRedisLock
 {
-    /**
-     * Bọc $callback trong 1 atomic lock (Cache::lock), chặn NGAY TRƯỚC KHI
-     * request chạm DB. Dùng cache store MẶC ĐỊNH của môi trường (tôn trọng
-     * CACHE_STORE trong .env / phpunit.xml) thay vì ép cứng 'redis' —
-     * production vẫn chạy Redis thật (CACHE_STORE=redis), còn test có thể
-     * dùng driver nhẹ hơn (array, database...) mà không cần Redis thật,
-     * vì mọi driver có LockProvider (array, redis, memcached, database,
-     * dynamodb, file) đều hỗ trợ atomic lock.
-     */
     protected function withSubmitLock(
         string $lockKey,
         callable $callback,
@@ -24,7 +16,9 @@ trait HasRedisLock
         $lock = Cache::lock($lockKey, $seconds);
 
         if (!$lock->get()) {
-            abort(409, $conflictMessage);
+            throw ValidationException::withMessages([
+                'submitLock' => $conflictMessage,
+            ]);
         }
 
         try {

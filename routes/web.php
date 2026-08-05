@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\HealthCheckController;
+use App\Http\Controllers\ExportPdfController;
 
 // ── Auth (register, login, OTP, Google OAuth, logout) ──────────────────────
 require __DIR__ . '/auth.php';
@@ -49,6 +50,9 @@ Route::prefix('missing')->name('missing.')->group(function () {
     Route::get('/{slug}', [MissingController::class, 'detailBySlug'])
         ->where('slug', '^(?!create$|store$|detail$|found$)[a-z0-9-]+$')
         ->name('by_slug');
+
+    Route::get('/detail/{id}/qr.svg', [MissingController::class, 'qr'])->name('qr');
+    Route::get('/detail/{id}/pdf', [ExportPdfController::class, 'missingChild'])->name('pdf');
 });
 
 Route::get('/map/heatmap-data', [HeatmapController::class, 'index'])
@@ -103,7 +107,7 @@ Route::middleware('auth')->get(
             default => null,
         };
 
-        abort_if(blank($path) || ! Storage::disk('private')->exists($path), 404);
+        abort_if(blank($path) || !Storage::disk('private')->exists($path), 404);
 
         return Storage::disk('private')->response($path);
     },
