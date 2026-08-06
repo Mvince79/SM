@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class FoundChild extends Model
 {
     use HasFactory, SoftDeletes;
+    use LogsActivity;
 
     protected $table = 'found_children';
 
@@ -54,6 +57,12 @@ class FoundChild extends Model
         ];
     }
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status'])
+            ->logOnlyDirty();
+    }
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

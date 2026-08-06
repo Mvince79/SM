@@ -11,10 +11,13 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use App\Models\FaceMatchResult;
 use App\Models\Clue;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class MissingChild extends Model
 {
     use SoftDeletes;
+    use LogsActivity;
 
     protected $table = 'missing_children';
 
@@ -75,6 +78,13 @@ class MissingChild extends Model
                 $missingChild->slug = static::generateUniqueSlug($missingChild);
             }
         });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status']) // chỉ log field quan trọng, không log hết
+            ->logOnlyDirty();     // chỉ log khi giá trị thực sự thay đổi
     }
 
     protected static function generateUniqueSlug(MissingChild $missingChild): string

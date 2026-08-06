@@ -11,10 +11,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class User extends Authenticatable implements FilamentUser
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'full_name',
@@ -60,6 +62,12 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['role', 'status', 'kyc_status'])
+            ->logOnlyDirty();
+    }
     // ─── Scopes ──────────────────────────────────────────────────────────────
 
     public function scopeActive($query)
