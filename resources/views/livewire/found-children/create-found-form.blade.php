@@ -5,6 +5,7 @@ use Livewire\WithFileUploads;
 use App\Models\FoundChild;
 use App\Models\Photo;
 use App\Models\Province;
+use App\Models\UserConsent;
 use App\Traits\HasIdempotency;
 use Illuminate\Support\Facades\Auth;
 
@@ -33,6 +34,7 @@ new class extends Component {
 
     // ── Bước 3 — Xác nhận & Cam kết ──────────────────────────────────────────
     public bool $agreed = false;
+    public bool $agreedDataPolicy = false;
     public bool $isSubmitting = false;
     public string $idempotencyKey = '';
 
@@ -72,7 +74,10 @@ new class extends Component {
     {
         return [
             'gender_estimate' => ['required', 'in:MALE,FEMALE,UNKNOWN'],
-            'age_estimate' => ['nullable', 'integer', 'min:0', 'max:120'],
+            // F-05: trước đây hardcode max:120 — không khớp với form đăng tin
+            // tìm trẻ (dùng config('app.child_age_limit'), đúng Luật Trẻ em
+            // 2016 = dưới 16 tuổi). Đồng bộ lại theo cùng 1 nguồn config.
+            'age_estimate' => ['nullable', 'integer', 'min:0', 'max:' . (config('app.child_age_limit') - 1)],
             'condition_desc' => ['nullable', 'string', 'max:2000'],
             'clothes_desc' => ['nullable', 'string', 'max:1000'],
             'special_marks' => ['required', 'string', 'min:10'],
@@ -84,6 +89,7 @@ new class extends Component {
     protected function messagesStep2(): array
     {
         return [
+            'age_estimate.max' => 'Hệ thống chỉ tiếp nhận báo tin cho trẻ dưới ' . config('app.child_age_limit') . ' tuổi theo quy định của Luật Trẻ em 2016.',
             'special_marks.required' => 'Vui lòng mô tả dấu hiệu/đặc điểm nhận dạng để gia đình dễ nhận ra bé.',
             'special_marks.min' => 'Mô tả cần ít nhất 10 ký tự.',
             'photos.required' => 'Vui lòng tải lên ít nhất 1 ảnh để cộng đồng nhận diện.',
@@ -98,6 +104,7 @@ new class extends Component {
     {
         return [
             'agreed' => ['accepted'],
+            'agreedDataPolicy' => ['accepted'],
         ];
     }
 
@@ -105,6 +112,7 @@ new class extends Component {
     {
         return [
             'agreed.accepted' => 'Vui lòng xác nhận cam kết trước khi gửi hồ sơ.',
+            'agreedDataPolicy.accepted' => 'Vui lòng đồng ý với Chính sách Bảo vệ Dữ liệu Trẻ em.',
         ];
     }
 
@@ -213,6 +221,20 @@ new class extends Component {
                     'special_marks' => $this->special_marks,
                     'status' => 'PENDING',
                 ]);
+
+                // F-05: trước đây form báo tin tìm thấy không ghi UserConsent nào
+                // cả — thêm để khớp với những gì child-data-policy Điều 7 đã cam
+                // kết áp dụng cho luồng này. 'agreed' (đúng sự thật + chịu trách
+                // nhiệm pháp luật) tương ứng TOS, giống create-missing-form.
+                foreach (['TOS', 'PRIVACY_POLICY', 'CHILD_DATA_POLICY'] as $type) {
+                    UserConsent::create([
+                        'user_id' => Auth::id(),
+                        'consent_type' => $type,
+                        'version' => config("legal.versions.$type"),
+                        'accepted_at' => now(),
+                        'ip_address' => request()->ip(),
+                    ]);
+                }
 
                 foreach ($this->photos as $index => $photo) {
                     $path = $photo->storePublicly("found-children/{$item->id}", 'public');
@@ -529,7 +551,7 @@ new class extends Component {
                             Tuổi ước tính
                         </label>
                         <div class="relative">
-                            <input type="number" wire:model.blur="age_estimate" min="0" max="120" placeholder="VD: 8"
+                            <input type="number" wire:model.blur="age_estimate" min="0" max="{{ config('app.child_age_limit') - 1 }}" placeholder="VD: 8"
                                 class="w-full px-4 py-3 pr-14 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
                             <span
                                 class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-semibold pointer-events-none">tuổi</span>
@@ -705,10 +727,28 @@ new class extends Component {
                         <span class="text-[11px] text-slate-600 leading-relaxed font-bold">
                             Tôi cam kết các thông tin khai báo trên đây là đúng sự thật, được ghi nhận từ việc trực
                             tiếp gặp/tiếp nhận em bé, và chịu trách nhiệm trước pháp luật Việt Nam về tính xác thực
-                            của thông tin.
+                            của thông tin, theo
+                            <a href="{{ route('legal.terms') }}" target="_blank" class="text-primary underline">Điều khoản Sử dụng</a>.
                         </span>
                     </label>
                     @error('agreed')
+                        <p class="text-xs text-red-500 font-semibold mt-2">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- F-05: checkbox riêng cho Chính sách Quyền riêng tư + Bảo vệ Dữ liệu Trẻ em,
+                     cùng cơ chế với create-missing-form.blade.php --}}
+                <div class="bg-primary/5 border border-primary/20 p-4 rounded-2xl mt-3">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" wire:model="agreedDataPolicy" class="mt-0.5 w-4 h-4 accent-primary rounded shrink-0" />
+                        <span class="text-[11px] text-slate-600 leading-relaxed font-bold">
+                            Tôi đã đọc và đồng ý với
+                            <a href="{{ route('legal.privacy') }}" target="_blank" class="text-primary underline">Chính sách Quyền riêng tư</a>
+                            và
+                            <a href="{{ route('legal.child-data') }}" target="_blank" class="text-primary underline">Chính sách Bảo vệ Dữ liệu Trẻ em</a>.
+                        </span>
+                    </label>
+                    @error('agreedDataPolicy')
                         <p class="text-xs text-red-500 font-semibold mt-2">{{ $message }}</p>
                     @enderror
                 </div>

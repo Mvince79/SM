@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\FoundChild;
 use App\Models\MissingChild;
-use App\Support\CacheTags;
+use App\Support\CacheVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -58,10 +58,10 @@ class MapDataController
 
         $cacheKey = $this->getCacheKey($validated);
 
-        $markers = Cache::tags([CacheTags::MAP_DATA])->remember(
+        $markers = Cache::remember(
             $cacheKey,
             self::CACHE_TTL,
-            fn() => $this->getMarkers($validated)
+            fn () => $this->getMarkers($validated)
         );
 
         return response()->json($markers);
@@ -417,7 +417,9 @@ class MapDataController
                 : null,
         ]));
 
-        return "map_data:{$hash}";
+        $version = CacheVersion::current(CacheVersion::MAP_DATA);
+
+        return "map_data:v{$version}:{$hash}";
     }
 
     /**

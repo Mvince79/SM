@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\MissingChild;
-use App\Support\CacheTags;
+use App\Support\CacheVersion;
 use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
@@ -13,8 +13,10 @@ class HomeController extends Controller
 
     public function index()
     {
-        $highlights = Cache::tags([CacheTags::HOME_HIGHLIGHTS])->remember(
-            'home:highlights',
+        $version = CacheVersion::current(CacheVersion::HOME_HIGHLIGHTS);
+
+        $highlights = Cache::remember(
+            "home:highlights:v{$version}",
             self::CACHE_TTL,
             function () {
                 $sosKids = MissingChild::where('status', 'APPROVED')

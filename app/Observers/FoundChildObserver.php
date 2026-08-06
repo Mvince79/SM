@@ -3,8 +3,7 @@
 namespace App\Observers;
 
 use App\Models\FoundChild;
-use App\Support\CacheTags;
-use Illuminate\Support\Facades\Cache;
+use App\Support\CacheVersion;
 use Illuminate\Support\Facades\Log;
 
 class FoundChildObserver
@@ -12,7 +11,7 @@ class FoundChildObserver
     private function invalidateMapCache(): void
     {
         try {
-            Cache::tags([CacheTags::MAP_DATA])->flush();
+            CacheVersion::bump(CacheVersion::MAP_DATA);
         } catch (\Throwable $e) {
             Log::warning('FoundChildObserver: cache flush failed: ' . $e->getMessage());
         }

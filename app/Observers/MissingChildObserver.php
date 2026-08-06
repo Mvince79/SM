@@ -4,8 +4,7 @@ namespace App\Observers;
 
 use App\Jobs\DispatchProvinceCaseApprovedNotificationsJob;
 use App\Models\MissingChild;
-use App\Support\CacheTags;
-use Illuminate\Support\Facades\Cache;
+use App\Support\CacheVersion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -14,8 +13,8 @@ class MissingChildObserver
     private function invalidateMapAndHomeCache(): void
     {
         try {
-            Cache::tags([CacheTags::MAP_DATA])->flush();
-            Cache::tags([CacheTags::HOME_HIGHLIGHTS])->flush();
+            CacheVersion::bump(CacheVersion::MAP_DATA);
+            CacheVersion::bump(CacheVersion::HOME_HIGHLIGHTS);
         } catch (\Throwable $e) {
             Log::warning('MissingChildObserver: cache flush failed: ' . $e->getMessage());
         }
