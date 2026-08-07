@@ -8,6 +8,7 @@ use App\Models\AdminChatAssignment;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\MessageSanitizerService;
+use App\Rules\SecureImage;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -83,7 +84,7 @@ class ChatBox extends Component
     {
         $this->validate([
             'body' => ['nullable', 'string', 'max:2000'],
-            'photo' => ['nullable', 'image', 'max:5120'], // max 5MB
+            'photo' => ['nullable', 'image', 'max:5120', new SecureImage], // max 5MB
         ]);
 
         if (empty(trim($this->body)) && ! $this->photo) {

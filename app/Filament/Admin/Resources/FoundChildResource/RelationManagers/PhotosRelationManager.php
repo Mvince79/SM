@@ -2,13 +2,16 @@
 
 namespace App\Filament\Admin\Resources\FoundChildResource\RelationManagers;
 
-use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables\Table;
-use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ImageColumn;
+use App\Rules\SecureImage;
+use App\Support\SecureUploadFilename;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Toggle;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class PhotosRelationManager extends RelationManager
 {
@@ -23,7 +26,12 @@ class PhotosRelationManager extends RelationManager
                 ->label('Ảnh')
                 ->image()
                 ->disk('public')
-                ->directory(fn($record) => 'found_children/' . ($record?->getKey() ?? 'tmp') . '/original')
+                ->directory(fn ($record) => 'found_children/'.($record?->getKey() ?? 'tmp').'/original')
+                ->maxSize(5120)
+                ->rules([new SecureImage])
+                ->getUploadedFileNameForStorageUsing(
+                    fn (TemporaryUploadedFile $file): string => SecureUploadFilename::for($file),
+                )
                 ->required(),
             Toggle::make('is_primary')->label('Ảnh chính'),
         ]);

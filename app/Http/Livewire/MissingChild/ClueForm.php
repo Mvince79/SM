@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\ClueSubmittedNotification;
+use App\Rules\SecureImage;
 
 class ClueForm extends Component
 {
@@ -44,7 +45,7 @@ class ClueForm extends Component
     {
         return [
             'description' => ['required', 'string', 'max:2000'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => ['nullable', 'image', 'max:5120', new SecureImage],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lng' => ['nullable', 'numeric', 'between:-180,180'],
             'is_anonymous' => ['boolean'],

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\SecureImage;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SubmitKycRequest extends FormRequest
@@ -36,9 +37,9 @@ class SubmitKycRequest extends FormRequest
             ],
             'full_name_on_id' => ['nullable', 'string', 'max:255'],
             'dob_on_id' => ['nullable', 'date', 'before:today'],
-            'front_image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
-            'back_image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
-            'selfie' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'front_image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120', new SecureImage(['image/jpeg', 'image/png'])],
+            'back_image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120', new SecureImage(['image/jpeg', 'image/png'])],
+            'selfie' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120', new SecureImage(['image/jpeg', 'image/png'])],
         ];
     }
 

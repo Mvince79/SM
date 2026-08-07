@@ -4,6 +4,8 @@ namespace App\Filament\Admin\Resources\MissingChildren\RelationManagers;
 
 use App\Models\MissingChild;
 use App\Models\Photo;
+use App\Rules\SecureImage;
+use App\Support\SecureUploadFilename;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -16,7 +18,7 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class PhotosRelationManager extends RelationManager
 {
@@ -35,8 +37,12 @@ class PhotosRelationManager extends RelationManager
             FileUpload::make('path_original')
                 ->label('Ảnh')
                 ->disk('public')
-                ->directory(fn() => 'missing/' . $this->ownerRecord->id)
+                ->directory(fn () => 'missing/'.$this->ownerRecord->id)
                 ->image()
+                ->rules([new SecureImage])
+                ->getUploadedFileNameForStorageUsing(
+                    fn (TemporaryUploadedFile $file): string => SecureUploadFilename::for($file),
+                )
                 ->imagePreviewHeight('160')
                 ->maxSize(5120) // 5MB
                 ->required(),
@@ -55,30 +61,30 @@ class PhotosRelationManager extends RelationManager
                             ?: $record->path_original
                             ?: $record->path_blurred;
 
-                        if (!$path) {
+                        if (! $path) {
                             return null;
                         }
 
-                        return asset('storage/' . $path);  
+                        return asset('storage/'.$path);
                     })
-                    ->imageHeight(80)   
+                    ->imageHeight(80)
                     ->width(80)
                     ->defaultImageUrl(
-                        fn($record) => 'https://ui-avatars.com/api/?name=Photo&size=80&background=e2e8f0&color=64748b'
+                        fn ($record) => 'https://ui-avatars.com/api/?name=Photo&size=80&background=e2e8f0&color=64748b'
                     ),
 
                 TextColumn::make('path_original')
                     ->label('Tên file')
-                    ->formatStateUsing(fn($state) => $state ? basename($state) : '—')
+                    ->formatStateUsing(fn ($state) => $state ? basename($state) : '—')
                     ->limit(35)
-                    ->tooltip(fn($record) => $record->path_original)
+                    ->tooltip(fn ($record) => $record->path_original)
                     ->searchable(),
 
                 TextColumn::make('is_primary')
                     ->label('Loại')
                     ->badge()
-                    ->color(fn($state) => $state ? 'success' : 'gray')
-                    ->formatStateUsing(fn($state) => $state ? '★ Ảnh chính' : 'Ảnh phụ'),
+                    ->color(fn ($state) => $state ? 'success' : 'gray')
+                    ->formatStateUsing(fn ($state) => $state ? '★ Ảnh chính' : 'Ảnh phụ'),
 
                 TextColumn::make('sort_order')
                     ->label('Thứ tự')
@@ -103,7 +109,7 @@ class PhotosRelationManager extends RelationManager
                     ->label('Đặt làm ảnh chính')
                     ->icon('heroicon-o-star')
                     ->color('success')
-                    ->visible(fn($record) => !$record->is_primary)
+                    ->visible(fn ($record) => ! $record->is_primary)
                     ->requiresConfirmation()
                     ->modalHeading('Đặt làm ảnh chính?')
                     ->modalDescription('Ảnh hiện tại làm chính sẽ chuyển thành ảnh phụ.')
@@ -126,7 +132,7 @@ class PhotosRelationManager extends RelationManager
             ])
             ->reorderable('sort_order')
             ->reorderRecordsTriggerAction(
-                fn($action) => $action->button()->label('Sắp xếp ảnh')
+                fn ($action) => $action->button()->label('Sắp xếp ảnh')
             )
             ->defaultSort('sort_order')
             ->striped();

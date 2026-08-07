@@ -29,7 +29,7 @@ new class extends Component
     public function updatedAvatarUpload(): void
     {
         $this->validate([
-            'avatarUpload' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
+            'avatarUpload' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:3072', new \App\Rules\SecureImage],
         ], [
             'avatarUpload.image' => 'File phải là ảnh.',
             'avatarUpload.mimes' => 'Chỉ chấp nhận JPG, PNG, WebP.',
@@ -94,7 +94,7 @@ new class extends Component
             $dst = imagecreatetruecolor(300, 300);
             imagecopyresampled($dst, $src, 0, 0, $x, $y, 300, 300, $size, $size);
 
-            $filename = 'avatars/' . Auth::id() . '_' . time() . '.jpg';
+            $filename = 'avatars/' . \Illuminate\Support\Str::uuid() . '.jpg';
             $fullPath = storage_path('app/public/' . $filename);
 
             if (!is_dir(dirname($fullPath))) {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\SecureImage;
 use Illuminate\Foundation\Http\FormRequest;
 
 class FoundChildRequest extends FormRequest
@@ -16,7 +17,7 @@ class FoundChildRequest extends FormRequest
         return [
             'province_id' => 'required|exists:provinces,id',
             'photos' => 'required|array|min:1',
-            'photos.*' => 'image|mimes:jpg,jpeg,png,webp|max:5120',
+            'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120', new SecureImage],
             'found_date' => 'required|date',
             'found_time' => 'nullable|date_format:H:i',
             'gender_estimate' => 'nullable|in:MALE,FEMALE,UNKNOWN',

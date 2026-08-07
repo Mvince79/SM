@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Missing;
 
+use App\Rules\SecureImage;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -47,7 +48,7 @@ class StoreMissingChildRequest extends FormRequest
             'clothes_color' => ['nullable', 'string', 'max:100'],
             'special_marks' => ['required', 'string', 'min:20'],
             'photos' => ['nullable', 'array', 'max:5'],
-            'photos.*' => ['file', 'max:5120'],
+            'photos.*' => ['file', 'max:5120', new SecureImage],
 
             // Bước 3
             'contact_name' => ['required', 'string', 'max:100'],

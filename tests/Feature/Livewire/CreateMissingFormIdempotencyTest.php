@@ -6,6 +6,8 @@ use App\Models\MissingChild;
 use App\Models\Province;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -71,5 +73,24 @@ class CreateMissingFormIdempotencyTest extends TestCase
             ->call('submit');
 
         $this->assertSame(2, MissingChild::count(), 'Idempotency key khác nhau -> phải tạo 2 record riêng biệt');
+    }
+    public function test_embedded_executable_payload_is_rejected_before_missing_case_is_created(): void
+    {
+        Storage::fake('public');
+
+        $province = Province::factory()->create(['is_active' => 1]);
+        $user = User::factory()->create(['kyc_status' => 'VERIFIED']);
+        $photo = UploadedFile::fake()->image('portrait.jpg', 800, 600);
+        file_put_contents($photo->getRealPath(), '<?php echo "owned";', FILE_APPEND);
+
+        Livewire::actingAs($user)
+            ->test('missing.create-missing-form')
+            ->set('province_id', (string) $province->id)
+            ->set($this->baseFormData())
+            ->set('photos', [$photo])
+            ->call('submit')
+            ->assertHasErrors('photos.*');
+
+        $this->assertDatabaseCount('missing_children', 0);
     }
 }

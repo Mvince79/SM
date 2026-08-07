@@ -3,19 +3,22 @@
 namespace App\Filament\Admin\Resources\Articles\Schemas;
 
 use App\Models\User;
+use App\Rules\SecureImage;
+use App\Support\SecureUploadFilename;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
-use Filament\Infolists\Components\TextEntry;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ArticleForm
 {
@@ -43,6 +46,29 @@ class ArticleForm
                         RichEditor::make('content')
                             ->label('Nội dung')
                             ->required()
+                            ->fileAttachmentsDisk('public')
+                            ->fileAttachmentsDirectory('articles/content')
+                            ->fileAttachmentsVisibility('public')
+                            ->fileAttachmentsAcceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->fileAttachmentsMaxSize(5120)
+                            ->saveUploadedFileAttachmentUsing(function (TemporaryUploadedFile $file): string {
+                                Validator::validate(
+                                    ['file' => $file],
+                                    ['file' => ['file', 'max:5120', new SecureImage]],
+                                );
+
+                                $path = $file->storeAs(
+                                    'articles/content',
+                                    SecureUploadFilename::for($file),
+                                    'public',
+                                );
+
+                                if (! is_string($path)) {
+                                    throw new \RuntimeException('Could not store the article attachment.');
+                                }
+
+                                return $path;
+                            })
                             ->columnSpanFull(),
 
                         FileUpload::make('cover_image_path')
@@ -51,6 +77,10 @@ class ArticleForm
                             ->disk('public')
                             ->directory('articles/covers')
                             ->imageEditor()
+                            ->rules([new SecureImage])
+                            ->getUploadedFileNameForStorageUsing(
+                                fn (TemporaryUploadedFile $file): string => SecureUploadFilename::for($file),
+                            )
                             ->maxSize(5120),
 
                         Select::make('author_id')
@@ -62,7 +92,7 @@ class ArticleForm
                             )
                             ->searchable()
                             ->preload()
-                            ->default(fn(): ?int => Auth::id())
+                            ->default(fn (): ?int => Auth::id())
                             ->required(),
 
                         DateTimePicker::make('published_at')
@@ -100,7 +130,7 @@ class ArticleForm
                                 $description = $get('meta_description')
                                     ?: 'Mô tả bài viết sẽ xuất hiện tại đây khi người dùng tìm kiếm trên Google.';
 
-                                $url = url('/bai-viet/' . $slug);
+                                $url = url('/bai-viet/'.$slug);
 
                                 return new HtmlString(
                                     '<div style="
@@ -116,7 +146,7 @@ class ArticleForm
                                             margin-bottom: 4px;
                                             word-break: break-all;
                                         ">'
-                                    . e($url) .
+                                    .e($url).
                                     '</div>
 
                                         <div style="
@@ -125,7 +155,7 @@ class ArticleForm
                                             line-height: 1.3;
                                             margin-bottom: 4px;
                                         ">'
-                                    . e(Str::limit($title, 60, '...')) .
+                                    .e(Str::limit($title, 60, '...')).
                                     '</div>
 
                                         <div style="
@@ -133,7 +163,7 @@ class ArticleForm
                                             font-size: 14px;
                                             line-height: 1.5;
                                         ">'
-                                    . e(Str::limit($description, 160, '...')) .
+                                    .e(Str::limit($description, 160, '...')).
                                     '</div>
                                     </div>'
                                 );
