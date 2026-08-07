@@ -1,0 +1,15 @@
+[program:timtre-horizon]
+process_name=%(program_name)s
+command=/usr/bin/php /var/www/timtre/artisan horizon
+directory=/var/www/timtre
+user=www-data
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+redirect_stderr=true
+stdout_logfile=/var/log/timtre/horizon.log
+stdout_logfile_maxbytes=20MB
+stdout_logfile_backups=10
+stopwaitsecs=3600
+environment=APP_ENV="production"
