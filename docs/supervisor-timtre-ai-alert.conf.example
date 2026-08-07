@@ -1,0 +1,15 @@
+[eventlistener:timtre-ai-restart-alert]
+command=/usr/local/bin/timtre-ai-restart-alert
+events=PROCESS_STATE_EXITED
+user=www-data
+environment=AI_RESTART_ALERT_WINDOW_SECONDS="300",AI_RESTART_ALERT_THRESHOLD="3",AI_RESTART_ALERT_STATE_DIR="/var/lib/timtre-ai"
+autostart=true
+autorestart=true
+startsecs=1
+startretries=3
+stderr_logfile=/var/log/timtre-ai/restart-alert.error.log
+stderr_logfile_maxbytes=0
+stderr_logfile_backups=0
+stdout_logfile=/var/log/timtre-ai/restart-alert.log
+stdout_logfile_maxbytes=0
+stdout_logfile_backups=0

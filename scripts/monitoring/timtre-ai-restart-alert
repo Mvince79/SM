@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Supervisor event listener for unexpected timtre-ai exits.
+# Install to /usr/local/bin/timtre-ai-restart-alert with mode 0755.
+set -euo pipefail
+
+readonly PROGRAM='timtre-ai'
+readonly WINDOW_SECONDS="${AI_RESTART_ALERT_WINDOW_SECONDS:-300}"
+readonly THRESHOLD="${AI_RESTART_ALERT_THRESHOLD:-3}"
+readonly STATE_DIR="${AI_RESTART_ALERT_STATE_DIR:-/var/lib/timtre-ai}"
+readonly EVENT_FILE="${STATE_DIR}/unexpected-exits"
+readonly ALERT_MARKER="${STATE_DIR}/unexpected-exits.alerted"
+
+mkdir -p "$STATE_DIR"
+chmod 0750 "$STATE_DIR"
+
+emit_alert() {
+    local count="$1"
+    local message="${PROGRAM} unexpectedly exited ${count} times in the last ${WINDOW_SECONDS}s"
+
+    logger -t timtre-ai-restart-alert -p daemon.err -- "$message"
+
+    if [[ -n "${AI_ALERT_WEBHOOK_URL:-}" ]]; then
+        curl --fail --silent --show-error --max-time 10 \
+            --retry 1 \
+            -H 'Content-Type: application/json' \
+            --data "{\"service\":\"${PROGRAM}\",\"event\":\"repeated_unexpected_exit\",\"count\":${count},\"window_seconds\":${WINDOW_SECONDS}}" \
+            "$AI_ALERT_WEBHOOK_URL" \
+            || logger -t timtre-ai-restart-alert -p daemon.err -- 'Could not deliver AI restart webhook alert'
+    fi
+}
+
+while true; do
+    # Supervisor event-listener protocol: acknowledge each event before handling it.
+    printf 'READY\n'
+    IFS= read -r header || exit 0
+    payload_length=$(sed -n 's/.*len:\([0-9][0-9]*\).*/\1/p' <<<"$header")
+    payload=''
+    if [[ -n "$payload_length" && "$payload_length" -gt 0 ]]; then
+        IFS= read -r -N "$payload_length" payload || exit 0
+    fi
+    printf 'RESULT 2\nOK'
+
+    [[ "$header" == *'PROCESS_STATE_EXITED'* ]] || continue
+    [[ "$payload" == *"processname:${PROGRAM}"* ]] || continue
+    [[ "$payload" == *'expected:0'* ]] || continue
+
+    (
+        flock -x 9
+        now=$(date +%s)
+        cutoff=$((now - WINDOW_SECONDS))
+        touch "$EVENT_FILE"
+        awk -v cutoff="$cutoff" '$1 >= cutoff { print $1 }' "$EVENT_FILE" > "${EVENT_FILE}.tmp"
+        printf '%s\n' "$now" >> "${EVENT_FILE}.tmp"
+        mv "${EVENT_FILE}.tmp" "$EVENT_FILE"
+        count=$(wc -l < "$EVENT_FILE" | tr -d ' ')
+
+        if (( count >= THRESHOLD )) && [[ ! -e "$ALERT_MARKER" ]]; then
+            touch "$ALERT_MARKER"
+            emit_alert "$count"
+        elif (( count < THRESHOLD )); then
+            rm -f "$ALERT_MARKER"
+        fi
+    ) 9>"${EVENT_FILE}.lock"
+done
