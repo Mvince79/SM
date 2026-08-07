@@ -23,6 +23,14 @@ class MissingChild extends Model
 
     protected $table = 'missing_children';
 
+    public const STATUS_ARCHIVED = 'ARCHIVED';
+
+    public const EXPIRABLE_STATUSES = ['PENDING', 'APPROVED'];
+
+    public const EXPIRATION_WARNING_DAYS = 30;
+
+    public const RENEWAL_GRACE_DAYS = 30;
+
     protected $fillable = [
         'user_id',
         'case_code',
@@ -52,6 +60,10 @@ class MissingChild extends Model
         'approved_at',
         'approved_by',
         'found_at',
+        'expires_at',
+        'expiration_warning_sent_at',
+        'archived_at',
+        'status_before_archive',
         'qr_code_path',
         'view_count',
         'share_count',
@@ -70,16 +82,56 @@ class MissingChild extends Model
         'missing_date' => 'date',
         'approved_at' => 'datetime',
         'found_at' => 'datetime',
+        'expires_at' => 'datetime',
+        'expiration_warning_sent_at' => 'datetime',
+        'archived_at' => 'datetime',
         'lat' => 'decimal:7',
         'lng' => 'decimal:7',
     ];
     protected static function booted(): void
     {
+        static::creating(function (MissingChild $missingChild): void {
+            if (is_null($missingChild->expires_at)) {
+                $missingChild->expires_at = now()->addYears(2);
+            }
+        });
+
         static::saving(function (MissingChild $missingChild) {
             if (blank($missingChild->slug)) {
                 $missingChild->slug = static::generateUniqueSlug($missingChild);
             }
         });
+    }
+
+    public function canBeRenewed(): bool
+    {
+        if (!$this->expires_at) {
+            return false;
+        }
+
+        $withinRenewalWindow = $this->expires_at
+            ->copy()
+            ->addDays(self::RENEWAL_GRACE_DAYS)
+            ->greaterThanOrEqualTo(now());
+
+        return $withinRenewalWindow
+            && (in_array($this->status, self::EXPIRABLE_STATUSES, true)
+                || $this->status === self::STATUS_ARCHIVED);
+    }
+
+    public function renewExpiration(): void
+    {
+        $status = $this->status === self::STATUS_ARCHIVED
+            ? ($this->status_before_archive ?: 'APPROVED')
+            : $this->status;
+
+        $this->forceFill([
+            'status' => $status,
+            'expires_at' => now()->addYears(2),
+            'expiration_warning_sent_at' => null,
+            'archived_at' => null,
+            'status_before_archive' => null,
+        ])->save();
     }
 
     public function getActivitylogOptions(): LogOptions

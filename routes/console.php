@@ -15,3 +15,9 @@ Schedule::command('notifications:scan-unread-critical')->everyFiveMinutes();
 Schedule::command('horizon:snapshot')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+// Archive cases only after the configured retention window has elapsed.
+Schedule::command('cases:archive-expired')
+    ->dailyAt('01:00')
+    ->withoutOverlapping()
+    ->onOneServer();
