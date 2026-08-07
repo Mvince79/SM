@@ -19,9 +19,10 @@ use App\Models\Message;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\HealthCheckController;
 
 // ── Auth (register, login, OTP, Google OAuth, logout) ──────────────────────
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 // ── Trang chủ (public) ──────────────────────────────────────────────────────
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -87,6 +88,9 @@ Route::middleware(['auth'])
     })
     ->name('volunteer.dashboard');
 
+Route::get('/health', HealthCheckController::class)
+    ->name('health');
+    
 Route::middleware('auth')->get(
     '/admin/kyc-verifications/{kycVerification}/images/{side}',
     function (KycVerification $kycVerification, string $side) {
@@ -110,7 +114,7 @@ Route::middleware('auth')->get(
 Route::middleware(['auth', 'email.verified'])->group(function () {
     Route::prefix('/profile')->name('profile.')->group(function () {
         Route::get('/', [ProfileController::class, 'index'])->name('index');
-        Route::get('/kyc', fn () => view('profile.kyc'))->name('kyc');
+        Route::get('/kyc', fn() => view('profile.kyc'))->name('kyc');
     });
 
     Route::prefix('support')->name('support.')->group(function () {
@@ -156,7 +160,7 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
     Route::get('/admin-chat/attachment/{filename}', function (string $filename) {
         abort_if(str_contains($filename, '/') || str_contains($filename, '\\'), 404);
 
-        $path = 'chat-attachments/'.$filename;
+        $path = 'chat-attachments/' . $filename;
 
         $message = Message::query()
             ->with(['sender', 'receiver'])
@@ -187,7 +191,7 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
     })->name('admin-chat.attachment');
 
     Route::middleware('role:THIRD_PARTY_VERIFIER')->prefix('verifier')->name('verifier.')->group(function () {
-        Route::get('/dashboard', fn () => view('verifier.dashboard'))->name('dashboard');
+        Route::get('/dashboard', fn() => view('verifier.dashboard'))->name('dashboard');
         Route::post('/handover/{handoverable}/{type}', [HandoverConfirmationController::class, 'confirm'])
             ->name('handover.confirm')
             ->whereIn('type', ['missing', 'found']);
