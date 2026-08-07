@@ -103,8 +103,8 @@ class MissingChild extends Model
 
         while (
             static::where('slug', $slug)
-                ->when($missingChild->exists, fn($query) => $query->where('id', '!=', $missingChild->id))
-                ->exists()
+            ->when($missingChild->exists, fn($query) => $query->where('id', '!=', $missingChild->id))
+            ->exists()
         ) {
             $slug = $originalSlug . '-' . $counter;
             $counter++;
