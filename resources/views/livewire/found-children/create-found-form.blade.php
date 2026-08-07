@@ -43,6 +43,8 @@ new class extends Component {
     // ── Mount ────────────────────────────────────────────────────────────────
     public function mount(): void
     {
+        $this->authorize('create', FoundChild::class);
+
         $this->provinces = Province::where('is_active', 1)->orderBy('name')->get();
         $this->found_date = now()->toDateString();
         $this->idempotencyKey = $this->generateIdempotencyKey();
@@ -187,6 +189,8 @@ new class extends Component {
     // ── Submit ───────────────────────────────────────────────────────────────
     public function submit(): void
     {
+        $this->authorize('create', FoundChild::class);
+
         if ($this->isSubmitting) {
             return;
         }

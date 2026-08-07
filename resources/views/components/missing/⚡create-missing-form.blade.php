@@ -58,6 +58,8 @@ new class extends Component {
     // ── Mount ─────────────────────────────────────────────────────────────
     public function mount(): void
     {
+        $this->authorize('create', MissingChild::class);
+
         $this->provinces = Province::where('is_active', 1)->orderBy('name')->get();
         $this->missing_date = now()->toDateString();
         $this->idempotencyKey = $this->generateIdempotencyKey();
@@ -221,6 +223,8 @@ new class extends Component {
 
     public function submit(): void
     {
+        $this->authorize('create', MissingChild::class);
+
         $this->validate($this->rulesStep3(), $this->messagesStep3());
 
         if ($this->dob && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->dob)) {
