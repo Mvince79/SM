@@ -43,7 +43,7 @@ class ProcessKycJob implements ShouldQueue
         $ocrForStorage = collect($result['ocr_raw_response'])->except(['id_number'])->all();
 
         $kyc->forceFill([
-            'id_type' => $result['id_type'] ?? null,
+            // 'id_type' => $result['id_type'] ?? null,
             'ocr_provider' => $result['ocr_provider'],
             'ocr_raw_response' => $ocrForStorage,
             'face_match_score' => $result['face_match_score'],
