@@ -18,10 +18,9 @@ class MissingController extends Controller
 
     public function index(SearchMissingRequest $request)
     {
-        // $data = $this->missingChildService->getListForPublic($request->filters());
+        $data = $this->missingChildService->getListForPublic($request->filters());
 
-        // return view('missing.index', $data);
-        return view('missing.index');
+        return view('missing.index', $data);
 
     }
 

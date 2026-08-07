@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\EscalationQueue;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class NotificationRecipient extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'notification_event_id',
         'user_id',

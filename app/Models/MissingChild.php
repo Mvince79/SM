@@ -13,11 +13,13 @@ use App\Models\Clue;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class MissingChild extends Model
 {
     use SoftDeletes;
     use LogsActivity;
+    use HasFactory;
 
     protected $table = 'missing_children';
 
