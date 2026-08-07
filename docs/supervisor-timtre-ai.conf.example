@@ -1,0 +1,21 @@
+[program:timtre-ai]
+directory=/var/www/timtre/ai-service
+command=/var/www/timtre/ai-service/venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8001 --workers 1 --no-access-log
+user=www-data
+environment=HOME="/var/lib/timtre-ai",PYTHONUNBUFFERED="1",TF_CPP_MIN_LOG_LEVEL="2"
+
+autostart=true
+autorestart=true
+startsecs=30
+startretries=3
+stopsignal=TERM
+stopwaitsecs=60
+stopasgroup=true
+killasgroup=true
+
+redirect_stderr=true
+stdout_logfile=/var/log/timtre-ai/service.log
+; Rotation is owned by /etc/logrotate.d/timtre-ai (daily, 7 compressed copies).
+; Supervisor's own rotation must stay disabled so the two mechanisms never race.
+stdout_logfile_maxbytes=0
+stdout_logfile_backups=0

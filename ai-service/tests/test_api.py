@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import unittest
 import time
+from io import BytesIO
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
+from PIL import Image
 
 import main
 from services.face_service import NoFaceDetectedError
@@ -14,7 +16,13 @@ class FaceMatchApiTest(unittest.TestCase):
     def setUp(self) -> None:
         main.INTERNAL_KEY = "test-key"
         main.SCORE_THRESHOLD = 0.70
+        main.face_service._ready = False
         self.client = TestClient(main.app)
+
+    def image_bytes(self, image_format: str = "JPEG") -> bytes:
+        buffer = BytesIO()
+        Image.new("RGB", (16, 16), color=(120, 80, 40)).save(buffer, format=image_format)
+        return buffer.getvalue()
 
     def test_health_requires_internal_key(self) -> None:
         response = self.client.get("/health")
@@ -27,12 +35,20 @@ class FaceMatchApiTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"status": "ok", "model": "ArcFace"})
 
+    def test_ready_requires_a_warmed_model(self) -> None:
+        unavailable = self.client.get("/ready", headers={"X-Internal-Key": "test-key"})
+        self.assertEqual(unavailable.status_code, 503)
+
+        main.face_service._ready = True
+        available = self.client.get("/ready", headers={"X-Internal-Key": "test-key"})
+        self.assertEqual(available.status_code, 200)
+
     def test_encode_returns_512_dimension_vector(self) -> None:
         with patch.object(main.face_service, "encode", return_value=[0.1] * 512):
             response = self.client.post(
                 "/encode",
                 headers={"X-Internal-Key": "test-key"},
-                files={"file": ("face.jpg", b"fake image bytes", "image/jpeg")},
+                files={"file": ("face.jpg", self.image_bytes(), "image/jpeg")},
             )
 
         self.assertEqual(response.status_code, 200)
@@ -45,7 +61,7 @@ class FaceMatchApiTest(unittest.TestCase):
             response = self.client.post(
                 "/encode",
                 headers={"X-Internal-Key": "test-key"},
-                files={"file": ("blank.jpg", b"fake image bytes", "image/jpeg")},
+                files={"file": ("blank.jpg", self.image_bytes(), "image/jpeg")},
             )
 
         self.assertEqual(response.status_code, 422)
@@ -64,7 +80,7 @@ class FaceMatchApiTest(unittest.TestCase):
             response = self.client.post(
                 "/detect-face",
                 headers={"X-Internal-Key": "test-key"},
-                files={"file": ("face.jpg", b"fake image bytes", "image/jpeg")},
+                files={"file": ("face.jpg", self.image_bytes(), "image/jpeg")},
             )
 
         self.assertEqual(response.status_code, 200)
@@ -78,7 +94,7 @@ class FaceMatchApiTest(unittest.TestCase):
             response = self.client.post(
                 "/detect-face",
                 headers={"X-Internal-Key": "test-key"},
-                files={"file": ("blank.jpg", b"fake image bytes", "image/jpeg")},
+                files={"file": ("blank.jpg", self.image_bytes(), "image/jpeg")},
             )
 
         self.assertEqual(response.status_code, 422)
@@ -113,8 +129,8 @@ class FaceMatchApiTest(unittest.TestCase):
                 "/verify",
                 headers={"X-Internal-Key": "test-key"},
                 files={
-                    "id_document": ("id.jpg", b"fake id bytes", "image/jpeg"),
-                    "selfie": ("selfie.png", b"fake selfie bytes", "image/png"),
+                    "id_document": ("id.jpg", self.image_bytes(), "image/jpeg"),
+                    "selfie": ("selfie.png", self.image_bytes("PNG"), "image/png"),
                 },
             )
 
@@ -130,13 +146,34 @@ class FaceMatchApiTest(unittest.TestCase):
                 "/verify",
                 headers={"X-Internal-Key": "test-key"},
                 files={
-                    "id_document": ("id.jpg", b"fake id bytes", "image/jpeg"),
-                    "selfie": ("selfie.jpg", b"fake selfie bytes", "image/jpeg"),
+                    "id_document": ("id.jpg", self.image_bytes(), "image/jpeg"),
+                    "selfie": ("selfie.jpg", self.image_bytes(), "image/jpeg"),
                 },
             )
 
         self.assertEqual(response.status_code, 422)
         self.assertEqual(response.json()["detail"], "no_face_detected")
+
+    def test_invalid_image_content_is_rejected_before_inference(self) -> None:
+        with patch.object(main.face_service, "encode") as encode:
+            response = self.client.post(
+                "/encode",
+                headers={"X-Internal-Key": "test-key"},
+                files={"file": ("fake.jpg", b"not an image", "image/jpeg")},
+            )
+
+        self.assertEqual(response.status_code, 415)
+        self.assertEqual(response.json()["detail"], "invalid_image_content:file")
+        encode.assert_not_called()
+
+    def test_production_settings_reject_public_binding_and_placeholder_key(self) -> None:
+        with (
+            patch.object(main, "APP_ENV", "production"),
+            patch.object(main, "BIND_HOST", "0.0.0.0"),
+            patch.object(main, "INTERNAL_KEY", "change_me"),
+        ):
+            with self.assertRaises(RuntimeError):
+                main.validate_production_settings()
 
     def test_request_timeout_returns_408(self) -> None:
         previous_timeout = main.REQUEST_TIMEOUT_SECONDS

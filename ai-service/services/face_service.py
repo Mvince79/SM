@@ -24,6 +24,16 @@ class FaceService:
         self.model_name = model_name
         self.threshold = threshold
         self.detector_backends = list(detector_backends or ["mtcnn", "opencv"])
+        self._ready = False
+
+    @property
+    def is_ready(self) -> bool:
+        return self._ready
+
+    def warm_up(self) -> None:
+        """Load the recognition model and cache its weights before serving traffic."""
+        DeepFace.build_model(model_name=self.model_name)
+        self._ready = True
 
     def encode(self, image_path: str) -> list[float]:
         last_error: Exception | None = None
@@ -36,6 +46,7 @@ class FaceService:
                     detector_backend=detector_backend,
                     enforce_detection=True,
                 )
+                self._ready = True
                 break
             except ValueError as exc:
                 last_error = exc
