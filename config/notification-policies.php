@@ -7,6 +7,7 @@ use App\Services\Notification\Strategies\FaceMatchConfirmedForAdminStrategy;
 use App\Services\Notification\Strategies\FaceMatchConfirmedForFamilyStrategy;
 use App\Services\Notification\Strategies\FaceMatchConfirmedForVerifierStrategy;
 use App\Services\Notification\Strategies\HandoverReadyForFamilyStrategy;
+use App\Services\Notification\Strategies\HandoverReadyForVerifierStrategy;
 
 return [
     'strategies' => [
@@ -24,6 +25,7 @@ return [
         NotificationEvent::TYPE_HANDOVER_READY => [
             'USER' => HandoverReadyForFamilyStrategy::class,
             'VOLUNTEER' => HandoverReadyForFamilyStrategy::class,
+            'THIRD_PARTY_VERIFIER' => HandoverReadyForVerifierStrategy::class,
         ],
         NotificationEvent::TYPE_ROLE_CHANGED => [
             'USER' => RoleChangedNotification::class,
