@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class VolunteerPolicyTest extends TestCase
@@ -27,7 +28,7 @@ class VolunteerPolicyTest extends TestCase
         return $cases;
     }
 
-    /** @dataProvider roleKycMatrix */
+    #[DataProvider('roleKycMatrix')]
     public function test_access_volunteer_features_matrix(string $role, string $kycStatus, bool $expectedAllow): void
     {
         $user = User::factory()->create([
@@ -38,7 +39,7 @@ class VolunteerPolicyTest extends TestCase
 
         $result = Gate::forUser($user)->allows('access-volunteer-features');
 
-        $this->assertSame($expectedAllow, $result, "Role={$role} KYC={$kycStatus} kỳ vọng allow=" . ($expectedAllow ? 'true' : 'false'));
+        $this->assertSame($expectedAllow, $result, "Role={$role} KYC={$kycStatus} kỳ vọng allow=".($expectedAllow ? 'true' : 'false'));
     }
 
     public function test_banned_volunteer_is_always_denied_even_if_verified(): void

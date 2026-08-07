@@ -11,6 +11,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -86,9 +87,7 @@ class KycTest extends TestCase
         ]);
     }
 
-    /**
-     * @dataProvider invalidIdNumberProvider
-     */
+    #[DataProvider('invalidIdNumberProvider')]
     public function test_kyc_submission_rejects_invalid_id_number_format(string $idType, string $idNumber): void
     {
         $user = User::factory()->create();
