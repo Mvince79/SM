@@ -60,8 +60,8 @@ new class extends Component {
                     }
                 },
             ],
-            'front_image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
-            'back_image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'front_image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120', new \App\Rules\SecureImage(['image/jpeg', 'image/png'])],
+            'back_image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120', new \App\Rules\SecureImage(['image/jpeg', 'image/png'])],
         ];
     }
 
@@ -79,7 +79,7 @@ new class extends Component {
     protected function rulesStep3(): array
     {
         return [
-            'selfie' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
+            'selfie' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120', new \App\Rules\SecureImage(['image/jpeg', 'image/png'])],
             'selfieCapturedByCamera' => ['accepted'],
         ];
     }

@@ -84,7 +84,7 @@ new class extends Component {
             'clothes_desc' => ['nullable', 'string', 'max:1000'],
             'special_marks' => ['required', 'string', 'min:10'],
             'photos' => ['required', 'array', 'min:1', 'max:5'],
-            'photos.*' => ['file', 'image', 'max:5120'],
+            'photos.*' => ['file', 'image', 'max:5120', new \App\Rules\SecureImage],
         ];
     }
 
@@ -172,7 +172,7 @@ new class extends Component {
         $this->validate(
             [
                 'photos' => ['array', 'max:5'],
-                'photos.*' => ['file', 'image', 'max:5120'],
+                'photos.*' => ['file', 'image', 'max:5120', new \App\Rules\SecureImage],
             ],
             [
                 'photos.*.max' => 'Mỗi ảnh tối đa 5MB.',

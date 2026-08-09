@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\SecureImage;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ProfileUpdateRequest extends FormRequest
@@ -20,7 +21,7 @@ class ProfileUpdateRequest extends FormRequest
             'notify_lat' => 'nullable|numeric',
             'notify_lng' => 'nullable|numeric',
             'notify_radius_km' => 'nullable|integer|min:0',
-            'avatar' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', new SecureImage],
         ];
     }
 }

@@ -23,11 +23,11 @@ class FaceMatchResultResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCpuChip;
 
-    protected static ?string $navigationLabel = 'Đối Chiếu Khuôn Mặt AI';
+    protected static ?string $navigationLabel = 'Đối chiếu khuôn mặt AI';
 
-    protected static ?string $modelLabel = 'Đối Chiếu Khuôn Mặt AI';
+    protected static ?string $modelLabel = 'kết quả đối chiếu khuôn mặt';
 
-    protected static ?string $pluralModelLabel = 'Đối Chiếu Khuôn Mặt AI';
+    protected static ?string $pluralModelLabel = 'kết quả đối chiếu khuôn mặt';
     protected static ?int $navigationSort = 10;
 
     public static function getNavigationGroup(): ?string

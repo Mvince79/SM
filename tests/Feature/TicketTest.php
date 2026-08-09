@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\SupportTicket;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -83,9 +84,7 @@ class TicketTest extends TestCase
         ]);
     }
 
-    /**
-     * @dataProvider invalidPayloadProvider
-     */
+    #[DataProvider('invalidPayloadProvider')]
     public function test_ticket_submission_fails_with_invalid_payload(array $overrides, string $invalidField): void
     {
         $user = User::factory()->create();

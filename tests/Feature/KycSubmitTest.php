@@ -93,6 +93,30 @@ class KycSubmitTest extends TestCase
         $response->assertStatus(401);
     }
 
+    public function test_submit_kyc_rejects_an_image_with_embedded_executable_payload(): void
+    {
+        Storage::fake('private');
+        Queue::fake([ProcessKycJob::class]);
+
+        $user = User::factory()->create(['kyc_status' => 'NONE']);
+        $front = UploadedFile::fake()->image('front.jpg', 800, 600);
+        file_put_contents($front->getRealPath(), '<?php echo "owned";', FILE_APPEND);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/v1/kyc/submit', [
+                'id_type' => 'CCCD_12',
+                'id_number' => '079203001234',
+                'front_image' => $front,
+                'back_image' => UploadedFile::fake()->image('back.jpg', 800, 600),
+                'selfie' => UploadedFile::fake()->image('selfie.jpg', 800, 600),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('front_image');
+
+        $this->assertDatabaseCount('kyc_verifications', 0);
+        Queue::assertNothingPushed();
+    }
+
     public function test_id_number_is_encrypted_and_decrypted_via_model(): void
     {
         $user = User::factory()->create();

@@ -4,14 +4,17 @@ namespace App\Filament\Admin\Resources\HandoverPoints\Schemas;
 
 use App\Filament\Forms\Components\LocationPicker;
 use App\Models\Province;
+use App\Rules\SecureDocument;
+use App\Support\SecureUploadFilename;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class HandoverPointForm
 {
@@ -38,6 +41,10 @@ class HandoverPointForm
                                 'image/jpeg',
                                 'image/png',
                             ])
+                            ->rules([new SecureDocument])
+                            ->getUploadedFileNameForStorageUsing(
+                                fn (TemporaryUploadedFile $file): string => SecureUploadFilename::for($file),
+                            )
                             ->maxSize(5120)
                             ->openable()
                             ->downloadable()
@@ -75,7 +82,7 @@ class HandoverPointForm
                         Select::make('province_id')
                             ->label('Tỉnh/Thành phố')
                             ->options(
-                                fn(): array => Province::query()
+                                fn (): array => Province::query()
                                     ->orderBy('name')
                                     ->pluck('name', 'id')
                                     ->all()
@@ -110,10 +117,10 @@ class HandoverPointForm
                                 'Bắt buộc đối với các điểm bàn giao, ngoại trừ Tổng đài Quốc gia 111.'
                             )
                             ->required(
-                                fn(Get $get): bool => $get('type') !== 'HOTLINE_111'
+                                fn (Get $get): bool => $get('type') !== 'HOTLINE_111'
                             )
                             ->hidden(
-                                fn(Get $get): bool => $get('type') === 'HOTLINE_111'
+                                fn (Get $get): bool => $get('type') === 'HOTLINE_111'
                             )
                             ->rows(4)
                             ->maxLength(2000)

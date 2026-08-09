@@ -2,15 +2,17 @@
 
 namespace App\Filament\Admin\Resources\Clues\Schemas;
 
+use App\Rules\SecureImage;
+use App\Support\SecureUploadFilename;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class ClueForm
 {
@@ -71,7 +73,12 @@ class ClueForm
                     ->schema([
                         FileUpload::make('image_path')
                             ->label('Ảnh đính kèm')
-                            ->image(),
+                            ->image()
+                            ->maxSize(5120)
+                            ->rules([new SecureImage])
+                            ->getUploadedFileNameForStorageUsing(
+                                fn (TemporaryUploadedFile $file): string => SecureUploadFilename::for($file),
+                            ),
                         Grid::make(2)->schema([
                             Select::make('is_verified')
                                 ->label('Trạng thái xác minh')

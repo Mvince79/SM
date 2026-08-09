@@ -8,6 +8,7 @@ use App\Traits\HasIdempotency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use App\Traits\HasRedisLock;
+use App\Rules\SecureImage;
 
 class FoundChildController extends Controller
 {
@@ -27,7 +28,7 @@ class FoundChildController extends Controller
 
         $request->validate([
             'photos' => 'required|array|min:1',
-            'photos.*' => 'image|mimes:jpg,jpeg,png,webp|max:5120',
+            'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120', new SecureImage],
         ]);
 
         $setPrimary = (bool) $request->input('set_primary', false);
@@ -163,7 +164,7 @@ class FoundChildController extends Controller
         // Handle optional uploaded photo from edit form
         if ($request->hasFile('photo')) {
             $request->validate([
-                'photo' => 'image|mimes:jpg,jpeg,png,webp|max:5120',
+                'photo' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120', new SecureImage],
             ]);
 
             $file = $request->file('photo');

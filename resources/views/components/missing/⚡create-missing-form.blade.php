@@ -97,7 +97,7 @@ new class extends Component {
         return [
             'special_marks' => ['required', 'string', 'min:20'],
             'photos' => ['nullable', 'array', 'max:5'],
-            'photos.*' => ['file', 'max:5120'],
+            'photos.*' => ['file', 'max:5120', new \App\Rules\SecureImage],
         ];
     }
 
@@ -192,7 +192,6 @@ new class extends Component {
 
             if (!in_array($mimeType, $allowed)) {
                 $this->addError('photos.*', 'Chỉ chấp nhận ảnh JPG, PNG, WebP thực sự.');
-                $this->photos = [];
                 return;
             }
         }
@@ -200,7 +199,7 @@ new class extends Component {
         $this->validate(
             [
                 'photos' => ['array', 'max:5'],
-                'photos.*' => ['file', 'max:5120'],
+                'photos.*' => ['file', 'max:5120', new \App\Rules\SecureImage],
             ],
             [
                 'photos.*.max' => 'Mỗi ảnh tối đa 5MB.',
@@ -223,9 +222,20 @@ new class extends Component {
 
     public function submit(): void
     {
-        $this->authorize('create', MissingChild::class);
-
-        $this->validate($this->rulesStep3(), $this->messagesStep3());
+        // Re-validate every step at the trust boundary. A user can submit the
+        // Livewire action directly without navigating through each wizard step.
+        $this->validate(
+            [
+                ...$this->rulesStep1(),
+                ...$this->rulesStep2(),
+                ...$this->rulesStep3(),
+            ],
+            [
+                ...$this->messagesStep1(),
+                ...$this->messagesStep2(),
+                ...$this->messagesStep3(),
+            ],
+        );
 
         if ($this->dob && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->dob)) {
             $this->dob = '';

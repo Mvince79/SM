@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\HealthCheckController;
 use App\Http\Controllers\ExportPdfController;
+use App\Http\Controllers\MissingChildRenewalController;
 
 // ── Auth (register, login, OTP, Google OAuth, logout) ──────────────────────
 require __DIR__ . '/auth.php';
@@ -53,6 +54,13 @@ Route::prefix('missing')->name('missing.')->group(function () {
 
     Route::get('/detail/{id}/qr.svg', [MissingController::class, 'qr'])->name('qr');
     Route::get('/detail/{id}/pdf', [ExportPdfController::class, 'missingChild'])->name('pdf');
+
+    Route::middleware(['auth', 'signed'])->group(function () {
+        Route::get('/{missingChild}/renew', [MissingChildRenewalController::class, 'show'])
+            ->name('renew.show');
+        Route::post('/{missingChild}/renew', [MissingChildRenewalController::class, 'store'])
+            ->name('renew.store');
+    });
 });
 
 Route::get('/map/heatmap-data', [HeatmapController::class, 'index'])

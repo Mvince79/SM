@@ -1,0 +1,12 @@
+/var/log/timtre-ai/service.log {
+    daily
+    rotate 7
+    missingok
+    notifempty
+    compress
+    delaycompress
+    dateext
+    dateformat -%Y%m%d
+    copytruncate
+    create 0640 www-data www-data
+}

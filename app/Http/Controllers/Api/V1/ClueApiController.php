@@ -14,6 +14,7 @@ use App\Events\NewClueSubmitted;
 use App\Notifications\ClueSubmittedNotification;
 use Illuminate\Support\Facades\Notification;
 use App\Traits\HasIdempotency;
+use App\Rules\SecureImage;
 
 /**
  * API controller for handling Clue submissions from mobile/Postman.
@@ -40,7 +41,7 @@ class ClueApiController extends Controller
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lng' => ['nullable', 'numeric', 'between:-180,180'],
             'is_anonymous' => ['boolean'],
-            'image' => ['nullable', 'image', 'max:5120'],
+            'image' => ['nullable', 'image', 'max:5120', new SecureImage],
         ]);
 
         $userId = Auth::id();
