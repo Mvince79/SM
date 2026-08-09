@@ -14,7 +14,7 @@
 
 /* ═══════════════════════════════════════════════════════════
    DESIGN TOKENS — TìmTrẻ.vn
-   Coral Crimson × Royal Trust Blue × Emerald
+   Carmine × Deep Navy × Forest — institutional, không neon
 ═══════════════════════════════════════════════════════════ */
 @theme {
     --font-sans:
@@ -22,30 +22,28 @@
         "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
         "Noto Color Emoji";
 
-    /* Primary — Coral Crimson (urgency & humanity) */
-    --color-primary: #ff3b30;
-    --color-primary-dark: #e02b20;
-    --color-primary-light: #fff0ef;
+    /* Primary — Carmine trầm (khẩn cấp, không rực như coral SaaS) */
+    --color-primary: #b9293f;
+    --color-primary-dark: #8f1f31;
+    --color-primary-light: #fbeef0;
 
-    /* Brand — Royal Trust Blue (trust & security) */
-    --color-brand: #0052ff;
-    --color-brand-dark: #003ecc;
-    --color-brand-light: #f0f4ff;
+    /* Brand — Deep Navy (tin cậy, tổ chức — không phải "startup blue") */
+    --color-brand: #1c3a5e;
+    --color-brand-dark: #12283f;
+    --color-brand-light: #eef2f7;
 
-    /* Success — Emerald (child returned home safely) */
-    --color-success: #12b76a;
-    --color-success-dark: #027a48;
-    --color-success-light: #ecfdf3;
+    /* Success — Forest green trầm (thay vì emerald sáng) */
+    --color-success: #2f6d52;
+    --color-success-dark: #1f4d3a;
+    --color-success-light: #eef5f1;
 
-    /* Shadows */
+    /* Shadows — nhẹ, không glow */
     --shadow-premium:
-        0 12px 30px -10px rgba(15, 23, 42, 0.04),
-        0 4px 12px -4px rgba(15, 23, 42, 0.02);
+        0 8px 20px -8px rgba(15, 23, 42, 0.06),
+        0 2px 6px -2px rgba(15, 23, 42, 0.03);
     --shadow-premium-hover:
-        0 20px 40px -12px rgba(15, 23, 42, 0.08),
-        0 8px 16px -6px rgba(15, 23, 42, 0.03);
-    --shadow-glow-sos: 0 0 20px 2px rgba(255, 59, 48, 0.25);
-    --shadow-glow-brand: 0 0 20px 2px rgba(0, 82, 255, 0.15);
+        0 14px 28px -10px rgba(15, 23, 42, 0.09),
+        0 4px 10px -4px rgba(15, 23, 42, 0.04);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -67,11 +65,11 @@
     }
 
     ::selection {
-        background-color: rgba(255, 59, 48, 0.1);
-        color: #ff3b30;
+        background-color: rgba(185, 41, 63, 0.12);
+        color: #8f1f31;
     }
 
-    /* Premium custom scrollbar */
+    /* Custom scrollbar */
     ::-webkit-scrollbar {
         width: 6px;
         height: 6px;
@@ -103,20 +101,6 @@
     }
 }
 
-@keyframes ai-scan-line {
-    0% {
-        top: 0%;
-        opacity: 0.1;
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        top: 100%;
-        opacity: 0.1;
-    }
-}
-
 @keyframes shimmer-sweep {
     0% {
         background-position: -200% 0;
@@ -135,7 +119,7 @@
         transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* ── Pulse animations ── */
+    /* ── Pulse animations — chạy 2 vòng rồi dừng, không lặp vô hạn ── */
     .pulse-dot {
         position: relative;
     }
@@ -144,8 +128,8 @@
         position: absolute;
         inset: -6px;
         border-radius: 50%;
-        background: rgba(255, 59, 48, 0.4);
-        animation: sos-pulse-ring 1.8s ease-out infinite;
+        background: rgba(185, 41, 63, 0.35);
+        animation: sos-pulse-ring 1.8s ease-out 2;
     }
 
     .pulse-found {
@@ -156,37 +140,23 @@
         position: absolute;
         inset: -6px;
         border-radius: 50%;
-        background: rgba(18, 183, 106, 0.4);
-        animation: sos-pulse-ring 1.8s ease-out infinite;
+        background: rgba(47, 109, 82, 0.35);
+        animation: sos-pulse-ring 1.8s ease-out 2;
     }
 
-    /* ── AI Scanner ── */
+    /* ── AI Scanner overlay — tắt hẳn, chỉ giữ class để không vỡ HTML cũ ── */
     .ai-scanner-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-            to bottom,
-            transparent 94%,
-            rgba(0, 82, 255, 0.4) 95%,
-            rgba(0, 82, 255, 0.8) 100%
-        );
-        pointer-events: none;
-        animation: ai-scan-line 3s linear infinite;
-        z-index: 10;
+        display: none;
     }
 
-    /* ── Glassmorphism ── */
+    /* ── Card nền đặc, viền mảnh — bỏ hiệu ứng kính mờ (glassmorphism) ── */
     .glass-premium {
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
     }
     .glass-dark {
-        background: rgba(15, 23, 42, 0.75);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: #0f172a;
+        border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     /* ── Skeleton shimmer ── */
@@ -259,9 +229,9 @@
         @apply flex items-center gap-2.5;
     }
     .brand-logo-mark {
-        @apply w-9 h-9 bg-gradient-to-tr from-primary to-primary-dark rounded-xl
+        @apply w-9 h-9 bg-brand rounded-xl
                flex items-center justify-center text-white font-black text-base
-               shadow-md shadow-primary/20 transform transition-all duration-300;
+               shadow-sm transform transition-all duration-300;
         /* group-hover:scale-105 must be added inline in Blade, not here */
     }
     .brand-logo-text {
@@ -353,7 +323,7 @@
     .btn-primary {
         @apply w-full bg-primary text-white font-extrabold text-xs py-3.5 rounded-xl
                hover:bg-primary-dark transition-all
-               shadow-md shadow-primary/10
+               shadow-sm
                uppercase tracking-widest
                border-none cursor-pointer;
     }
@@ -411,10 +381,10 @@
                text-xs font-black uppercase tracking-wider px-3 py-2 rounded-xl;
     }
 
-    /* ── Hero ── */
+    /* ── Hero — nền đặc (navy), không gradient 3 lớp ── */
     .hero {
-        @apply bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950
-               text-white py-20 lg:py-28 px-4 relative overflow-hidden;
+        @apply text-white py-20 lg:py-28 px-4 relative overflow-hidden;
+        background: #0f2038;
     }
     .hero-inner {
         @apply max-w-7xl mx-auto relative grid lg:grid-cols-12 gap-12 items-center;
@@ -521,7 +491,7 @@
     }
     .how-step-icon {
         @apply w-16 h-16 rounded-2xl flex items-center justify-center mx-auto text-3xl font-black
-               shadow-lg transform transition-all duration-300;
+               shadow-sm transform transition-all duration-300;
     }
     .how-step:hover .how-step-icon {
         transform: scale(1.05);
@@ -529,20 +499,20 @@
 
     /* ── CTA Banner ── */
     .cta-banner {
-        @apply bg-gradient-to-r from-primary to-primary-dark text-white
+        @apply bg-primary text-white
                py-16 px-4 text-center relative overflow-hidden;
     }
 
-    /* ── Mobile FAB ── */
+    /* ── Mobile FAB — bóng thường, không glow neon ── */
     .mobile-fab {
         @apply fixed bottom-6 right-6 z-40 md:hidden;
     }
     .mobile-fab a {
         @apply flex items-center justify-center w-14 h-14
-               bg-gradient-to-r from-primary to-primary-dark
+               bg-primary
                rounded-full text-white border-2 border-white
                transition-all duration-300;
-        box-shadow: var(--shadow-glow-sos);
+        box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.18);
     }
     .mobile-fab a:hover {
         transform: scale(1.05);
@@ -560,22 +530,21 @@
     background: #fafafb !important;
 }
 .leaflet-popup-content-wrapper {
-    background: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(12px);
-    border-radius: 20px !important;
+    background: #ffffff !important;
+    border-radius: 16px !important;
     box-shadow:
-        0 20px 25px -5px rgba(0, 0, 0, 0.05),
-        0 10px 10px -5px rgba(0, 0, 0, 0.02) !important;
-    border: 1px solid rgba(255, 255, 255, 0.6);
+        0 12px 20px -6px rgba(0, 0, 0, 0.08),
+        0 4px 8px -4px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid #e2e8f0;
     padding: 4px;
 }
 .leaflet-popup-tip {
-    background: rgba(255, 255, 255, 0.95) !important;
+    background: #ffffff !important;
 }
 .leaflet-bar {
     border: none !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
-    border-radius: 12px !important;
+    box-shadow: 0 6px 12px -3px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 10px !important;
     overflow: hidden;
 }
 .leaflet-bar a {
@@ -586,5 +555,5 @@
 }
 .leaflet-bar a:hover {
     background: #f8fafc !important;
-    color: #ff3b30 !important;
+    color: #b9293f !important;
 }
