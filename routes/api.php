@@ -37,7 +37,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             ->name('chatbot.message');
     });
 
-    Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    Route::middleware(['auth:sanctum', 'throttle:5,1'])->group(function () {
         Route::post('/kyc/submit', [KycController::class, 'store'])
             ->name('kyc.submit');
     });
@@ -51,9 +51,11 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     });
     // Public test endpoint (development only) to exercise clue creation without auth.
     // Remove or protect this in production.
-    Route::post('/clues-test', [\App\Http\Controllers\Api\V1\ClueApiController::class, 'store'])
-        ->name('clues.test')
-        ->middleware('throttle:10,1');
+    if (!app()->environment('production')) {
+        Route::post('/clues-test', [\App\Http\Controllers\Api\V1\ClueApiController::class, 'store'])
+            ->name('clues.test')
+            ->middleware('throttle:10,1');
+    }
 
     // ────────────────────────────────────────────────────────────────────────────
     // POST clues — 10 requests/minute (chống spam manh mối)

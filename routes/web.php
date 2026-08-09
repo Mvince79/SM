@@ -94,7 +94,7 @@ Route::middleware(['auth'])
 
 Route::get('/health', HealthCheckController::class)
     ->name('health');
-    
+
 Route::middleware('auth')->get(
     '/admin/kyc-verifications/{kycVerification}/images/{side}',
     function (KycVerification $kycVerification, string $side) {
@@ -124,7 +124,8 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
     Route::prefix('support')->name('support.')->group(function () {
         Route::get('/', [SupportTicketController::class, 'index'])->name('index');
         Route::get('/create', [SupportTicketController::class, 'create'])->name('create');
-        Route::post('/store', [SupportTicketController::class, 'store'])->name('store');
+        Route::post('/store', [SupportTicketController::class, 'store'])->name('store')
+            ->middleware('throttle:5,1');
     });
 
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read'])
