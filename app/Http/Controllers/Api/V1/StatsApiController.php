@@ -17,6 +17,11 @@ class StatsApiController extends Controller
             $found = MissingChild::where('status', 'FOUND')->count();
 
             $pending = MissingChild::where('status', 'PENDING')->count();
+            $averageFoundDays = MissingChild::query()
+                ->whereNotNull('found_at')
+                ->whereNotNull('missing_date')
+                ->selectRaw('AVG(DATEDIFF(found_at, missing_date)) as avg_days')
+                ->value('avg_days');
 
             $foundRate = $total > 0
                 ? round(($found / $total) * 100, 1)
@@ -50,6 +55,7 @@ class StatsApiController extends Controller
                 'found_rate_percent' => $foundRate,
                 'missing_by_province' => $missingByProvince,
                 'trend_monthly' => $trendMonthly,
+                'average_found_days' => round($averageFoundDays ?? 0, 1),
             ];
         });
 

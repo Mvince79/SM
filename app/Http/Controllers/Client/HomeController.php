@@ -4,33 +4,44 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\MissingChild;
+use App\Support\CacheVersion;
+use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
+    protected const CACHE_TTL = 180; // 3 minutes
+
     public function index()
     {
-        // 5 hồ sơ mới nhất đang cần tìm — hiển thị ở SOS bar
-        $sosKids = MissingChild::where('status', 'APPROVED')
-            ->whereNull('deleted_at')
-            ->with('primaryPhoto')
-            ->latest('missing_date')
-            ->take(5)
-            ->get();
+        $version = CacheVersion::current(CacheVersion::HOME_HIGHLIGHTS);
 
-        // 3 hồ sơ khẩn cấp nhất (mất tích trong 72h) — section "Đang cần tìm gấp"
-        $urgentCases = MissingChild::where('status', 'APPROVED')
-            ->whereNull('deleted_at')
-            ->with('primaryPhoto', 'province')
-            ->latest('missing_date')
-            ->take(3)
-            ->get();
+        $highlights = Cache::remember(
+            "home:highlights:v{$version}",
+            self::CACHE_TTL,
+            function () {
+                $sosKids = MissingChild::where('status', 'APPROVED')
+                    ->whereNull('deleted_at')
+                    ->with('primaryPhoto')
+                    ->latest('missing_date')
+                    ->take(5)
+                    ->get();
 
-        // Thống kê tổng quan
-        $stats = [
-            'total_approved' => MissingChild::where('status', 'APPROVED')->count(),
-            'total_found' => MissingChild::whereIn('status', ['FOUND', 'CLOSED'])->count(),
-        ];
+                $urgentCases = MissingChild::where('status', 'APPROVED')
+                    ->whereNull('deleted_at')
+                    ->with('primaryPhoto', 'province')
+                    ->latest('missing_date')
+                    ->take(3)
+                    ->get();
 
-        return view('home', compact('sosKids', 'urgentCases', 'stats'));
+                $stats = [
+                    'total_approved' => MissingChild::where('status', 'APPROVED')->count(),
+                    'total_found' => MissingChild::whereIn('status', ['FOUND', 'CLOSED'])->count(),
+                ];
+
+                return compact('sosKids', 'urgentCases', 'stats');
+            }
+        );
+
+        return view('home', $highlights);
     }
 }

@@ -353,17 +353,16 @@
                 loadMarkers(queryString);
                 loadHeatmap(queryString);
             });
-            window.addEventListener('nearby-radius-changed', (event) => {
-                const { radius, lat, lng } = event.detail;
-
-                const params = new URLSearchParams({
-                    radius,
-                    lat,
-                    lng,
-                });
-
-                loadMarkers(`?${params.toString()}`);
-            });
+            // ĐÃ GỠ: trước đây có 1 listener lắng nghe sự kiện
+            // 'nearby-radius-changed' (bắn ra từ widget "Trẻ mất tích gần đây"
+            // ngay khi trình duyệt lấy xong GPS thật của người dùng — kể cả khi
+            // không ai bấm gì). Listener đó gọi loadMarkers() với bộ lọc bán
+            // kính GPS thật, khiến TOÀN BỘ marker trên bản đồ chính bị âm thầm
+            // xoá và thay bằng vài marker (thường là 0) quanh vị trí người
+            // dùng — nhìn như "chấm tự nhiên biến mất" vài giây sau khi mở
+            // trang. Widget "gần đây" vẫn tự lấy dữ liệu và hiển thị số đếm/
+            // danh sách riêng của nó (xem nearby-widget.blade.php), không cần
+            // listener này để hoạt động — nên gỡ hẳn, không thay thế.
             // Locate the client device location
             document
                 .getElementById('toggle-heatmap')

@@ -23,7 +23,8 @@ class CreateFoundFormIdempotencyTest extends TestCase
             ->set('province_id', (string) $province->id)
             ->set('found_date', now()->toDateString())
             ->set('special_marks', 'Ao xanh, co vet seo nho o tay')
-            ->set('agreed', true);
+            ->set('agreed', true)
+            ->set('agreedDataPolicy', true);
 
         $key = $component->get('idempotencyKey');
         $this->assertNotEmpty($key);

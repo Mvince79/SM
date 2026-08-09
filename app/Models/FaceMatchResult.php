@@ -4,9 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+
 
 class FaceMatchResult extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'missing_id',
         'found_id',
@@ -19,7 +24,7 @@ class FaceMatchResult extends Model
         'model_used',
         'status',
         'confirmed_by',
-        'confirmed_at', 
+        'confirmed_at',
         'notified_at',
     ];
 
@@ -48,6 +53,12 @@ class FaceMatchResult extends Model
         };
     }
 
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status'])
+            ->logOnlyDirty();
+    }
     public static function confidenceLevelForScore(float $score): string
     {
         if ($score >= config('face_match.high_confidence_threshold', 0.85)) {

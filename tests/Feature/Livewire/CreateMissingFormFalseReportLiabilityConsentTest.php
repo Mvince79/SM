@@ -74,11 +74,23 @@ class CreateMissingFormFalseReportLiabilityConsentTest extends TestCase
         $this->assertSame(config('legal.versions.FALSE_REPORT_LIABILITY'), $consent->version);
         $this->assertNotNull($consent->accepted_at);
 
-        // Tách biệt với 2 consent Sprint 3.5 — cả 3 bản ghi phải cùng tồn tại, không ghi đè lẫn nhau.
         $this->assertSame(
-            3,
+            4,
             UserConsent::where('user_id', $user->id)->count(),
-            'Phải có đủ 3 bản ghi consent riêng biệt: TOS, CHILD_DATA_POLICY, FALSE_REPORT_LIABILITY.',
+            'Phải có đủ 4 bản ghi consent riêng biệt: TOS, PRIVACY_POLICY, CHILD_DATA_POLICY, FALSE_REPORT_LIABILITY.',
         );
+
+        foreach (['TOS', 'PRIVACY_POLICY', 'CHILD_DATA_POLICY', 'FALSE_REPORT_LIABILITY'] as $type) {
+            $record = UserConsent::where('user_id', $user->id)
+                ->where('consent_type', $type)
+                ->first();
+
+            $this->assertNotNull($record, "Phải có bản ghi consent {$type} sau khi submit thành công.");
+            $this->assertSame(
+                config("legal.versions.$type"),
+                $record->version,
+                "Bản ghi consent {$type} phải lưu đúng version hiện hành trong config/legal.php.",
+            );
+        }
     }
 }

@@ -16,8 +16,12 @@ class Photo extends Model
         'model_id',
         'path_original',
         'path_thumb',
+        'path_thumb_webp',
+        'path_display',
+        'path_display_webp',
         'path_blurred',
         'file_size',
+        'file_size_display',
         'mime_type',
         'width',
         'height',
@@ -35,6 +39,7 @@ class Photo extends Model
     {
         return [
             'file_size' => 'integer',
+            'file_size_display' => 'integer',
             'width' => 'integer',
             'height' => 'integer',
             'has_face' => 'integer',

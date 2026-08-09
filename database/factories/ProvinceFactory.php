@@ -17,7 +17,7 @@ class ProvinceFactory extends Factory
         return [
             'name' => 'Tỉnh ' . $index,
             'code' => 'VN-' . str_pad($index, 3, '0', STR_PAD_LEFT),
-            'short_code' => strtoupper(substr('PRV' . $index, 0, 3)),
+            'short_code' => 'PRV' . $index,
             'region' => $this->faker->randomElement(['BAC', 'TRUNG', 'NAM']),
             'is_active' => 1,
         ];

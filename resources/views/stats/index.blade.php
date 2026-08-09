@@ -15,7 +15,7 @@
     <main class="max-w-7xl min-w-0 mx-auto px-4 py-8 sm:py-10 space-y-6 sm:space-y-8 overflow-x-hidden">
 
         <!-- KPI Stripe-like CARDS GRID -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
 
             <!-- KPI 1 -->
             <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium space-y-2">
@@ -55,14 +55,31 @@
                 </div>
             </div>
 
+            <!-- KPI 5 -->
+            <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium space-y-2">
+                <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                    Thời gian tìm thấy TB
+                </div>
+
+                <div class="text-3xl font-black text-slate-900 tracking-tight">
+                    <span id="averageFoundDaysStat">0</span>
+                    <span class="text-base">ngày</span>
+                </div>
+
+                <div class="text-[10px] font-bold text-slate-400">
+                    Trung bình từ ngày mất tích đến khi tìm thấy
+                </div>
+            </div>
         </div>
 
         <!-- CHARTS AREA -->
         <div class="grid lg:grid-cols-12 gap-6">
 
             <!-- Left: Line chart trends (8 cols) -->
-            <div class="min-w-0 lg:col-span-8 bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-premium space-y-4">
-                <div class="flex flex-col items-start gap-2 min-[360px]:flex-row min-[360px]:items-center min-[360px]:justify-between border-b border-slate-100 pb-3">
+            <div
+                class="min-w-0 lg:col-span-8 bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-premium space-y-4">
+                <div
+                    class="flex flex-col items-start gap-2 min-[360px]:flex-row min-[360px]:items-center min-[360px]:justify-between border-b border-slate-100 pb-3">
                     <h3 class="font-extrabold text-slate-800 text-sm uppercase tracking-wider">Xu hướng hồ sơ tiếp nhận
                         theo tháng</h3>
                     <span class="bg-brand/10 text-brand text-[9px] font-black uppercase px-2.5 py-1 rounded-full">Dữ liệu
@@ -76,7 +93,8 @@
             </div>
 
             <!-- Right: Donut classifications (4 cols) -->
-            <div class="min-w-0 lg:col-span-4 bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-premium space-y-4">
+            <div
+                class="min-w-0 lg:col-span-4 bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-premium space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h3 class="font-extrabold text-slate-800 text-sm uppercase tracking-wider">Tỷ lệ theo khu vực chính</h3>
                 </div>
@@ -86,7 +104,8 @@
                     <canvas id="donutChart" class="max-w-full"></canvas>
                 </div>
 
-                <div id="provinceLegend" class="grid grid-cols-1 min-[360px]:grid-cols-3 gap-2 text-center text-[10px] pt-2">
+                <div id="provinceLegend"
+                    class="grid grid-cols-1 min-[360px]:grid-cols-3 gap-2 text-center text-[10px] pt-2">
                     <div>
                         <span class="font-black text-primary">● Đang tải</span>
                         <div class="font-extrabold text-slate-650 mt-0.5">0%</div>
@@ -125,7 +144,8 @@
                 document.getElementById('foundStat').innerText = data.found ?? 0;
                 document.getElementById('pendingStat').innerText = data.pending ?? 0;
                 document.getElementById('foundRateStat').innerText = data.found_rate_percent ?? 0;
-
+                document.getElementById('averageFoundDaysStat').innerText =
+                    data.average_found_days ?? 0;
                 const monthly = data.trend_monthly ?? [];
                 const monthlyLabels = monthly.map(item => item.month);
                 const monthlyData = monthly.map(item => item.count);
@@ -222,11 +242,11 @@
                     const percent = Math.round((Number(item.count) / totalProvince) * 100);
 
                     return `
-                            <div>
-                                <span class="font-black ${legendColors[index] ?? 'text-slate-400'}">● ${item.name}</span>
-                                <div class="font-extrabold text-slate-650 mt-0.5">${percent}%</div>
-                            </div>
-                        `;
+                                    <div>
+                                        <span class="font-black ${legendColors[index] ?? 'text-slate-400'}">● ${item.name}</span>
+                                        <div class="font-extrabold text-slate-650 mt-0.5">${percent}%</div>
+                                    </div>
+                                `;
                 }).join('');
             })
             .catch(() => {
@@ -234,6 +254,7 @@
                 document.getElementById('foundStat').innerText = 0;
                 document.getElementById('pendingStat').innerText = 0;
                 document.getElementById('foundRateStat').innerText = 0;
+                document.getElementById('averageFoundDaysStat').innerText = 0;
             });
     </script>
 @endpush

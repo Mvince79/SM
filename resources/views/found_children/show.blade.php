@@ -118,7 +118,7 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         @foreach($item->photos as $photo)
                             <a href="{{ Storage::url($photo->path_original) }}" target="_blank" class="block group">
-                                <img src="{{ Storage::url($photo->path_original) }}" alt="Ảnh {{ $loop->iteration }}" class="w-full h-36 object-cover rounded-lg border group-hover:opacity-90 transition" />
+                                <img src="{{ Storage::url($photo->path_display ?? $photo->path_original) }}" alt="Ảnh {{ $loop->iteration }}" loading="lazy" class="w-full h-36 object-cover rounded-lg border group-hover:opacity-90 transition" />
                                 @if($photo->is_primary)
                                     <span class="mt-2 inline-flex text-xs font-semibold px-2 py-1 rounded bg-primary/10 text-primary">Ảnh chính</span>
                                 @endif

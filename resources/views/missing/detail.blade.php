@@ -638,6 +638,13 @@
                         hồ sơ nhanh</p>
                 </form>
 
+                <!-- E-01: Xuất PDF hồ sơ -->
+                <a href="{{ route('missing.pdf', ['id' => $case->id]) }}"
+                    class="flex items-center justify-center gap-2 bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 shadow-premium text-sm font-extrabold text-slate-800 hover:bg-slate-50 hover:border-primary/30 transition-colors">
+                    <x-heroicon-o-document-arrow-down class="w-5 h-5 text-primary" />
+                    In / Xuất PDF hồ sơ
+                </a>
+
                 <!-- Interactive Mini map tracking location -->
                 @php
                     $hasMissingCoordinates = is_numeric($case->lat)

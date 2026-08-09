@@ -1,68 +1,79 @@
 (function (window) {
-    'use strict';
+    "use strict";
 
     const sovereigntyData = {
-        type: 'FeatureCollection',
+        type: "FeatureCollection",
         features: [
+            // Hoàng Sa (Paracel) — quần đảo trải khoảng 15.6°N–17.2°N,
+            // 111.0°E–113.0°E. Vùng mặt nạ trước đây (111.65–112.45E,
+            // 16.88–17.18N) quá hẹp, không phủ hết các đảo/rạn ở rìa nên
+            // nhãn Trung Quốc trên tile gốc vẫn lộ ra ở biên. Nới rộng ra
+            // đủ để che toàn bộ cụm đảo ở mọi mức zoom.
             {
-                type: 'Feature',
+                type: "Feature",
                 properties: {
-                    type: 'mask',
+                    name: "Quần đảo Hoàng Sa",
+                    type: "mask",
                 },
                 geometry: {
-                    type: 'Polygon',
+                    type: "Polygon",
                     coordinates: [
                         [
-                            [111.65, 16.88],
-                            [112.45, 16.88],
-                            [112.45, 17.18],
-                            [111.65, 17.18],
-                            [111.65, 16.88],
+                            [111.0, 15.6],
+                            [113.0, 15.6],
+                            [113.0, 17.2],
+                            [111.0, 17.2],
+                            [111.0, 15.6],
                         ],
                     ],
                 },
             },
             {
-                type: 'Feature',
+                type: "Feature",
                 properties: {
-                    name: 'Quần đảo Hoàng Sa',
-                    fullName: 'Quần đảo Hoàng Sa — TP Đà Nẵng, Việt Nam',
-                    type: 'label',
+                    name: "Quần đảo Hoàng Sa",
+                    fullName: "Quần đảo Hoàng Sa — TP Đà Nẵng, Việt Nam",
+                    type: "label",
                 },
                 geometry: {
-                    type: 'Point',
-                    coordinates: [112.0, 16.5],
+                    type: "Point",
+                    coordinates: [112.0, 16.4],
                 },
             },
+            // Trường Sa (Spratly) — quần đảo trải khoảng 6.0°N–12.5°N,
+            // 111.0°E–117.5°E. Trước đây feature này có type: 'area' với
+            // toạ độ SAI (trùng vĩ độ ~17°N của Hoàng Sa) và style
+            // fill:false/stroke:false → không che được gì, nên chữ Trung
+            // Quốc trên tile gốc ở khu vực Trường Sa vẫn hiện ra. Thay
+            // bằng 1 mask thật, đúng toạ độ, giống cơ chế của Hoàng Sa.
             {
-                type: 'Feature',
+                type: "Feature",
                 properties: {
-                    name: 'Quần đảo Trường Sa',
-                    fullName: 'Quần đảo Trường Sa — Tỉnh Khánh Hòa, Việt Nam',
-                    type: 'area',
+                    name: "Quần đảo Trường Sa",
+                    type: "mask",
                 },
                 geometry: {
-                    type: 'Polygon',
+                    type: "Polygon",
                     coordinates: [
                         [
-                            [111.55, 16.95],
-                            [112.70, 16.95],
-                            [112.70, 17.45],
-                            [111.55, 17.45],
-                            [111.55, 16.95],
+                            [111.0, 6.0],
+                            [117.5, 6.0],
+                            [117.5, 12.5],
+                            [111.0, 12.5],
+                            [111.0, 6.0],
                         ],
                     ],
                 },
             },
             {
-                type: 'Feature',
+                type: "Feature",
                 properties: {
-                    name: 'Quần đảo Trường Sa',
-                    fullName: 'Quần đảo Trường Sa — Tỉnh Khánh Hòa, Việt Nam',
-                    type: 'label',
+                    name: "Quần đảo Trường Sa",
+                    fullName: "Quần đảo Trường Sa — Tỉnh Khánh Hòa, Việt Nam",
+                    type: "label",
                 },
                 geometry: {
-                    type: 'Point',
+                    type: "Point",
                     coordinates: [114.0, 9.5],
                 },
             },
@@ -70,13 +81,13 @@
     };
 
     function addStyles() {
-        if (document.getElementById('vn-sovereignty-layer-style')) {
+        if (document.getElementById("vn-sovereignty-layer-style")) {
             return;
         }
 
-        const style = document.createElement('style');
+        const style = document.createElement("style");
 
-        style.id = 'vn-sovereignty-layer-style';
+        style.id = "vn-sovereignty-layer-style";
         style.textContent = `
             .vn-sovereignty-label-icon {
                 background: transparent;
@@ -112,43 +123,43 @@
     }
 
     function initVnSovereigntyLayer(map) {
-        if (typeof window.L === 'undefined') {
-            console.error('[VN Sovereignty] Leaflet chưa được tải.');
+        if (typeof window.L === "undefined") {
+            console.error("[VN Sovereignty] Leaflet chưa được tải.");
 
             return null;
         }
 
-        if (!map || typeof map.addLayer !== 'function') {
-            console.error('[VN Sovereignty] Đối tượng map không hợp lệ.');
+        if (!map || typeof map.addLayer !== "function") {
+            console.error("[VN Sovereignty] Đối tượng map không hợp lệ.");
 
             return null;
         }
 
         addStyles();
 
-        if (!map.getPane('vnSovereigntyPane')) {
-            map.createPane('vnSovereigntyPane');
+        if (!map.getPane("vnSovereigntyPane")) {
+            map.createPane("vnSovereigntyPane");
 
-            const pane = map.getPane('vnSovereigntyPane');
+            const pane = map.getPane("vnSovereigntyPane");
 
-            pane.style.zIndex = '450';
-            pane.style.pointerEvents = 'none';
+            pane.style.zIndex = "450";
+            pane.style.pointerEvents = "none";
         }
 
         const layer = L.geoJSON(sovereigntyData, {
-            pane: 'vnSovereigntyPane',
+            pane: "vnSovereigntyPane",
 
             style(feature) {
-                if (feature.properties.type === 'mask') {
+                if (feature.properties.type === "mask") {
                     return {
                         stroke: false,
-                        fillColor: '#aad3df',
+                        fillColor: "#aad3df",
                         fillOpacity: 1,
                         interactive: false,
                     };
                 }
 
-                if (feature.properties.type === 'area') {
+                if (feature.properties.type === "area") {
                     return {
                         stroke: false,
                         fill: false,
@@ -161,10 +172,10 @@
 
             pointToLayer(feature, latlng) {
                 return L.marker(latlng, {
-                    pane: 'vnSovereigntyPane',
+                    pane: "vnSovereigntyPane",
                     interactive: false,
                     icon: L.divIcon({
-                        className: 'vn-sovereignty-label-icon',
+                        className: "vn-sovereignty-label-icon",
                         html: `
                             <div class="vn-sovereignty-label">
                                 ${feature.properties.fullName}

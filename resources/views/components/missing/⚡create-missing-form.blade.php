@@ -5,7 +5,6 @@ use Livewire\WithFileUploads;
 use App\Models\MissingChild;
 use App\Models\Photo;
 use App\Models\Province;
-use App\Jobs\ProcessPhotoJob;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Traits\HasIdempotency;
@@ -261,7 +260,13 @@ new class extends Component {
                     'status' => 'PENDING',
                 ]);
 
-                foreach (['TOS', 'CHILD_DATA_POLICY'] as $type) {
+                // F-05: checkbox "agreedDataPolicy" hiển thị cho người dùng là đồng ý
+                // với CẢ Chính sách Quyền riêng tư LẪN Chính sách Bảo vệ Dữ liệu Trẻ em
+                // (xem 2 link trong label bên dưới) — nhưng trước đây code chỉ ghi
+                // 'CHILD_DATA_POLICY', bỏ sót 'PRIVACY_POLICY' dù DB (enum) và config
+                // (legal.versions.PRIVACY_POLICY) đều đã hỗ trợ sẵn. Thêm vào để lưu
+                // đúng những gì đã hiển thị/cam kết với người dùng.
+                foreach (['TOS', 'PRIVACY_POLICY', 'CHILD_DATA_POLICY'] as $type) {
                     UserConsent::create([
                         'user_id' => Auth::id(),
                         'consent_type' => $type,
@@ -291,7 +296,11 @@ new class extends Component {
                         'is_primary' => $index === 0 ? 1 : 0,
                         'sort_order' => $index,
                     ]);
-                    ProcessPhotoJob::dispatch($case->id, $path);
+                    // KHÔNG tự dispatch ProcessPhotoJob ở đây: App\Observers\PhotoObserver
+                    // đã tự động dispatch đúng photo_id ngay khi Photo::create() chạy ở
+                    // trên (xem AppServiceProvider::boot() -> Photo::observe(...)).
+                    // Dòng dispatch cũ ở đây truyền nhầm $case->id (id hồ sơ, không phải
+                    // id ảnh) nên vừa sai vừa dispatch trùng job — đã xoá.
                 }
 
                 return $case;
@@ -883,7 +892,8 @@ new class extends Component {
                         <input type="checkbox" wire:model="agreed" class="mt-1 accent-primary" />
                         <span class="text-[11px] text-slate-600 leading-relaxed font-bold">
                             Tôi hoàn toàn cam kết các thông tin khai báo trên đây là đúng sự thật và chịu mọi
-                            trách nhiệm trước pháp luật Việt Nam về tính xác thực
+                            trách nhiệm trước pháp luật Việt Nam về tính xác thực, theo
+                            <a href="{{ route('legal.terms') }}" target="_blank" class="text-primary underline">Điều khoản Sử dụng</a>.
                         </span>
                     </label>
                     @error('agreed')

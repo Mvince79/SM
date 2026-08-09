@@ -4,11 +4,22 @@ namespace App\Observers;
 
 use App\Jobs\DispatchProvinceCaseApprovedNotificationsJob;
 use App\Models\MissingChild;
+use App\Support\CacheVersion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MissingChildObserver
 {
+    private function invalidateMapAndHomeCache(): void
+    {
+        try {
+            CacheVersion::bump(CacheVersion::MAP_DATA);
+            CacheVersion::bump(CacheVersion::HOME_HIGHLIGHTS);
+        } catch (\Throwable $e) {
+            Log::warning('MissingChildObserver: cache flush failed: ' . $e->getMessage());
+        }
+    }
+
     /**
      * Handle the MissingChild "creating" event.
      * Chạy TRƯỚC khi INSERT → tránh race condition sinh code trùng.
@@ -38,7 +49,7 @@ class MissingChildObserver
                 ? (int) substr($maxCode, -5) + 1
                 : 1;
 
-            return $prefix.str_pad($sequence, 5, '0', STR_PAD_LEFT);
+            return $prefix . str_pad($sequence, 5, '0', STR_PAD_LEFT);
         });
     }
 
@@ -60,16 +71,21 @@ class MissingChildObserver
 
             Log::info("MissingChild Observer: review_level={$reviewLevel} for {$missingChild->case_code}");
         } catch (\Throwable $e) {
-            Log::warning('Set review_level failed: '.$e->getMessage());
+            Log::warning('Set review_level failed: ' . $e->getMessage());
         }
 
         Log::info("MissingChild Observer (created): Generated case_code {$missingChild->case_code} for child ID {$missingChild->id}");
+
+        // Tin mới (kể cả đang PENDING chờ duyệt) có thể đổi số liệu thống
+        // kê ở trang chủ, và nếu status ban đầu đã là APPROVED thì cũng
+        // cần xuất hiện ngay trên bản đồ — không đợi cache cũ hết TTL.
+        $this->invalidateMapAndHomeCache();
 
         // Generate QR code PNG pointing to public detail URL and save path to model
         try {
             $qrService = app(\App\Services\QrCodeService::class);
             // Per spec: QR should point to /missing/{case_code}
-            $detailUrl = url('/missing/'.$missingChild->case_code);
+            $detailUrl = url('/missing/' . $missingChild->case_code);
             $path = $qrService->generate($detailUrl, $missingChild->case_code);
 
             // Save relative path into model without firing events
@@ -77,7 +93,7 @@ class MissingChildObserver
             $missingChild->saveQuietly();
             Log::info("MissingChild Observer: QR code generated at {$path} for {$missingChild->case_code}");
         } catch (\Throwable $e) {
-            Log::warning('QR generation failed: '.$e->getMessage());
+            Log::warning('QR generation failed: ' . $e->getMessage());
         }
     }
 
@@ -90,6 +106,10 @@ class MissingChildObserver
             DispatchProvinceCaseApprovedNotificationsJob::dispatch($missingChild->getKey());
         }
 
+        if ($missingChild->wasChanged(['status', 'lat', 'lng'])) {
+            $this->invalidateMapAndHomeCache();
+        }
+
         try {
             activity()
                 ->performedOn($missingChild)
@@ -100,9 +120,25 @@ class MissingChildObserver
                 ])
                 ->log("Đã cập nhật tin tìm kiếm trẻ thất lạc: {$missingChild->full_name} ({$missingChild->case_code})");
         } catch (\Throwable $e) {
-            Log::warning('Activity log failed: '.$e->getMessage());
+            Log::warning('Activity log failed: ' . $e->getMessage());
         }
 
         Log::info("MissingChild Observer (updated): Updated child ID {$missingChild->id} ({$missingChild->case_code})");
+    }
+
+    /**
+     * Handle the MissingChild "deleted" event (soft delete).
+     */
+    public function deleted(MissingChild $missingChild): void
+    {
+        $this->invalidateMapAndHomeCache();
+    }
+
+    /**
+     * Handle the MissingChild "restored" event.
+     */
+    public function restored(MissingChild $missingChild): void
+    {
+        $this->invalidateMapAndHomeCache();
     }
 }

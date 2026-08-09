@@ -50,7 +50,7 @@ class KycController extends Controller
             'selfie_path' => $selfiePath,
             'status' => 'PENDING', // KycVerification thật không có hằng số STATUS_*, dùng string trực tiếp
         ]);
-
+        
         $user->forceFill(['kyc_status' => 'PENDING'])->save();
 
         ProcessKycJob::dispatch($kyc->id);
