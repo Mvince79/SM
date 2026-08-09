@@ -3,15 +3,28 @@ import Pusher from 'pusher-js';
 
 window.Pusher = Pusher;
 
-window.Echo = new Echo({
-    broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-    forceTLS: false,
-    enabledTransports: ['ws', 'wss'],
-});
+const reverbKey = import.meta.env.VITE_REVERB_APP_KEY;
+const reverbHost = import.meta.env.VITE_REVERB_HOST;
+
+// Realtime is an optional enhancement. A missing deployment variable must not
+// abort the whole application bundle (navigation, dark mode, maps, ...).
+if (reverbKey && reverbHost) {
+    try {
+        window.Echo = new Echo({
+            broadcaster: 'reverb',
+            key: reverbKey,
+            wsHost: reverbHost,
+            wsPort: import.meta.env.VITE_REVERB_PORT ?? 8080,
+            wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
+            forceTLS: window.location.protocol === 'https:',
+            enabledTransports: ['ws', 'wss'],
+        });
+    } catch (error) {
+        console.warn('[realtime] Reverb could not be initialized.', error);
+    }
+} else {
+    console.warn('[realtime] Reverb is disabled because its deployment configuration is incomplete.');
+}
 
 let chatRefreshQueued = false;
 
@@ -28,7 +41,7 @@ const dispatchMessageReceived = () => {
     }, 25);
 };
 
-if (window.authUserId) {
+if (window.authUserId && window.Echo) {
     window.Echo
         .private(`private-chat.${window.authUserId}`)
         .listen('.message.sent', dispatchMessageReceived);
