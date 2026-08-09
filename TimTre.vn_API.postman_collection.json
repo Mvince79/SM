@@ -1,0 +1,327 @@
+{
+  "info": {
+    "name": "TìmTrẻ.vn API — v1",
+    "description": "Postman Collection cho toàn bộ API routes của hệ thống TìmTrẻ.vn (Laravel 12).\n\nSinh tự động từ `php artisan route:list --path=api --json` ngày 09/08/2026 (nhánh khang79).\n\nNhóm theo domain: Public Data, Auth (Sanctum), Volunteer, KYC, Internal (AI service), Chatbot, Health Check.\n\n⚠️ Field trong body request của các endpoint POST/PATCH được điền theo suy luận từ tài liệu Sprint — cần đối chiếu lại với FormRequest thật (`app/Http/Requests/...`) trước khi dùng để test chính thức.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "timtre-vn-api-v1-d02"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{sanctum_token}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "sanctum_token", "value": "", "type": "string" },
+    { "key": "internal_api_key", "value": "", "type": "string" },
+    { "key": "missing_child_id", "value": "1", "type": "string" },
+    { "key": "assignment_id", "value": "1", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Kiểm tra server sống. Public, không auth. Rate limit: 60 req/phút."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Missing Children (Public)",
+      "item": [
+        {
+          "name": "List Missing Children",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/missing-children?page=1&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "missing-children"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "15" },
+                { "key": "province_id", "value": "", "disabled": true },
+                { "key": "gender", "value": "", "disabled": true },
+                { "key": "keyword", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Public. contact_phone bị ẩn với guest chưa đăng nhập. Rate limit: 60 req/phút."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Missing Child Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/missing-children/{{missing_child_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "missing-children", "{{missing_child_id}}"]
+            },
+            "description": "Public. contact_phone chỉ hiện khi user đã đăng nhập (kèm Bearer token)."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Missing Child (Auth)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/missing-children/{{missing_child_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "missing-children", "{{missing_child_id}}"]
+            },
+            "description": "Cần Sanctum token, quyền phù hợp (admin/chủ hồ sơ). Rate limit: 120 req/phút."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Map & Stats (Public)",
+      "item": [
+        {
+          "name": "Get Map Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/map-data?lat=10.7769&lng=106.7009&radius_km=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "map-data"],
+              "query": [
+                { "key": "lat", "value": "10.7769" },
+                { "key": "lng", "value": "106.7009" },
+                { "key": "radius_km", "value": "10" },
+                { "key": "province_id", "value": "", "disabled": true },
+                { "key": "bbox", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Markers cho Leaflet map: lat, lng, type, photo_thumb_url. Public. Rate limit: 60 req/phút."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "stats"]
+            },
+            "description": "Thống kê tổng quan (tỷ lệ đoàn tụ, số ca, v.v.). Public. Rate limit: 60 req/phút."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Clues",
+      "item": [
+        {
+          "name": "Submit Clue (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"missing_child_id\": 1,\n  \"description\": \"Nhìn thấy cháu tại khu vực chợ Bến Thành lúc 14h\",\n  \"latitude\": 10.7724,\n  \"longitude\": 106.6980,\n  \"seen_at\": \"2026-08-09T14:00:00Z\",\n  \"photo\": null\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/clues",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "clues"]
+            },
+            "description": "Cần Sanctum token. Header Idempotency-Key để tránh double-submit. Rate limit: 120 req/phút + 60 req/phút (2 lớp throttle)."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Clue — TEST route (no auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"missing_child_id\": 1,\n  \"description\": \"[TEST] clue thử nghiệm\",\n  \"latitude\": 10.7724,\n  \"longitude\": 106.6980\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/clues-test",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "clues-test"]
+            },
+            "description": "Route test riêng (không auth) trỏ cùng ClueApiController@store. Rate limit siết chặt: 10 req/phút — chỉ dùng cho QA/dev."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "KYC",
+      "item": [
+        {
+          "name": "Submit KYC (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "id_type", "value": "CCCD", "type": "text", "description": "CCCD (12 số) hoặc CMND (9 số)" },
+                { "key": "id_number", "value": "079123456789", "type": "text" },
+                { "key": "full_name", "value": "Nguyễn Văn A", "type": "text" },
+                { "key": "id_front_image", "type": "file", "src": [] },
+                { "key": "id_back_image", "type": "file", "src": [] },
+                { "key": "selfie_image", "type": "file", "src": [] }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/kyc/submit",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "kyc", "submit"]
+            },
+            "description": "Cần Sanctum token. Ảnh lưu private disk. id_number được mã hoá at-rest. Rate limit rất chặt: 5 req/phút (chống spam submit)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Volunteer",
+      "item": [
+        {
+          "name": "Get Nearby Clues (Auth)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/volunteer/nearby-clues?lat=10.7769&lng=106.7009&radius_km=5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "volunteer", "nearby-clues"],
+              "query": [
+                { "key": "lat", "value": "10.7769" },
+                { "key": "lng", "value": "106.7009" },
+                { "key": "radius_km", "value": "5" }
+              ]
+            },
+            "description": "Cần Sanctum token + role volunteer. Rate limit: 120 req/phút."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Assignment (Auth)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clue_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/volunteer/assignments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "volunteer", "assignments"]
+            },
+            "description": "Volunteer nhận xác minh 1 clue. Không cho 2 volunteer nhận cùng lúc 1 clue (đã có test coverage). Rate limit: 120 req/phút."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Assignment (Auth)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"verified\",\n  \"note\": \"Đã xác minh tại hiện trường\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/volunteer/assignments/{{assignment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "volunteer", "assignments", "{{assignment_id}}"]
+            },
+            "description": "Cập nhật kết quả xác minh clue field verification. Rate limit: 120 req/phút."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chatbot",
+      "item": [
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Làm sao để xác thực KYC?\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/chatbot/message",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "chatbot", "message"]
+            },
+            "description": "Public, không auth. Trả lời intent (kyc, face match, privacy, report missing, support, handover guidance). Rate limit: 60 req/phút."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Internal (AI Service only)",
+      "item": [
+        {
+          "name": "Trigger Face Match",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Internal-Key", "value": "{{internal_api_key}}", "description": "⚠️ Xác nhận đúng tên header thật trong App\\Http\\Middleware\\InternalApiKey — có thể là X-Internal-Key hoặc tên khác, cần đối chiếu code." }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"missing_child_id\": 1,\n  \"found_child_id\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/internal/face-match/trigger",
+              "host": ["{{base_url}}"],
+              "path": ["api", "internal", "face-match", "trigger"]
+            },
+            "description": "CHỈ dùng nội bộ giữa Laravel ⇄ AI Face Match service. Không dùng cho client/app thường. Cần header InternalApiKey đúng giá trị cấu hình server."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
