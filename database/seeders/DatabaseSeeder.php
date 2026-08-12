@@ -30,6 +30,8 @@ class DatabaseSeeder extends Seeder
             HandoverPointsSeeder::class,
             DemoVerifierSeeder::class,
             DemoArticlesSeeder::class,
+            DemoMissingChildrenSeeder::class, // S6-A01
+            DemoFoundChildrenSeeder::class,   // S6-A01
 
         ]);
     }
