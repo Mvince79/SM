@@ -26,21 +26,27 @@ class FaceMatchService
     {
         $absolutePath = Storage::disk($disk)->path($storagePath);
 
-        if (! is_file($absolutePath)) {
+        if (!is_file($absolutePath)) {
             throw new RuntimeException("Photo file not found: {$storagePath}");
         }
 
-        $handle = fopen($absolutePath, 'rb');
+        [$uploadPath, $uploadName, $mime, $isTemp] = $this->prepareUploadFile($absolutePath);
+
+        $handle = fopen($uploadPath, 'rb');
 
         try {
             $response = $this->client()
-                ->attach('file', $handle, basename($storagePath), [
-                    'Content-Type' => mime_content_type($absolutePath) ?: 'application/octet-stream',
+                ->attach('file', $handle, $uploadName, [
+                    'Content-Type' => $mime,
                 ])
                 ->post('/encode');
         } finally {
             if (is_resource($handle)) {
                 fclose($handle);
+            }
+
+            if ($isTemp) {
+                @unlink($uploadPath);
             }
         }
 
@@ -52,8 +58,8 @@ class FaceMatchService
             ];
         }
 
-        if (! $response->successful()) {
-            throw new AIServiceUnavailableException('AI encode request failed with status '.$response->status());
+        if (!$response->successful()) {
+            throw new AIServiceUnavailableException('AI encode request failed with status ' . $response->status());
         }
 
         return [
@@ -67,21 +73,27 @@ class FaceMatchService
     {
         $absolutePath = Storage::disk('public')->path($storagePath);
 
-        if (! is_file($absolutePath)) {
+        if (!is_file($absolutePath)) {
             throw new RuntimeException("Photo file not found: {$storagePath}");
         }
 
-        $handle = fopen($absolutePath, 'rb');
+        [$uploadPath, $uploadName, $mime, $isTemp] = $this->prepareUploadFile($absolutePath);
+
+        $handle = fopen($uploadPath, 'rb');
 
         try {
             $response = $this->client()
-                ->attach('file', $handle, basename($storagePath), [
-                    'Content-Type' => mime_content_type($absolutePath) ?: 'application/octet-stream',
+                ->attach('file', $handle, $uploadName, [
+                    'Content-Type' => $mime,
                 ])
                 ->post('/detect-face');
         } finally {
             if (is_resource($handle)) {
                 fclose($handle);
+            }
+
+            if ($isTemp) {
+                @unlink($uploadPath);
             }
         }
 
@@ -94,8 +106,8 @@ class FaceMatchService
             ];
         }
 
-        if (! $response->successful()) {
-            throw new AIServiceUnavailableException('AI detect-face request failed with status '.$response->status());
+        if (!$response->successful()) {
+            throw new AIServiceUnavailableException('AI detect-face request failed with status ' . $response->status());
         }
 
         return [
@@ -113,8 +125,8 @@ class FaceMatchService
             'encoding_b' => $encodingB,
         ]);
 
-        if (! $response->successful()) {
-            throw new AIServiceUnavailableException('AI compare request failed with status '.$response->status());
+        if (!$response->successful()) {
+            throw new AIServiceUnavailableException('AI compare request failed with status ' . $response->status());
         }
 
         return [
@@ -138,21 +150,24 @@ class FaceMatchService
         $selfieAbsolutePath = Storage::disk($disk)->path($selfiePath);
 
         foreach ([$idDocumentAbsolutePath, $selfieAbsolutePath] as $absolutePath) {
-            if (! is_file($absolutePath)) {
-                throw new RuntimeException('Photo file not found: '.basename($absolutePath));
+            if (!is_file($absolutePath)) {
+                throw new RuntimeException('Photo file not found: ' . basename($absolutePath));
             }
         }
 
-        $idDocumentHandle = fopen($idDocumentAbsolutePath, 'rb');
-        $selfieHandle = fopen($selfieAbsolutePath, 'rb');
+        [$idUploadPath, $idUploadName, $idMime, $idIsTemp] = $this->prepareUploadFile($idDocumentAbsolutePath);
+        [$selfieUploadPath, $selfieUploadName, $selfieMime, $selfieIsTemp] = $this->prepareUploadFile($selfieAbsolutePath);
+
+        $idDocumentHandle = fopen($idUploadPath, 'rb');
+        $selfieHandle = fopen($selfieUploadPath, 'rb');
 
         try {
             $response = $this->client()
-                ->attach('id_document', $idDocumentHandle, basename($idDocumentPath), [
-                    'Content-Type' => mime_content_type($idDocumentAbsolutePath) ?: 'application/octet-stream',
+                ->attach('id_document', $idDocumentHandle, $idUploadName, [
+                    'Content-Type' => $idMime,
                 ])
-                ->attach('selfie', $selfieHandle, basename($selfiePath), [
-                    'Content-Type' => mime_content_type($selfieAbsolutePath) ?: 'application/octet-stream',
+                ->attach('selfie', $selfieHandle, $selfieUploadName, [
+                    'Content-Type' => $selfieMime,
                 ])
                 ->post('/verify');
         } finally {
@@ -162,6 +177,14 @@ class FaceMatchService
 
             if (is_resource($selfieHandle)) {
                 fclose($selfieHandle);
+            }
+
+            if ($idIsTemp) {
+                @unlink($idUploadPath);
+            }
+
+            if ($selfieIsTemp) {
+                @unlink($selfieUploadPath);
             }
         }
 
@@ -174,8 +197,8 @@ class FaceMatchService
             ];
         }
 
-        if (! $response->successful()) {
-            throw new AIServiceUnavailableException('AI verify request failed with status '.$response->status());
+        if (!$response->successful()) {
+            throw new AIServiceUnavailableException('AI verify request failed with status ' . $response->status());
         }
 
         return [
@@ -186,11 +209,54 @@ class FaceMatchService
         ];
     }
 
+    /**
+     * AI service chỉ chấp nhận jpeg/png. Nếu ảnh gốc là định dạng khác
+     * (vd: webp), convert sang jpeg tạm thời trước khi upload.
+     *
+     * @return array{0: string, 1: string, 2: string, 3: bool} [uploadPath, uploadName, mime, isTemp]
+     */
+    private function prepareUploadFile(string $absolutePath): array
+    {
+        $mime = mime_content_type($absolutePath) ?: 'application/octet-stream';
+
+        if (in_array($mime, ['image/jpeg', 'image/png'], true)) {
+            return [$absolutePath, basename($absolutePath), $mime, false];
+        }
+
+        $image = match ($mime) {
+            'image/webp' => @imagecreatefromwebp($absolutePath),
+            'image/gif' => @imagecreatefromgif($absolutePath),
+            'image/bmp' => @imagecreatefrombmp($absolutePath),
+            default => @imagecreatefromstring(file_get_contents($absolutePath)),
+        };
+
+        if ($image === false || $image === null) {
+            throw new RuntimeException("Unable to decode image for conversion: {$absolutePath} (mime: {$mime})");
+        }
+
+        // Nền trắng cho ảnh có alpha channel (webp/png trong suốt) khi convert sang jpeg
+        $width = imagesx($image);
+        $height = imagesy($image);
+        $flattened = imagecreatetruecolor($width, $height);
+        $white = imagecolorallocate($flattened, 255, 255, 255);
+        imagefill($flattened, 0, 0, $white);
+        imagecopy($flattened, $image, 0, 0, 0, 0, $width, $height);
+        imagedestroy($image);
+
+        $tmpPath = tempnam(sys_get_temp_dir(), 'facematch_') . '.jpg';
+        imagejpeg($flattened, $tmpPath, 90);
+        imagedestroy($flattened);
+
+        $uploadName = pathinfo($absolutePath, PATHINFO_FILENAME) . '.jpg';
+
+        return [$tmpPath, $uploadName, 'image/jpeg', true];
+    }
+
     private function client(?int $timeout = null): PendingRequest
     {
         $key = config('face_match.internal_key');
 
-        if (! $key) {
+        if (!$key) {
             throw new RuntimeException('FACE_MATCH_INTERNAL_KEY is not configured.');
         }
 
