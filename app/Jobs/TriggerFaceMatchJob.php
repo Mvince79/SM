@@ -54,6 +54,10 @@ class TriggerFaceMatchJob implements ShouldQueue
         $sourceEncoding = $this->decryptEncoding($photo);
 
         foreach ($this->targetPhotos($photo) as $targetPhoto) {
+            if ($this->hasClearlyDifferentGender($photo, $targetPhoto)) {
+                continue;
+            }
+
             $targetEncoding = $this->decryptEncoding($targetPhoto);
             $comparison = $faceMatchService->compare($sourceEncoding, $targetEncoding);
 
@@ -119,15 +123,26 @@ class TriggerFaceMatchJob implements ShouldQueue
             ->where('has_face', 1)
             ->whereNotNull('face_encoding');
 
-        if (in_array($photo->detected_gender, ['MALE', 'FEMALE'], true)) {
-            $query->where(function ($query) use ($photo) {
-                $query->where('detected_gender', $photo->detected_gender)
-                    ->orWhere('detected_gender', 'UNKNOWN')
-                    ->orWhereNull('detected_gender');
-            });
-        }
-
         return $query->get();
+    }
+
+    private function hasClearlyDifferentGender(Photo $source, Photo $target): bool
+    {
+        $sourceGender = $this->normalizeGender($source->detected_gender);
+        $targetGender = $this->normalizeGender($target->detected_gender);
+
+        return $sourceGender !== null
+            && $targetGender !== null
+            && $sourceGender !== $targetGender;
+    }
+
+    private function normalizeGender(?string $gender): ?string
+    {
+        return match (Str::upper(trim((string) $gender))) {
+            'MALE', 'MAN', 'NAM', 'M' => 'MALE',
+            'FEMALE', 'WOMAN', 'NU', 'NỮ', 'F' => 'FEMALE',
+            default => null,
+        };
     }
 
     private function decryptEncoding(Photo $photo): array
