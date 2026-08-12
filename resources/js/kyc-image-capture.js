@@ -1,5 +1,11 @@
-document.addEventListener('alpine:init', () => {
-    Alpine.data('kycImageCapture', (fieldName, facingMode = 'environment') => ({
+let registered = false;
+
+const registerKycImageCapture = () => {
+    if (registered || !window.Alpine) return;
+
+    registered = true;
+
+    window.Alpine.data('kycImageCapture', (fieldName, facingMode = 'environment') => ({
         stage: 'choice',
         cameraSupported: null,
         permissionError: null,
@@ -78,4 +84,32 @@ document.addEventListener('alpine:init', () => {
             this.stream = null;
         },
     }));
-});
+};
+
+const initializePendingKycComponents = () => {
+    if (!window.Alpine) return;
+
+    document.querySelectorAll('[x-data^="kycImageCapture("]').forEach((element) => {
+        const initialized = element._x_dataStack?.some(
+            (scope) => typeof scope.openCamera === 'function',
+        );
+
+        if (initialized) return;
+
+        window.Alpine.destroyTree(element);
+        window.Alpine.initTree(element);
+    });
+};
+
+const bootKycImageCapture = () => {
+    registerKycImageCapture();
+    queueMicrotask(initializePendingKycComponents);
+};
+
+if (window.Alpine) {
+    bootKycImageCapture();
+} else {
+    document.addEventListener('alpine:init', bootKycImageCapture, { once: true });
+}
+
+document.addEventListener('livewire:navigated', bootKycImageCapture);
