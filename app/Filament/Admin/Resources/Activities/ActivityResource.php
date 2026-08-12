@@ -16,12 +16,15 @@ class ActivityResource extends Resource
 {
     protected static ?string $model = Activity::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    // Đổi sang icon danh sách nhật ký phù hợp hơn
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
     protected static ?string $recordTitleAttribute = 'ActivityLog';
-    protected static ?string $navigationLabel = 'Activity Logs';
-    protected static ?string $modelLabel = 'Activity Log';
-    protected static ?string $pluralModelLabel = 'Activity Logs';
+
+    // Đổi tên nhãn hiển thị trên Sidebar và tiêu đề sang Tiếng Việt
+    protected static ?string $navigationLabel = 'Nhật Ký Hoạt Động';
+    protected static ?string $modelLabel = 'Nhật ký hoạt động';
+    protected static ?string $pluralModelLabel = 'Nhật ký hoạt động';
 
     public static function form(Schema $schema): Schema
     {
