@@ -1,5 +1,3 @@
-import 'leaflet.heat';
-
 /**
  * Khởi tạo lớp Heatmap cho bản đồ Leaflet hiện có.
  *
