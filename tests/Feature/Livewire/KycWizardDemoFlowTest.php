@@ -52,7 +52,6 @@ class KycWizardDemoFlowTest extends TestCase
                 ->assertHasNoErrors()
                 ->assertSet('step', 3)
                 ->set('selfie', UploadedFile::fake()->image('selfie.jpg', 720, 960))
-                ->set('selfieCapturedByCamera', true)
                 ->call('submit')
                 ->assertHasNoErrors();
 
@@ -69,7 +68,7 @@ class KycWizardDemoFlowTest extends TestCase
         Queue::assertPushed(ProcessKycJob::class, 2);
     }
 
-    public function test_selfie_step_only_offers_direct_camera_capture(): void
+    public function test_selfie_step_offers_camera_and_file_upload(): void
     {
         Storage::fake('private');
         $user = User::factory()->create(['kyc_status' => 'NONE']);
@@ -84,14 +83,14 @@ class KycWizardDemoFlowTest extends TestCase
             ->call('next')
             ->assertSet('step', 3)
             ->assertSee('Chụp bằng camera')
-            ->assertSee('Bắt buộc chụp trực tiếp bằng camera trước')
-            ->assertDontSee('Tải ảnh có sẵn')
-            ->assertDontSee('wire:model="selfie"', false);
+            ->assertSee('Tải ảnh có sẵn')
+            ->assertSee('wire:model="selfie"', false);
     }
 
-    public function test_selfie_upload_is_rejected_without_camera_capture_confirmation(): void
+    public function test_selfie_upload_from_device_is_accepted(): void
     {
         Storage::fake('private');
+        Queue::fake([ProcessKycJob::class]);
         $user = User::factory()->create(['kyc_status' => 'NONE']);
 
         Livewire::actingAs($user)
@@ -104,8 +103,8 @@ class KycWizardDemoFlowTest extends TestCase
             ->call('next')
             ->set('selfie', UploadedFile::fake()->image('selfie-from-disk.jpg', 720, 960))
             ->call('submit')
-            ->assertHasErrors(['selfieCapturedByCamera']);
+            ->assertHasNoErrors();
 
-        $this->assertDatabaseCount('kyc_verifications', 0);
+        $this->assertDatabaseCount('kyc_verifications', 1);
     }
 }

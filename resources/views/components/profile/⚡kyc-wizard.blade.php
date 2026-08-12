@@ -80,7 +80,6 @@ new class extends Component {
     {
         return [
             'selfie' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120', new \App\Rules\SecureImage(['image/jpeg', 'image/png'])],
-            'selfieCapturedByCamera' => ['accepted'],
         ];
     }
 
@@ -88,7 +87,6 @@ new class extends Component {
     {
         return [
             'selfie.required' => 'Vui lòng chụp ảnh selfie.',
-            'selfieCapturedByCamera.accepted' => 'Ảnh selfie phải được chụp trực tiếp bằng camera.',
             '*.image' => 'File phải là hình ảnh.',
             '*.max' => 'Dung lượng ảnh tối đa 5MB.',
         ];
@@ -357,6 +355,8 @@ new class extends Component {
                         @error('selfie') !border-danger bg-danger-light/40 @enderror">
 
                     <canvas x-ref="canvas" class="hidden"></canvas>
+                    <input type="file" x-ref="fileInput" wire:model="selfie"
+                        accept="image/png,image/jpeg" class="hidden" />
 
                     @if ($this->selfie)
                         <img src="{{ $this->selfie->temporaryUrl() }}" class="w-full h-full object-cover" />
@@ -396,12 +396,16 @@ new class extends Component {
                                     class="w-full rounded-full bg-primary/10 text-primary text-xs font-black py-2.5 flex items-center justify-center gap-2 hover:bg-primary/15 transition-colors">
                                     <x-heroicon-o-camera class="w-4 h-4" /> Chụp bằng camera
                                 </button>
+                                <button type="button" @click="$refs.fileInput.click()"
+                                    class="w-full rounded-full border border-slate-200 bg-white text-slate-700 text-xs font-black py-2.5 flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors">
+                                    <x-heroicon-o-arrow-up-tray class="w-4 h-4" /> Tải ảnh có sẵn
+                                </button>
                                 <div x-show="cameraSupported === false" x-cloak
                                     class="rounded-xl bg-amber-50 px-3 py-2 text-center text-[10px] font-bold leading-snug text-amber-700">
                                     Thiết bị hoặc trình duyệt này không hỗ trợ camera. Vui lòng chuyển sang thiết bị có camera để tiếp tục xác thực.
                                 </div>
                             </div>
-                            <span class="text-center text-[11px] text-slate-400 font-semibold">Bắt buộc chụp trực tiếp bằng camera trước</span>
+                            <span class="text-center text-[11px] text-slate-400 font-semibold">Chụp trực tiếp hoặc tải ảnh JPG/PNG, tối đa 5MB</span>
                         </div>
                     @endif
 
