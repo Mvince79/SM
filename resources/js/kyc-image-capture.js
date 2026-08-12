@@ -5,111 +5,239 @@ const registerKycImageCapture = () => {
 
     registered = true;
 
-    window.Alpine.data('kycImageCapture', (fieldName, facingMode = 'environment') => ({
-        stage: 'choice',
-        cameraSupported: null,
-        permissionError: null,
-        stream: null,
+    Alpine.data(
+        'kycImageCapture',
+        (fieldName, facingMode = 'environment') => ({
+            stage: 'choice',
+            cameraSupported: null,
+            permissionError: null,
+            stream: null,
 
-        init() {
-            this.cameraSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-        },
+            init() {
+                this.cameraSupported = !!(
+                    navigator.mediaDevices &&
+                    navigator.mediaDevices.getUserMedia
+                );
+            },
 
-        async openCamera() {
-            if (this.cameraSupported === false) return;
-            this.permissionError = null;
+            async openCamera() {
+                if (this.cameraSupported === false) return;
 
-            try {
-                this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
-                this.cameraSupported = true;
-                this.stage = 'camera';
-                this.$nextTick(async () => {
-                    if (!this.$refs.video) return;
-                    this.$refs.video.srcObject = this.stream;
-                    await this.$refs.video.play();
-                });
-            } catch (error) {
-                console.warn('Camera không khả dụng:', error.name, error.message);
+                this.permissionError = null;
 
-                if (error.name === 'NotFoundError' || error.name === 'OverconstrainedError') {
-                    this.cameraSupported = false;
-                } else {
-                    this.permissionError = 'denied';
+                try {
+                    this.stream =
+                        await navigator.mediaDevices.getUserMedia({
+                            video: {
+                                facingMode,
+                            },
+                        });
+
+                    this.cameraSupported = true;
+                    this.stage = 'camera';
+
+                    this.$nextTick(async () => {
+                        if (!this.$refs.video) return;
+
+                        this.$refs.video.srcObject = this.stream;
+
+                        try {
+                            await this.$refs.video.play();
+                        } catch (error) {
+                            console.warn(
+                                'Không thể phát camera:',
+                                error
+                            );
+                        }
+                    });
+                } catch (error) {
+                    console.warn(
+                        'Camera không khả dụng:',
+                        error.name,
+                        error.message
+                    );
+
+                    if (
+                        error.name === 'NotFoundError' ||
+                        error.name === 'OverconstrainedError'
+                    ) {
+                        this.cameraSupported = false;
+                    } else {
+                        this.permissionError = 'denied';
+                    }
                 }
-            }
-        },
+            },
 
-        capture() {
-            const video = this.$refs.video;
-            const canvas = this.$refs.canvas;
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            this.stopStream();
-            this.stage = 'uploading';
+            capture() {
+                const video = this.$refs.video;
+                const canvas = this.$refs.canvas;
 
-            canvas.toBlob(async (blob) => {
-                const file = new File([blob], `${fieldName}.jpg`, { type: 'image/jpeg' });
+                if (!video || !canvas) return;
+
+                if (
+                    !video.videoWidth ||
+                    !video.videoHeight
+                ) {
+                    console.warn(
+                        'Camera chưa sẵn sàng để chụp.'
+                    );
+                    return;
+                }
+
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                const context = canvas.getContext('2d');
+
+                if (!context) {
+                    console.warn(
+                        'Không thể lấy canvas context.'
+                    );
+                    return;
+                }
+
+                context.drawImage(
+                    video,
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+
+                this.stopStream();
+                this.stage = 'uploading';
+
+                canvas.toBlob(
+                    async (blob) => {
+                        if (!blob) {
+                            this.stage = 'choice';
+                            return;
+                        }
+
+                        const file = new File(
+                            [blob],
+                            `${fieldName}.jpg`,
+                            {
+                                type: 'image/jpeg',
+                            }
+                        );
+
+                        try {
+                            if (fieldName === 'selfie') {
+                                await this.$wire.set(
+                                    'selfieCapturedByCamera',
+                                    true
+                                );
+                            }
+
+                            this.$wire.upload(
+                                fieldName,
+                                file,
+                                () => {
+                                    // Upload thành công
+                                },
+                                () => {
+                                    // Upload thất bại
+                                    this.stage = 'choice';
+                                }
+                            );
+                        } catch (error) {
+                            console.error(
+                                'Upload ảnh camera thất bại:',
+                                error
+                            );
+
+                            this.stage = 'choice';
+                        }
+                    },
+                    'image/jpeg',
+                    0.9
+                );
+            },
+
+            cancelCamera() {
+                this.stopStream();
+                this.stage = 'choice';
+            },
+
+            retake() {
+                this.stopStream();
+
+                this.stage = 'choice';
 
                 if (fieldName === 'selfie') {
-                    await this.$wire.set('selfieCapturedByCamera', true);
+                    this.$wire.set(
+                        'selfieCapturedByCamera',
+                        false
+                    );
                 }
 
-                this.$wire.upload(
-                    fieldName,
-                    file,
-                    () => {},
-                    () => { this.stage = 'choice'; },
-                );
-            }, 'image/jpeg', 0.9);
-        },
+                this.$wire.set(fieldName, null);
+            },
 
-        cancelCamera() {
-            this.stopStream();
-            this.stage = 'choice';
-        },
+            stopStream() {
+                if (!this.stream) return;
 
-        retake() {
-            this.stage = 'choice';
+                this.stream
+                    .getTracks()
+                    .forEach((track) => track.stop());
 
-            if (fieldName === 'selfie') {
-                this.$wire.set('selfieCapturedByCamera', false);
-            }
-
-            this.$wire.set(fieldName, null);
-        },
-
-        stopStream() {
-            this.stream?.getTracks().forEach((track) => track.stop());
-            this.stream = null;
-        },
-    }));
+                this.stream = null;
+            },
+        })
+    );
 };
 
 const initializePendingKycComponents = () => {
     if (!window.Alpine) return;
 
-    document.querySelectorAll('[x-data^="kycImageCapture("]').forEach((element) => {
-        const initialized = element._x_dataStack?.some(
-            (scope) => typeof scope.openCamera === 'function',
-        );
+    document
+        .querySelectorAll(
+            '[x-data^="kycImageCapture("]'
+        )
+        .forEach((element) => {
+            const initialized =
+                element._x_dataStack?.some(
+                    (scope) =>
+                        typeof scope.openCamera ===
+                        'function'
+                );
 
-        if (initialized) return;
+            if (initialized) return;
 
-        window.Alpine.destroyTree(element);
-        window.Alpine.initTree(element);
-    });
+            try {
+                window.Alpine.destroyTree(element);
+                window.Alpine.initTree(element);
+            } catch (error) {
+                console.error(
+                    'Không thể initialize KYC component:',
+                    error
+                );
+            }
+        });
 };
 
 const bootKycImageCapture = () => {
     registerKycImageCapture();
-    queueMicrotask(initializePendingKycComponents);
+
+    queueMicrotask(
+        initializePendingKycComponents
+    );
 };
 
 if (window.Alpine) {
     bootKycImageCapture();
 } else {
-    document.addEventListener('alpine:init', bootKycImageCapture, { once: true });
+    document.addEventListener(
+        'alpine:init',
+        bootKycImageCapture,
+        {
+            once: true,
+        }
+    );
 }
 
-document.addEventListener('livewire:navigated', bootKycImageCapture);
+document.addEventListener(
+    'livewire:navigated',
+    bootKycImageCapture
+);
