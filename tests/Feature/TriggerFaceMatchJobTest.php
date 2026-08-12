@@ -166,7 +166,7 @@ class TriggerFaceMatchJobTest extends TestCase
         Event::assertNotDispatched(FaceMatchFound::class);
     }
 
-    public function test_trigger_face_match_job_skips_clearly_different_detected_gender(): void
+    public function test_trigger_face_match_job_compares_faces_regardless_of_detected_gender(): void
     {
         Event::fake([FaceMatchFound::class]);
         config([
@@ -180,15 +180,19 @@ class TriggerFaceMatchJobTest extends TestCase
 
         $service = Mockery::mock(FaceMatchService::class);
         $service->shouldReceive('isHealthy')->once()->andReturnTrue();
-        $service->shouldNotReceive('compare');
+        $service->shouldReceive('compare')->once()->andReturn([
+            'score' => 0.88,
+            'model' => 'ArcFace',
+        ]);
 
         (new TriggerFaceMatchJob($missingPhoto->id))->handle($service);
 
-        $this->assertDatabaseMissing('face_match_results', [
+        $this->assertDatabaseHas('face_match_results', [
             'missing_photo_id' => $missingPhoto->id,
             'found_photo_id' => $foundPhoto->id,
+            'status' => 'PENDING',
         ]);
-        Event::assertNotDispatched(FaceMatchFound::class);
+        Event::assertDispatched(FaceMatchFound::class);
     }
 
     public function test_failed_trigger_job_notifies_admins(): void
