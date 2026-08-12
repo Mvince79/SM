@@ -12,7 +12,7 @@
                 {{ $receiver->full_name }}
             </div>
 
-            <div class="text-xs text-green-600 md:text-base">
+            <div class="text-xs text-success md:text-base">
                 ● Đang hoạt động
             </div>
 
@@ -28,9 +28,7 @@
                 loadingMore = true;
                 $wire.loadMore().then(() => loadingMore = false);
             }
-        "
-        @scroll-to-bottom.window="$nextTick(() => { $el.scrollTop = $el.scrollHeight })"
-        class="
+        " @scroll-to-bottom.window="$nextTick(() => { $el.scrollTop = $el.scrollHeight })" class="
         flex-1
         min-h-0
         overflow-y-auto
@@ -42,7 +40,7 @@
         @if ($hasMore)
             <div class="text-center mb-4">
                 <button type="button" wire:click="loadMore"
-                    class="px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100">
+                    class="px-4 py-2 text-sm font-semibold text-primary bg-primary/10 rounded-lg hover:bg-primary/20">
                     Tải thêm tin nhắn cũ
                 </button>
             </div>
@@ -51,30 +49,28 @@
         @forelse($messages as $message)
 
             <div class="mb-4
-            {{ $message->from_user_id == auth()->id() ? 'text-right' : 'text-left' }}">
+                {{ $message->from_user_id == auth()->id() ? 'text-right' : 'text-left' }}">
 
-                <div
-                    class="
-                inline-block
-                max-w-[85%]
-                px-3
-                py-2.5
-                text-sm
-                rounded-2xl
-                break-words
-                shadow-sm
-                md:max-w-[75%]
-                md:px-4
-                md:py-3
-                md:text-base
-                {{ $message->from_user_id == auth()->id() ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200' }}
-                ">
+                <div class="
+                    inline-block
+                    max-w-[85%]
+                    px-3
+                    py-2.5
+                    text-sm
+                    rounded-2xl
+                    break-words
+                    shadow-sm
+                    md:max-w-[75%]
+                    md:px-4
+                    md:py-3
+                    md:text-base
+                    {{ $message->from_user_id == auth()->id() ? 'bg-primary text-white' : 'bg-white border border-slate-200' }}
+                    ">
 
                     @if ($message->attachment_type === 'IMAGE' && $message->attachment_path)
                         <a href="{{ route('admin-chat.attachment', ['filename' => basename($message->attachment_path)]) }}"
                             target="_blank" class="block {{ $message->body ? 'mb-3' : '' }}">
-                            <img
-                                src="{{ route('admin-chat.attachment', ['filename' => basename($message->attachment_path)]) }}"
+                            <img src="{{ route('admin-chat.attachment', ['filename' => basename($message->attachment_path)]) }}"
                                 alt="Ảnh đính kèm"
                                 class="max-h-48 rounded-xl object-cover md:max-h-64 {{ $message->from_user_id == auth()->id() ? 'ml-auto' : '' }}">
                         </a>
@@ -144,10 +140,10 @@
                 <div class="mb-2 text-sm text-red-600">{{ $message }}</div>
             @enderror
 
-            <div class="grid grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[3rem_minmax(0,1fr)_auto] md:grid-cols-[3.5rem_minmax(0,1fr)_auto] md:gap-3">
+            <div
+                class="grid grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[3rem_minmax(0,1fr)_auto] md:grid-cols-[3.5rem_minmax(0,1fr)_auto] md:gap-3">
 
-                <label
-                    class="
+                <label class="
                 h-11
                 w-11
                 self-center
@@ -163,14 +159,12 @@
                 text-slate-600
                 hover:bg-slate-50
                 cursor-pointer
-                "
-                    title="Đính kèm ảnh">
+                " title="Đính kèm ảnh">
                     <x-heroicon-o-paper-airplane class="h-5 w-5 md:h-6 md:w-6" />
                     <input type="file" wire:model="photo" accept="image/*" class="hidden">
                 </label>
 
-                <textarea wire:model="body" rows="2"
-                    class="
+                <textarea wire:model="body" rows="2" class="
                 flex-1
                 min-w-0
                 h-11
@@ -185,25 +179,23 @@
                 overflow-hidden
                 focus:outline-none
                 focus:ring-1
-                focus:ring-blue-500
-                focus:border-blue-500
+                focus:ring-primary
+                focus:border-primary
                 sm:px-4
                 md:text-base
                 md:py-4
-                "
-                    placeholder="Nhập tin nhắn..."></textarea>
+                " placeholder="Nhập tin nhắn..."></textarea>
 
-                <button type="submit"
-                    class="
+                <button type="submit" class="
                 h-11
                 min-w-14
                 px-4
                 text-sm
                 font-semibold
-                bg-blue-600
+                bg-primary
                 text-white
                 rounded-2xl
-                hover:bg-blue-700
+                hover:bg-primary-dark
                 transition
                 md:h-14
                 md:min-w-20

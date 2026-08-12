@@ -63,9 +63,8 @@ new class extends Component {
 
     {{-- ── Danh sách tin ── --}}
     @forelse($posts as $post)
-        <div
-            class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium
-                    flex flex-col sm:flex-row gap-5 items-center justify-between">
+        <div class="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-premium
+                        flex flex-col sm:flex-row gap-5 items-center justify-between">
 
             {{-- Ảnh + thông tin --}}
             <div class="flex gap-4 items-center w-full sm:w-auto min-w-0">
@@ -83,7 +82,7 @@ new class extends Component {
                         @php
                             $chipClass = match ($post->status) {
                                 'PENDING' => 'bg-amber-100 text-amber-600 border-amber-200',
-                                'APPROVED' => 'bg-emerald-100 text-emerald-600 border-emerald-200',
+                                'APPROVED' => 'bg-success-light text-success border-success/35',
                                 'REJECTED' => 'bg-red-100 text-red-500 border-red-200',
                                 'FOUND' => 'bg-violet-100 text-violet-600 border-violet-200',
                                 default => 'bg-slate-100 text-slate-500 border-slate-200',
@@ -96,16 +95,14 @@ new class extends Component {
                                 default => $post->status,
                             };
                         @endphp
-                        <span
-                            class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border {{ $chipClass }}">
+                        <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border {{ $chipClass }}">
                             {{ $chipLabel }}
                         </span>
 
-                        <span
-                            class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border flex items-center gap-1
-             {{ $post->review_level === 'ENHANCED'
-                 ? 'bg-orange-100 text-orange-600 border-orange-200'
-                 : 'bg-sky-100 text-sky-600 border-sky-200' }}">
+                        <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full border flex items-center gap-1
+                 {{ $post->review_level === 'ENHANCED'
+            ? 'bg-orange-100 text-orange-600 border-orange-200'
+            : 'bg-brand/10 text-brand border-brand/20' }}">
                             @if ($post->review_level === 'ENHANCED')
                                 <x-heroicon-o-shield-exclamation class="w-3 h-3" /> Kiểm duyệt kỹ
                             @else
@@ -128,16 +125,14 @@ new class extends Component {
             {{-- Nút hành động --}}
             <div class="flex gap-2 w-full sm:w-auto justify-end flex-shrink-0">
                 {{-- Sửa — route missing.edit sẽ được thêm ở task liên quan --}}
-                <a href="{{ url('/missing/edit/' . $post->id) }}"
-                    class="border border-slate-200 text-slate-700 text-xs font-extrabold py-2.5 px-4
-                          rounded-xl hover:bg-slate-50 transition-colors">
+                <a href="{{ url('/missing/edit/' . $post->id) }}" class="border border-slate-200 text-slate-700 text-xs font-extrabold py-2.5 px-4
+                              rounded-xl hover:bg-slate-50 transition-colors">
                     ✏️ Sửa
                 </a>
 
                 {{-- Xóa — mở confirm modal qua Livewire --}}
-                <button type="button" wire:click="confirmDelete({{ $post->id }})"
-                    class="border border-red-200 text-red-500 text-xs font-extrabold py-2.5 px-4
-                               rounded-xl hover:bg-red-50 transition-colors">
+                <button type="button" wire:click="confirmDelete({{ $post->id }})" class="border border-red-200 text-red-500 text-xs font-extrabold py-2.5 px-4
+                                   rounded-xl hover:bg-red-50 transition-colors">
                     🗑 Xóa
                 </button>
             </div>
@@ -147,9 +142,8 @@ new class extends Component {
         <div class="text-center py-16 space-y-4">
             <div class="text-5xl">📭</div>
             <h3 class="font-extrabold text-slate-700 text-base">Bạn chưa đăng tin nào.</h3>
-            <a href="{{ route('missing.create') }}"
-                class="inline-block bg-primary text-white font-bold text-sm px-6 py-3
-                      rounded-xl hover:bg-primary-dark transition-colors shadow-md shadow-primary/10">
+            <a href="{{ route('missing.create') }}" class="inline-block bg-primary text-white font-bold text-sm px-6 py-3
+                          rounded-xl hover:bg-primary-dark transition-colors shadow-md shadow-primary/10">
                 Đăng tin ngay →
             </a>
         </div>
@@ -179,13 +173,11 @@ new class extends Component {
             </div>
 
             <div class="flex gap-3 justify-center pt-1">
-                <button type="button" wire:click="cancelDelete"
-                    class="text-xs font-bold text-slate-600 px-5 py-2.5 border border-slate-200
+                <button type="button" wire:click="cancelDelete" class="text-xs font-bold text-slate-600 px-5 py-2.5 border border-slate-200
                                rounded-xl hover:bg-slate-50 transition-colors">
                     Không, giữ lại
                 </button>
-                <button type="button" wire:click="destroy" wire:loading.attr="disabled"
-                    class="bg-red-500 text-white text-xs font-extrabold px-5 py-2.5
+                <button type="button" wire:click="destroy" wire:loading.attr="disabled" class="bg-red-500 text-white text-xs font-extrabold px-5 py-2.5
                                rounded-xl hover:bg-red-600 transition-colors disabled:opacity-60">
                     <span wire:loading.remove wire:target="destroy">Xóa tin</span>
                     <span wire:loading wire:target="destroy">⏳ Đang xóa...</span>

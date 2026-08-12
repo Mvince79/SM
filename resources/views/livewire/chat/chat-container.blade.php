@@ -1,6 +1,7 @@
 <div class="h-full w-full">
     <div class="grid h-full grid-cols-12">
-        <div class="{{ $selectedUserId ? 'hidden md:flex' : 'flex' }} col-span-12 min-h-0 flex-col border-r border-slate-200 bg-white md:col-span-4">
+        <div
+            class="{{ $selectedUserId ? 'hidden md:flex' : 'flex' }} col-span-12 min-h-0 flex-col border-r border-slate-200 bg-white md:col-span-4">
             <div class="flex h-16 flex-col justify-center border-b border-slate-200 px-4 md:h-24 md:px-6">
                 <h2 class="text-xl font-bold text-slate-800 md:text-3xl">
                     Tin nhắn
@@ -16,7 +17,8 @@
             </div>
         </div>
 
-        <div class="{{ $selectedUserId ? 'flex' : 'hidden md:flex' }} col-span-12 h-full min-h-0 flex-col md:col-span-8">
+        <div
+            class="{{ $selectedUserId ? 'flex' : 'hidden md:flex' }} col-span-12 h-full min-h-0 flex-col md:col-span-8">
             @if ($selectedUserId)
                 <div class="flex h-full min-h-0 flex-col">
                     <div class="flex h-14 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 md:hidden">
@@ -49,7 +51,8 @@
 
                     <div class="flex flex-1 items-center justify-center bg-slate-50">
                         <div class="px-6 text-center">
-                            <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                            <div
+                                class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand/10 text-brand">
                                 <x-heroicon-o-chat-bubble-left-right class="h-8 w-8" />
                             </div>
 
@@ -65,7 +68,8 @@
 
                     <div class="border-t border-slate-200 bg-white p-4">
                         <div class="flex gap-3">
-                            <textarea disabled rows="2" class="flex-1 resize-none rounded-xl border border-slate-200 bg-slate-100 p-3"
+                            <textarea disabled rows="2"
+                                class="flex-1 resize-none rounded-xl border border-slate-200 bg-slate-100 p-3"
                                 placeholder="Chọn người để bắt đầu chat..."></textarea>
 
                             <button disabled class="rounded-xl bg-slate-300 px-6 text-white">

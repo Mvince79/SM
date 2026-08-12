@@ -105,7 +105,7 @@
                 </div>
 
                 <div id="provinceLegend"
-                    class="grid grid-cols-1 min-[360px]:grid-cols-3 gap-2 text-center text-[10px] pt-2">
+                    class="grid grid-cols-2 min-[360px]:grid-cols-3 gap-2 text-center text-[10px] pt-2">
                     <div>
                         <span class="font-black text-primary">● Đang tải</span>
                         <div class="font-extrabold text-slate-650 mt-0.5">0%</div>
@@ -156,6 +156,8 @@
 
                 const totalProvince = provinceData.reduce((sum, count) => sum + Number(count), 0) || 1;
 
+                // 1 dataset duy nhất (đã bỏ dataset trùng lặp "Dữ liệu thống kê")
+                // Màu theo đúng token thương hiệu --color-primary (carmine)
                 const ctxLine = document.getElementById('lineChart').getContext('2d');
                 new Chart(ctxLine, {
                     type: 'bar',
@@ -164,23 +166,11 @@
                         datasets: [{
                             label: 'Hồ sơ tiếp nhận',
                             data: monthlyData,
-                            borderColor: '#12B76A',
-                            backgroundColor: 'rgba(18, 183, 106, 0.05)',
-                            fill: true,
-                            tension: 0.35,
-                            borderWidth: 3,
-                            pointBackgroundColor: '#12B76A',
-                            pointRadius: 4
-                        }, {
-                            label: 'Dữ liệu thống kê',
-                            data: monthlyData,
-                            borderColor: '#FF3B30',
-                            backgroundColor: 'transparent',
-                            tension: 0.35,
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            pointBackgroundColor: '#FF3B30',
-                            pointRadius: 3
+                            borderColor: '#b9293f',
+                            backgroundColor: '#b9293f',
+                            borderRadius: 6,
+                            borderWidth: 0,
+                            maxBarThickness: 36
                         }]
                     },
                     options: {
@@ -211,6 +201,8 @@
                     }
                 });
 
+                // Bảng màu 5 sắc thái trầm, cùng hệ với thương hiệu
+                // (carmine → navy → forest → đồng/gold → xám trung tính)
                 const ctxDonut = document.getElementById('donutChart').getContext('2d');
                 new Chart(ctxDonut, {
                     type: 'doughnut',
@@ -218,7 +210,7 @@
                         labels: provinceLabels,
                         datasets: [{
                             data: provinceData,
-                            backgroundColor: ['#FF3B30', '#0052FF', '#94A3B8', '#12B76A', '#F59E0B'],
+                            backgroundColor: ['#b9293f', '#1c3a5e', '#2f6d52', '#8a6d3b', '#94a3b8'],
                             borderWidth: 3,
                             borderColor: '#ffffff'
                         }]
@@ -235,19 +227,32 @@
                     }
                 });
 
-                const legendColors = ['text-primary', 'text-brand', 'text-slate-400'];
-                const topThree = provinces.slice(0, 3);
+                // Màu khớp đúng thứ tự backgroundColor của donut chart phía trên
+                const legendColors = ['text-primary', 'text-brand', 'text-[#2f6d52]', 'text-[#8a6d3b]', 'text-slate-400'];
+                const topFour = provinces.slice(0, 4);
+                const restCount = provinces.slice(4).reduce((sum, item) => sum + Number(item.count), 0);
 
-                document.getElementById('provinceLegend').innerHTML = topThree.map((item, index) => {
-                    const percent = Math.round((Number(item.count) / totalProvince) * 100);
+                const legendItems = topFour.map((item, index) => ({
+                    label: item.name,
+                    percent: Math.round((Number(item.count) / totalProvince) * 100),
+                    color: legendColors[index] ?? 'text-slate-400'
+                }));
 
-                    return `
-                                    <div>
-                                        <span class="font-black ${legendColors[index] ?? 'text-slate-400'}">● ${item.name}</span>
-                                        <div class="font-extrabold text-slate-650 mt-0.5">${percent}%</div>
-                                    </div>
-                                `;
-                }).join('');
+                // Gộp toàn bộ khu vực còn lại (nếu có) thành 1 mục "Khác" để không mất dữ liệu khỏi chú thích
+                if (restCount > 0) {
+                    legendItems.push({
+                        label: 'Khác',
+                        percent: Math.round((restCount / totalProvince) * 100),
+                        color: 'text-slate-400'
+                    });
+                }
+
+                document.getElementById('provinceLegend').innerHTML = legendItems.map(item => `
+                                        <div>
+                                            <span class="font-black ${item.color}">● ${item.label}</span>
+                                            <div class="font-extrabold text-slate-650 mt-0.5">${item.percent}%</div>
+                                        </div>
+                                    `).join('');
             })
             .catch(() => {
                 document.getElementById('totalStat').innerText = 0;

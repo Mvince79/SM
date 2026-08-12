@@ -90,12 +90,12 @@
 
                             <!-- Avatar photo container + Gallery -->
                             <div class="w-full sm:w-44 flex-shrink-0" x-data="{
-                                                            open: false,
-                                                            current: 0,
-                                                            photos: {{ Js::from($case->detail_photo_urls) }},
-                                                            prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length },
-                                                            next() { this.current = (this.current + 1) % this.photos.length }
-                                                        }" @keydown.left.window="if(open) prev()"
+                                                                    open: false,
+                                                                    current: 0,
+                                                                    photos: {{ Js::from($case->detail_photo_urls) }},
+                                                                    prev() { this.current = (this.current - 1 + this.photos.length) % this.photos.length },
+                                                                    next() { this.current = (this.current + 1) % this.photos.length }
+                                                                }" @keydown.left.window="if(open) prev()"
                                 @keydown.right.window="if(open) next()" @keydown.escape.window="open = false">
 
                                 <div class="relative overflow-hidden rounded-xl sm:rounded-2xl border-2 border-slate-100 shadow bg-slate-900 group aspect-square cursor-pointer"
@@ -134,8 +134,12 @@
 
                                 @if ($case->primaryPhoto)
                                     <p class="text-center text-[10px] text-slate-400 font-bold mt-2.5">
-                                        Ảnh chụp rõ nhất
-                                        {{ $case->primaryPhoto->updated_at?->format('n/Y') ?? $case->primaryPhoto->created_at?->format('n/Y') ?? 'Chưa rõ' }}
+                                        @if ($case->primaryPhoto->updated_at || $case->primaryPhoto->created_at)
+                                            Ảnh chụp rõ nhất:
+                                            {{ $case->primaryPhoto->updated_at?->format('n/Y') ?? $case->primaryPhoto->created_at?->format('n/Y') }}
+                                        @else
+                                            Ảnh chụp rõ nhất (chưa rõ thời gian chụp)
+                                        @endif
                                     </p>
                                 @endif
 
@@ -168,8 +172,9 @@
                                             class="absolute right-4 text-white bg-white/20 hover:bg-white/40 rounded-full w-10 h-10 flex items-center justify-center text-xl z-10">›</button>
                                         <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                                             <template x-for="(photo, i) in photos" :key="i">
-                                                <img :src="photo" :class="current === i ? 'border-white scale-110' :
-                                                                                    'border-transparent opacity-60'"
+                                                <img :src="photo"
+                                                    :class="current === i ? 'border-white scale-110' :
+                                                                                            'border-transparent opacity-60'"
                                                     class="w-12 h-12 object-cover rounded-lg border-2 cursor-pointer transition-all"
                                                     @click="current = i" />
                                             </template>
@@ -415,16 +420,16 @@
                         <x-skeletons.ai-match-list :rows="2" data-ai-match-list-skeleton />
                     @elseif($case->primaryPhoto?->ai_status === 'failed')
                         <div class="border border-slate-200 rounded-2xl p-5 bg-slate-50 text-center space-y-2">
-                            <p class="text-2xl">
-                            <div class="flex justify-center"><x-heroicon-o-clock class="w-12 h-12 text-slate-300" /></div>
-                            </p>
-                            <p class="text-xs font-bold text-slate-500">Đang chờ xử lý AI</p>
+                            <div class="flex justify-center"><x-heroicon-o-exclamation-triangle class="w-10 h-10 text-slate-300" />
+                            </div>
+                            <p class="text-xs font-bold text-slate-500">Không thể xử lý AI cho ảnh này, vui lòng thử lại sau</p>
                         </div>
                     @else
                         {{-- Empty state: done nhưng không có match --}}
                         <div class="border border-brand/20 rounded-2xl p-5 bg-brand/5 text-center space-y-2">
                             <div class="flex justify-center"><x-heroicon-o-cpu-chip class="w-10 h-10 text-brand" /></div>
-                            <p class="text-xs font-bold text-slate-500">Chưa có gợi ý AI nào cho hồ sơ này</p>
+                            <p class="text-xs font-bold text-slate-500">Hệ thống đã quét nhưng chưa tìm thấy hồ sơ tương đồng nào
+                                cho trường hợp này</p>
                         </div>
                     @endif
                 @else
@@ -441,6 +446,74 @@
 
                 @livewire('missing.handover-suggestion-card', ['caseId' => $case->id])
 
+                {{-- START: KHỐI ĐIỂM BÀN GIAO / TIẾP NHẬN --}}
+                @if(isset($handoverPoints) && $handoverPoints->isNotEmpty())
+                    <div
+                        class="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-premium space-y-4">
+                        {{-- Tiêu đề khối --}}
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                    <x-heroicon-o-building-office-2 class="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h4 class="font-extrabold text-slate-900 text-sm uppercase tracking-wider">
+                                        Điểm Tiếp Nhận & Bàn Giao
+                                    </h4>
+                                    <p class="text-xs text-slate-500">Các cơ quan/tổ chức hỗ trợ tiếp nhận người trong khu vực
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
+                                {{ $handoverPoints->count() }} địa điểm
+                            </span>
+                        </div>
+
+                        {{-- Danh sách các điểm bàn giao --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            @foreach($handoverPoints as $point)
+                                <div
+                                    class="p-3.5 bg-slate-50/80 hover:bg-slate-50 rounded-2xl border border-slate-200/60 transition-all duration-200 space-y-2">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <h5 class="text-xs font-bold text-slate-800 line-clamp-1">
+                                            {{ $point->name }}
+                                        </h5>
+                                        @if($point->type)
+                                            <span
+                                                class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+                                                {{ $point->type }}
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    <p class="text-xs text-slate-600 font-medium flex items-start gap-1">
+                                        <x-heroicon-o-map-pin class="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                                        <span>{{ $point->address }}</span>
+                                    </p>
+
+                                    @if($point->responsible_org_name)
+                                        <p class="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                                            <x-heroicon-o-user-group class="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                            <span>{{ $point->responsible_org_name }}</span>
+                                        </p>
+                                    @endif
+
+                                    @if($point->hotline_phone)
+                                        <div class="pt-1 border-t border-slate-200/50 flex justify-end">
+                                            <a href="tel:{{ $point->hotline_phone }}"
+                                                class="inline-flex items-center gap-1 text-xs font-black text-primary hover:underline">
+                                                <x-heroicon-o-phone class="w-3.5 h-3.5" />
+                                                <span>Hotline: {{ $point->hotline_phone }}</span>
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+                {{-- END: KHỐI ĐIỂM BÀN GIAO --}}
+                
                 <!-- CLUES SECTION -->
                 <div class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-premium">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -671,7 +744,8 @@
                             <div id="mini-map-sovereignty-overlay" class="map-sovereignty-overlay"></div>
                         </div>
                     @else
-                        <div class="flex min-h-28 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 text-center">
+                        <div
+                            class="flex min-h-28 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 text-center">
                             <p class="text-xs font-semibold text-slate-500">Hồ sơ chưa có tọa độ bản đồ chính xác.</p>
                         </div>
                     @endif
@@ -1191,14 +1265,14 @@
             });
             L.marker([lat, lng], { icon: icon }).addTo(map)
                 .bindPopup(`
-                                <div class='font-bold text-xs p-1 text-slate-900 flex items-center gap-1.5'>
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-primary">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                                    </svg>
-                                    Vị trí mất tích ước tính
-                                </div>
-                            `)
+                                        <div class='font-bold text-xs p-1 text-slate-900 flex items-center gap-1.5'>
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-primary">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                            </svg>
+                                            Vị trí mất tích ước tính
+                                        </div>
+                                    `)
                 .openPopup();
         });
     </script>

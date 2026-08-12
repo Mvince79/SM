@@ -19,7 +19,7 @@
                                 <img src="{{ asset('storage/' . $kid->primaryPhoto->path_thumb) }}"
                                     class="w-full h-full rounded-full object-cover bg-slate-100" alt="" loading="lazy" />
                             @else
-                                <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ $kid->id }}&backgroundColor=ffdfbf"
+                                <img src="https://api.dicebear.com/7.x/initials/svg?seed={{ $kid->full_name }}&backgroundColor=1c3a5e&textColor=ffffff&fontWeight=700"
                                     class="w-full h-full rounded-full object-cover bg-slate-100" alt="" />
                             @endif
                         </div>
@@ -48,7 +48,7 @@
                 </div>
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight">
                     Mỗi một đứa trẻ<br />
-                    <span class="bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent">đều xứng
+                    <span class="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">đều xứng
                         đáng</span><br />
                     được về nhà.
                 </h1>
@@ -70,34 +70,60 @@
                 </div>
             </div>
 
+            {{-- ── Trust Panel — thay cho widget "AI đang chạy" kiểu demo sản phẩm ── --}}
             <div class="hero-widget">
                 <div class="bg-white/5 backdrop-blur-lg border border-white/10 rounded-3xl p-6 shadow-2xl">
-                    <div class="flex justify-between items-center mb-5 border-b border-white/5 pb-4">
-                        <div class="flex items-center gap-2">
-                            <span class="text-lg"><x-heroicon-o-cpu-chip class="w-5 h-5 text-slate-200" /></span>
-                            <span class="text-sm font-bold text-slate-200">AI Nhận Diện Khuôn Mặt Đang Chạy</span>
-                        </div>
-                        <span
-                            class="bg-brand/20 text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-brand/20">ARC-FACE
-                            MODEL</span>
+                    <div class="flex items-center gap-2 mb-5 border-b border-white/5 pb-4">
+                        <x-heroicon-o-shield-check class="w-5 h-5 text-slate-200" />
+                        <span class="text-sm font-bold text-slate-200">Vì sao gia đình tin tưởng TìmTrẻ.vn</span>
                     </div>
-                    <div
-                        class="relative overflow-hidden rounded-2xl aspect-video bg-slate-950 flex items-center justify-center border border-white/5">
-                        <img src="https://api.dicebear.com/7.x/thumbs/svg?seed=An1&backgroundColor=ffdfbf"
-                            class="w-32 h-32 rounded-xl object-cover" alt="" />
-                        <div class="ai-scanner-overlay"></div>
-                        <div
-                            class="absolute bottom-2 left-2 bg-black/75 px-2.5 py-1 rounded-lg text-[10px] text-slate-300 font-semibold border border-white/5">
-                            Phân tích: HS-2026-0523</div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <div
+                                class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <x-heroicon-o-building-library class="w-4 h-4 text-slate-200" />
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-white">Phối hợp cùng cơ quan chức năng</div>
+                                <div class="text-xs text-slate-400 mt-0.5">Mọi manh mối xác thực đều được chuyển tới Công an
+                                    và Tổng đài 111.</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <div
+                                class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <x-heroicon-o-lock-closed class="w-4 h-4 text-slate-200" />
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-white">Bảo mật &amp; tuân thủ pháp luật trẻ em</div>
+                                <div class="text-xs text-slate-400 mt-0.5">Dữ liệu và hình ảnh trẻ được mã hoá, chỉ dùng
+                                    đúng mục đích tìm kiếm.</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <div
+                                class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <x-heroicon-o-check-badge class="w-4 h-4 text-slate-200" />
+                            </div>
+                            <div>
+                                <div class="text-sm font-bold text-white">Kiểm duyệt trước khi công khai</div>
+                                <div class="text-xs text-slate-400 mt-0.5">Đội ngũ xác minh từng hồ sơ trước khi hiển thị
+                                    cho cộng đồng.</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mt-4 grid grid-cols-2 gap-3 text-xs">
+
+                    <div class="mt-5 pt-4 border-t border-white/5 grid grid-cols-2 gap-3 text-xs">
                         <div class="bg-white/5 rounded-xl p-3 border border-white/5">
-                            <div class="text-slate-400">Tỷ lệ chính xác</div>
-                            <div class="text-base font-extrabold text-success mt-0.5">97.8%</div>
+                            <div class="text-slate-400">Đã đoàn tụ</div>
+                            <div class="text-base font-extrabold text-success mt-0.5">2 gia đình</div>
                         </div>
                         <div class="bg-white/5 rounded-xl p-3 border border-white/5">
-                            <div class="text-slate-400">Thời gian đối chiếu</div>
-                            <div class="text-base font-extrabold text-blue-300 mt-0.5">&lt; 0.8 giây</div>
+                            <div class="text-slate-400">Thời gian phản hồi TB</div>
+                            <div class="text-base font-extrabold text-brand mt-0.5">48 giờ</div>
                         </div>
                     </div>
                 </div>
@@ -124,33 +150,33 @@
             </div>
             <div class="grid md:grid-cols-3 gap-10">
                 @foreach ([
-    [
-        'icon' => 'heroicon-o-document-text', 
-        'bg' => 'bg-primary/10 text-primary', 
-        'title' => '1. Báo tin mất tích', 
-        'desc' => 'Điền biểu mẫu 3 bước tinh gọn, tải ảnh rõ mặt của con lên hệ thống. Đội ngũ kiểm duyệt sẽ phê duyệt và đưa thông tin lên cộng đồng chỉ sau tối đa 30 phút.'
-    ], 
-    [
-        'icon' => 'heroicon-o-globe-alt', 
-        'bg' => 'bg-brand/10 text-brand', 
-        'title' => '2. Lan toả & Báo manh mối', 
-        'desc' => 'Hệ thống sinh mã QR riêng. Người dân chia sẻ lên Facebook, Zalo bằng 1 cú chạm. Bất kỳ ai nhìn thấy trẻ có thể gửi manh mối kèm tọa độ GPS trực tiếp.'
-    ], 
-    [
-        'icon' => 'heroicon-o-home', 
-        'bg' => 'bg-success/10 text-success', 
-        'title' => '3. Đoàn tụ cùng gia đình', 
-        'desc' => 'Admin phối hợp với cơ quan công an kiểm chứng manh mối, kết nối trực tiếp với phụ huynh để đưa con trở về an toàn. Trạng thái con được cập nhật.'
-    ]
-] as $step)
-    <div class="how-step">
-        <div class="how-step-icon {{ $step['bg'] }} shadow-lg flex items-center justify-center">
-            <x-dynamic-component :component="$step['icon']" class="w-6 h-6" />
-        </div>
-        <h3 class="font-extrabold text-slate-900 text-lg">{{ $step['title'] }}</h3>
-        <p class="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto text-center">{{ $step['desc'] }}</p>
-    </div>
-@endforeach
+                        [
+                            'icon' => 'heroicon-o-document-text',
+                            'bg' => 'bg-primary/10 text-primary',
+                            'title' => '1. Báo tin mất tích',
+                            'desc' => 'Điền biểu mẫu 3 bước tinh gọn, tải ảnh rõ mặt của con lên hệ thống. Đội ngũ kiểm duyệt sẽ phê duyệt và đưa thông tin lên cộng đồng chỉ sau tối đa 30 phút.'
+                        ],
+                        [
+                            'icon' => 'heroicon-o-globe-alt',
+                            'bg' => 'bg-brand/10 text-brand',
+                            'title' => '2. Lan toả & Báo manh mối',
+                            'desc' => 'Hệ thống sinh mã QR riêng. Người dân chia sẻ lên Facebook, Zalo bằng 1 cú chạm. Bất kỳ ai nhìn thấy trẻ có thể gửi manh mối kèm tọa độ GPS trực tiếp.'
+                        ],
+                        [
+                            'icon' => 'heroicon-o-home',
+                            'bg' => 'bg-success/10 text-success',
+                            'title' => '3. Đoàn tụ cùng gia đình',
+                            'desc' => 'Admin phối hợp với cơ quan công an kiểm chứng manh mối, kết nối trực tiếp với phụ huynh để đưa con trở về an toàn. Trạng thái con được cập nhật.'
+                        ]
+                    ] as $step)
+                    <div class="how-step">
+                        <div class="how-step-icon {{ $step['bg'] }} shadow-lg flex items-center justify-center">
+                            <x-dynamic-component :component="$step['icon']" class="w-6 h-6" />
+                        </div>
+                        <h3 class="font-extrabold text-slate-900 text-lg">{{ $step['title'] }}</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto text-center">{{ $step['desc'] }}</p>
+                    </div>
+                @endforeach
             </div>
         </div>
     </section>
@@ -158,14 +184,15 @@
     {{-- ── Found Stories ── --}}
     <section class="py-16 px-4 max-w-7xl mx-auto">
         <div class="space-y-2 mb-10 text-center sm:text-left">
-            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight"><x-heroicon-o-check-circle class="w-7 h-7 inline text-green-500" /> Bé đã về nhà an toàn</h2>
+            <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight"><x-heroicon-o-check-circle
+                    class="w-7 h-7 inline text-green-500" /> Bé đã về nhà an toàn</h2>
             <p class="section-subtitle">Những câu chuyện hạnh phúc từ cộng đồng TìmTrẻ.vn</p>
         </div>
         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            @foreach ([['seed' => 'MinhLe', 'name' => 'Lê Văn Minh', 'age' => 10, 'city' => 'Đà Nẵng', 'days' => '3 ngày'], ['seed' => 'NganHa', 'name' => 'Hà Thị Ngân', 'age' => 7, 'city' => 'TP.HCM', 'days' => '24h'], ['seed' => 'TuanAnh', 'name' => 'Tuấn Anh', 'age' => 11, 'city' => 'Hà Nội', 'days' => '6h'], ['seed' => 'MyDuyen', 'name' => 'Mỹ Duyên', 'age' => 8, 'city' => 'Cần Thơ', 'days' => '2 ngày']] as $f)
+            @foreach ([['name' => 'Lê Văn Minh', 'age' => 10, 'city' => 'Đà Nẵng', 'days' => '3 ngày'], ['name' => 'Hà Thị Ngân', 'age' => 7, 'city' => 'TP.HCM', 'days' => '24h'], ['name' => 'Tuấn Anh', 'age' => 11, 'city' => 'Hà Nội', 'days' => '6h'], ['name' => 'Mỹ Duyên', 'age' => 8, 'city' => 'Cần Thơ', 'days' => '2 ngày']] as $f)
                 <div class="found-card">
                     <div class="w-14 h-14 rounded-full flex-shrink-0 border-2 border-white shadow overflow-hidden">
-                        <img src="https://api.dicebear.com/7.x/thumbs/svg?seed={{ $f['seed'] }}&backgroundColor=d1fae5"
+                        <img src="https://api.dicebear.com/7.x/initials/svg?seed={{ $f['name'] }}&backgroundColor=2f6d52&textColor=ffffff&fontWeight=700"
                             class="w-full h-full object-cover" alt="" />
                     </div>
                     <div class="min-w-0">
@@ -185,14 +212,15 @@
         <div class="max-w-3xl mx-auto space-y-6 relative z-10">
             <h2 class="text-3xl sm:text-4xl font-black tracking-tight leading-tight">Bạn có thể là người cứu rỗi cả một gia
                 đình hôm nay</h2>
-            <p class="text-red-105 text-sm leading-relaxed max-w-xl mx-auto font-medium">
+            <p class="text-white/85 text-sm leading-relaxed max-w-xl mx-auto font-medium">
                 Một lượt chia sẻ, một manh mối định vị hay một đăng ký làm tình nguyện viên — mỗi hành động nhỏ từ bạn đều
                 mang tính sinh tử với một gia đình mất con.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                 <a href="{{ route('auth.register') }}"
                     class="bg-white text-primary font-black px-8 py-4 rounded-2xl hover:bg-slate-50 shadow-xl transition-premium text-base">
-                    <x-heroicon-o-hand-raised class="w-5 h-5 inline-flex items-center gap-2 shrink-0 " /> Tham gia làm tình nguyện viên
+                    <x-heroicon-o-hand-raised class="w-5 h-5 inline-flex items-center gap-2 shrink-0 " /> Tham gia làm tình
+                    nguyện viên
                 </a>
                 <a href="{{ route('missing.index') }}"
                     class="border-2 border-white/80 text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 transition-premium text-base">

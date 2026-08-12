@@ -8,6 +8,7 @@ use App\Http\Requests\Missing\SearchMissingRequest;
 use App\Http\Requests\Missing\StoreMissingChildRequest;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Services\MissingChildService;
+use App\Models\HandoverPoint;
 
 class MissingController extends Controller
 {
@@ -27,6 +28,10 @@ class MissingController extends Controller
     public function detail(int $id)
     {
         $data = $this->missingChildService->getDetailForPublic($id);
+
+        // Lấy danh sách HandoverPoint dựa theo province_id của trẻ
+        $provinceId = $data['case']->province_id ?? $data['case']->last_seen_province_id ?? null;
+        $data['handoverPoints'] = $this->getHandoverPointsByProvince($provinceId);
 
         return view('missing.detail', $data);
     }
@@ -62,6 +67,9 @@ class MissingController extends Controller
 
         $data = $this->missingChildService->getDetailForPublic($missingChild->id);
 
+        // Lấy danh sách HandoverPoint
+        $data['handoverPoints'] = $this->getHandoverPointsByProvince($missingChild->province_id ?? $missingChild->last_seen_province_id);
+
         return view('missing.detail', $data);
     }
     public function create()
@@ -83,6 +91,10 @@ class MissingController extends Controller
             abort(404);
         }
 
+        // Lấy danh sách HandoverPoint
+        $provinceId = $data['case']->province_id ?? $data['case']->last_seen_province_id ?? null;
+        $data['handoverPoints'] = $this->getHandoverPointsByProvince($provinceId);
+
         return view('missing.detail', $data);
     }
 
@@ -91,5 +103,17 @@ class MissingController extends Controller
         $data = $this->missingChildService->getResolvedForPublic($id);
 
         return view('missing.resolved', $data);
+    }
+    /**
+     * Hàm phụ trợ lấy HandoverPoint hoạt động theo Tỉnh/Thành
+     */
+    private function getHandoverPointsByProvince(?int $provinceId)
+    {
+        return HandoverPoint::where('is_active', true)
+            ->when($provinceId, function ($query) use ($provinceId) {
+                return $query->where('province_id', $provinceId);
+            })
+            ->orderBy('priority_order', 'asc')
+            ->get();
     }
 }
