@@ -19,7 +19,7 @@
                 <h1 class="text-2xl font-bold">Chi tiết hồ sơ</h1>
                 <p class="text-sm text-slate-500 mt-1">Người báo: {{ $item->user->full_name }} | Ngày: {{ $item->created_at->format('d/m/Y') }}</p>
             </div>
-            @if(auth()->id() === $item->user_id || auth()->user()->isAdmin())
+            @if(auth()->check() && (auth()->id() === $item->user_id || auth()->user()->isAdmin()))
             <div class="flex gap-2">
                 <a href="{{ route('found-children.edit', $item) }}" class="px-4 py-2 border rounded bg-white hover:bg-gray-50">Sửa</a>
                 <form method="POST" action="{{ route('found-children.destroy', $item) }}" class="inline" onsubmit="return confirm('Xóa hồ sơ này? Thao tác không thể hoàn tác.')">
