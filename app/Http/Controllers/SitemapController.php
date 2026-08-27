@@ -77,7 +77,7 @@ class SitemapController extends Controller
 
     private function foundChildUrls(): array
     {
-        if (!\Illuminate\Support\Facades\Route::has('found-children.show')) {
+        if (!\Illuminate\Support\Facades\Route::has('found-children.public-show')) {
             return [];
         }
 
@@ -86,7 +86,7 @@ class SitemapController extends Controller
             ->select(['id', 'updated_at'])
             ->get()
             ->map(fn(FoundChild $case) => [
-                'loc' => route('found-children.show', $case->id),
+                'loc' => route('found-children.public-show', $case->id),
                 'lastmod' => $case->updated_at?->toAtomString(),
                 'changefreq' => 'daily',
                 'priority' => '0.7',

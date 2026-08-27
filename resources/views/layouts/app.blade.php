@@ -178,6 +178,8 @@
                     <li><a href="{{ route('map.index') }}" class="footer-link">Bản đồ định vị GPS</a></li>
                     <li><a href="{{ route('handover-points.index') }}" class="footer-link">Điểm tiếp nhận & Bàn giao</a></li>
                     <li><a href="{{ route('stats.index') }}" class="footer-link">Thống kê dữ liệu</a></li>
+                    <li><a href="{{ route('photo-search.index') }}" class="footer-link">Tìm kiếm bằng ảnh</a></li>
+                    <li><a href="{{ route('safe-handover-process') }}" class="footer-link">Quy trình bàn giao an toàn</a></li>
                     <li><a href="{{ route('found-children.create') }}" class="footer-link">Báo tin khẩn cấp</a></li>
                 </ul>
             </div>

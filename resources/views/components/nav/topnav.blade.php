@@ -23,6 +23,7 @@
         ['route' => 'home', 'label' => 'Trang chủ'],
         ['route' => 'missing.index', 'label' => 'Hồ sơ mất tích'],
         ['route' => 'map.index', 'label' => 'Bản đồ tìm kiếm'],
+        ['route' => 'photo-search.index', 'label' => 'Tìm kiếm ảnh'],
         ['route' => 'articles.index', 'label' => 'Bài viết'],
         ['route' => 'stats.index', 'label' => 'Thống kê'],
     ];
@@ -112,6 +113,13 @@
                             class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
                             <x-heroicon-o-lifebuoy class="w-4 h-4 text-slate-400 shrink-0" /> Trung tâm hỗ trợ
                         </a>
+
+                        @can('access-volunteer-features')
+                            <a href="{{ route('volunteer.dashboard') }}"
+                                class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                                <x-heroicon-o-user-group class="w-4 h-4 text-slate-400 shrink-0" /> Bảng tình nguyện viên
+                            </a>
+                        @endcan
 
                         <hr class="border-slate-100 my-1.5">
 
