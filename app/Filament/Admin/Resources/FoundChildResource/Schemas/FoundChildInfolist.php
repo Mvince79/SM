@@ -108,11 +108,8 @@ class FoundChildInfolist
                 Section::make('Khu vực & bàn giao')
                     ->schema([
                         Grid::make(2)->schema([
-                            TextEntry::make('district')
-                                ->label('Quận/Huyện')
-                                ->placeholder('—'),
                             TextEntry::make('ward')
-                                ->label('Phường/Xã')
+                                ->label('Xã/Phường')
                                 ->placeholder('—'),
                         ]),
                         TextEntry::make('address_detail')

@@ -60,7 +60,7 @@ new class extends Component {
                             </div>
                             <div class="case-card-location">
                                 <span><x-heroicon-o-map-pin class="w-4 h-4 inline shrink-0" /></span>
-                                {{ collect([$case->district, $case->province?->name])->filter()->implode(', ') }}
+                                {{ collect([$case->ward, $case->province?->name])->filter()->implode(', ') }}
                             </div>
                             @if($case->clothes_desc || $case->special_marks)
                                 <p class="case-card-desc">

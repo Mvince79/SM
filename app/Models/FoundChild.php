@@ -19,7 +19,6 @@ class FoundChild extends Model
     protected $fillable = [
         'user_id',
         'province_id',
-        'district',
         'ward',
         'address_detail',
         'lat',

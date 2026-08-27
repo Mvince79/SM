@@ -189,14 +189,11 @@ class MissingChildInfolist
                                 ->label('Tỉnh / Thành')
                                 ->placeholder('—'),
 
-                            TextEntry::make('district')
-                                ->label('Quận / Huyện')
-                                ->placeholder('—'),
                         ]),
 
                         Grid::make(3)->schema([
                             TextEntry::make('ward')
-                                ->label('Phường / Xã')
+                                ->label('Xã / Phường')
                                 ->placeholder('—'),
 
                             TextEntry::make('address_detail')

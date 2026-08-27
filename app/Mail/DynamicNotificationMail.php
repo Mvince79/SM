@@ -71,10 +71,6 @@ class DynamicNotificationMail extends Mailable implements ShouldQueue
                 'label' => 'Quản trị viên',
                 'introduction' => 'Bạn nhận thông báo này để kiểm tra và điều phối bước xử lý tiếp theo.',
             ],
-            'THIRD_PARTY_VERIFIER' => [
-                'label' => 'Đơn vị xác minh tiếp nhận',
-                'introduction' => 'Bạn nhận thông báo này để phối hợp xác minh và bảo đảm quy trình bàn giao an toàn.',
-            ],
             'VOLUNTEER' => [
                 'label' => 'Tình nguyện viên',
                 'introduction' => 'Bạn nhận thông báo này để hỗ trợ xác minh và chia sẻ thông tin đúng phạm vi được phân công.',

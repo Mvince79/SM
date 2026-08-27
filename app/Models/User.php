@@ -225,18 +225,4 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasOne(KycVerification::class);
     }
-    public function thirdPartyVerifierProfile()
-    {
-        return $this->hasOne(ThirdPartyVerifierProfile::class);
-    }
-
-    public function isThirdPartyVerifier(): bool
-    {
-        return $this->role === 'THIRD_PARTY_VERIFIER';
-    }
-
-    public function verifierProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(\App\Models\ThirdPartyVerifierProfile::class, 'user_id');
-    }
 }

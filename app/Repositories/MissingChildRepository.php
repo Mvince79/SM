@@ -33,7 +33,6 @@ class MissingChildRepository
                     $q2->where('full_name', 'like', "%{$q}%")
                         ->orWhere('special_marks', 'like', "%{$q}%")
                         ->orWhere('clothes_desc', 'like', "%{$q}%")
-                        ->orWhere('district', 'like', "%{$q}%")
                         ->orWhereHas('province', fn($p) => $p->where('name', 'like', "%{$q}%"));
                 });
             })

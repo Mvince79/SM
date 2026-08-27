@@ -23,6 +23,7 @@ class CreateFoundFormConsentTest extends TestCase
             'special_marks' => str_repeat('a', 15),
             'agreed' => true,
             'agreedDataPolicy' => true,
+            'dataUseConsent' => true,
         ];
     }
 
@@ -56,12 +57,12 @@ class CreateFoundFormConsentTest extends TestCase
         $this->assertSame(1, FoundChild::count());
 
         $this->assertSame(
-            3,
+            4,
             UserConsent::where('user_id', $user->id)->count(),
-            'Phải có đủ 3 bản ghi consent riêng biệt: TOS, PRIVACY_POLICY, CHILD_DATA_POLICY.',
+            'Phải có đủ 4 bản ghi consent riêng biệt: TOS, PRIVACY_POLICY, CHILD_DATA_POLICY, DATA_USE_LIMITATION.',
         );
 
-        foreach (['TOS', 'PRIVACY_POLICY', 'CHILD_DATA_POLICY'] as $type) {
+        foreach (['TOS', 'PRIVACY_POLICY', 'CHILD_DATA_POLICY', 'DATA_USE_LIMITATION'] as $type) {
             $record = UserConsent::where('user_id', $user->id)
                 ->where('consent_type', $type)
                 ->first();

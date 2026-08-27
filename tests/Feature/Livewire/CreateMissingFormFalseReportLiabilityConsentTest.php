@@ -26,6 +26,7 @@ class CreateMissingFormFalseReportLiabilityConsentTest extends TestCase
             'contact_relation' => 'Mẹ',
             'agreed' => true,
             'agreedDataPolicy' => true,
+            'dataUseConsent' => true,
         ];
     }
 
@@ -75,12 +76,12 @@ class CreateMissingFormFalseReportLiabilityConsentTest extends TestCase
         $this->assertNotNull($consent->accepted_at);
 
         $this->assertSame(
-            4,
+            5,
             UserConsent::where('user_id', $user->id)->count(),
-            'Phải có đủ 4 bản ghi consent riêng biệt: TOS, PRIVACY_POLICY, CHILD_DATA_POLICY, FALSE_REPORT_LIABILITY.',
+            'Phải có đủ 5 bản ghi consent riêng biệt: TOS, PRIVACY_POLICY, CHILD_DATA_POLICY, FALSE_REPORT_LIABILITY, DATA_USE_LIMITATION.',
         );
 
-        foreach (['TOS', 'PRIVACY_POLICY', 'CHILD_DATA_POLICY', 'FALSE_REPORT_LIABILITY'] as $type) {
+        foreach (['TOS', 'PRIVACY_POLICY', 'CHILD_DATA_POLICY', 'FALSE_REPORT_LIABILITY', 'DATA_USE_LIMITATION'] as $type) {
             $record = UserConsent::where('user_id', $user->id)
                 ->where('consent_type', $type)
                 ->first();

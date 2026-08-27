@@ -21,3 +21,9 @@ Schedule::command('cases:archive-expired')
     ->dailyAt('01:00')
     ->withoutOverlapping()
     ->onOneServer();
+
+// H-04 — Nhắc gia đình xác nhận đoàn tụ và leo thang cho admin nếu quá hạn.
+Schedule::command('reunion:remind-family')
+    ->dailyAt('02:00')
+    ->withoutOverlapping()
+    ->onOneServer();

@@ -63,7 +63,14 @@ class FoundChildResource extends Resource
             Textarea::make('condition_desc')->label('Mô tả tình trạng'),
             Textarea::make('clothes_desc')->label('Mô tả quần áo'),
             Textarea::make('special_marks')->label('Dấu hiệu đặc biệt'),
-            TextInput::make('current_location')->label('Vị trí hiện tại'),
+            // U-01/V-02 — Vị trí KHÔNG phải input tự do: Xã/Phường do reverse-geocode
+            // nội bộ suy ra từ lat/lng. Hành chính VN từ 01/07/2025 chỉ còn 2 cấp:
+            // Tỉnh → Xã/Phường (cấp Huyện/Quận đã bãi bỏ).
+            TextInput::make('ward')
+                ->label('Xã/Phường (tự động từ toạ độ)')
+                ->disabled()
+                ->dehydrated(false)
+                ->placeholder('Xác định tự động từ vị trí ghim trên bản đồ'),
             TextInput::make('handover_agency')->label('Cơ quan/Nơi bàn giao'),
             Select::make('status')
                 ->label('Trạng thái')

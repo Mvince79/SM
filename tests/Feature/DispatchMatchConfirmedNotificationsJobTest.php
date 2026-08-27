@@ -7,12 +7,10 @@ use App\Jobs\SendFcmNotificationJob;
 use App\Mail\DynamicNotificationMail;
 use App\Models\FaceMatchResult;
 use App\Models\FoundChild;
-use App\Models\HandoverPoint;
 use App\Models\MissingChild;
 use App\Models\NotificationEvent;
 use App\Models\NotificationRecipient;
 use App\Models\Province;
-use App\Models\ThirdPartyVerifierProfile;
 use App\Models\User;
 use App\Services\Notification\ConfirmedMatchRecipientFinder;
 use App\Services\Notification\NotificationDeliveryService;
@@ -41,15 +39,15 @@ class DispatchMatchConfirmedNotificationsJobTest extends TestCase
         $recipients = NotificationRecipient::query()->with('user')->get();
 
         $this->assertSame(NotificationEvent::TYPE_FACE_MATCH_CONFIRMED, $event->event_type);
-        $this->assertCount(4, $recipients);
-        $this->assertCount(3, $recipients->pluck('rendered_title')->unique());
+        $this->assertCount(3, $recipients);
+        $this->assertCount(2, $recipients->pluck('rendered_title')->unique());
         $this->assertEqualsCanonicalizing(
-            ['USER', 'USER', 'THIRD_PARTY_VERIFIER', 'ADMIN'],
+            ['USER', 'USER', 'ADMIN'],
             $recipients->pluck('role_at_time')->all(),
         );
 
-        Queue::assertPushed(SendFcmNotificationJob::class, 4);
-        Mail::assertQueued(DynamicNotificationMail::class, 4);
+        Queue::assertPushed(SendFcmNotificationJob::class, 3);
+        Mail::assertQueued(DynamicNotificationMail::class, 3);
 
         $job->handle(
             app(ConfirmedMatchRecipientFinder::class),
@@ -57,9 +55,9 @@ class DispatchMatchConfirmedNotificationsJobTest extends TestCase
         );
 
         $this->assertSame(1, NotificationEvent::count());
-        $this->assertSame(4, NotificationRecipient::count());
-        Queue::assertPushed(SendFcmNotificationJob::class, 4);
-        Mail::assertQueued(DynamicNotificationMail::class, 4);
+        $this->assertSame(3, NotificationRecipient::count());
+        Queue::assertPushed(SendFcmNotificationJob::class, 3);
+        Mail::assertQueued(DynamicNotificationMail::class, 3);
     }
 
     public function test_job_uses_notification_queue_and_retry_policy(): void
@@ -88,28 +86,6 @@ class DispatchMatchConfirmedNotificationsJobTest extends TestCase
         User::factory()->create([
             'role' => 'ADMIN',
             'last_active_at' => now()->subMinutes(6),
-        ]);
-        $verifier = User::factory()->create([
-            'role' => 'THIRD_PARTY_VERIFIER',
-        ]);
-        $handoverPoint = HandoverPoint::query()->create([
-            'name' => 'Công an phường thử nghiệm',
-            'type' => 'POLICE_STATION',
-            'address' => 'Địa chỉ thử nghiệm',
-            'province_id' => $province->id,
-            'lat' => 10.7769,
-            'lng' => 106.7009,
-            'responsible_org_name' => 'Công an',
-            'legal_authority_note' => 'Điểm tiếp nhận được xác minh',
-            'is_active' => true,
-        ]);
-        ThirdPartyVerifierProfile::query()->create([
-            'user_id' => $verifier->id,
-            'organization_type' => 'POLICE',
-            'organization_name' => 'Công an phường thử nghiệm',
-            'handover_point_id' => $handoverPoint->id,
-            'verified_by_admin_id' => $admin->id,
-            'verified_at' => now(),
         ]);
 
         $missing = MissingChild::withoutEvents(fn () => MissingChild::query()->create([

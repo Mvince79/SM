@@ -190,7 +190,6 @@ class MissingControllerTest extends TestCase
             'lat' => 10.7769,
             'lng' => 106.7009,
             'address_detail' => 'Chợ Bến Thành',
-            'district' => 'Quận 1',
         ]);
 
         $response = $this->get('/missing/detail?id='.$missing->id);

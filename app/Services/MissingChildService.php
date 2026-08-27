@@ -29,8 +29,13 @@ class MissingChildService
     public function getDetailForPublic(int $id): array
     {
         $case = $this->missingChildRepository->findPublicById($id);
+        // F-02 (T-34): gom "đã xác nhận" HOẶC "score >= ngưỡng" mà vẫn giữ điều kiện
+        // missing_id ngầm định. Bọc OR trong closure để không phá khoá ngoại.
         $aiMatches = $case->faceMatchResults()
-            ->where('score', '>=', config('face_match.score_threshold', 0.7))
+            ->where(function ($q) {
+                $q->where('status', 'CONFIRMED')
+                    ->orWhere('score', '>=', config('face_match.score_threshold', 0.7));
+            })
             ->with([
                 'foundChild.province',
                 'foundChild.photos' => fn($q) => $q->orderBy('sort_order')->limit(1),
@@ -53,8 +58,13 @@ class MissingChildService
     public function getDetailForPublicByCaseCode(string $caseCode): array
     {
         $case = $this->missingChildRepository->findPublicByCaseCode($caseCode);
+        // F-02 (T-34): gom "đã xác nhận" HOẶC "score >= ngưỡng" mà vẫn giữ điều kiện
+        // missing_id ngầm định. Bọc OR trong closure để không phá khoá ngoại.
         $aiMatches = $case->faceMatchResults()
-            ->where('score', '>=', config('face_match.score_threshold', 0.7))
+            ->where(function ($q) {
+                $q->where('status', 'CONFIRMED')
+                    ->orWhere('score', '>=', config('face_match.score_threshold', 0.7));
+            })
             ->with([
                 'foundChild.province',
                 'foundChild.photos' => fn($q) => $q->orderBy('sort_order')->limit(1),

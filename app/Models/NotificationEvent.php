@@ -22,6 +22,12 @@ class NotificationEvent extends Model
 
     public const TYPE_ROLE_CHANGED = 'ROLE_CHANGED';
 
+    // H-04 — Nhắc gia đình xác nhận đoàn tụ (hồ sơ HANDED_OVER quá 3 ngày).
+    public const TYPE_REUNION_FAMILY_REMINDER = 'REUNION_FAMILY_REMINDER';
+
+    // H-04 — Leo thang cho admin khi HANDED_OVER quá 7 ngày chưa xác nhận.
+    public const TYPE_REUNION_ADMIN_ESCALATION = 'REUNION_ADMIN_ESCALATION';
+
     protected $fillable = [
         'event_type',
         'subject_type',

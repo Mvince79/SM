@@ -58,6 +58,14 @@ class AppServiceProvider extends ServiceProvider
             \App\Observers\UserObserver::class
         );
 
+        // D-01 — Audit log mọi thay đổi status của MissingChild / FoundChild.
+        \App\Models\MissingChild::observe(
+            \App\Observers\StatusChangeAuditObserver::class
+        );
+        \App\Models\FoundChild::observe(
+            \App\Observers\StatusChangeAuditObserver::class
+        );
+
         // Register Livewire component
         Livewire::component(
             'volunteer.assignment-board',

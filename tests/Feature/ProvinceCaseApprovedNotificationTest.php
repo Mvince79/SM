@@ -36,8 +36,6 @@ class ProvinceCaseApprovedNotificationTest extends TestCase
             fn (DispatchProvinceCaseApprovedNotificationsJob $job): bool => $job->missingChildId === $case->id,
         );
 
-        $case->update(['district' => 'Quận đã cập nhật']);
-
         Queue::assertPushed(DispatchProvinceCaseApprovedNotificationsJob::class, 1);
     }
 

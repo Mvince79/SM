@@ -4,6 +4,7 @@ use App\Http\Controllers\Client\ArticleController;
 use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\MapController;
 use App\Http\Controllers\Client\MissingController;
+use App\Http\Controllers\Client\PhotoSearchController;
 use App\Http\Controllers\Client\ProfileController;
 use App\Http\Controllers\Client\StatsController;
 use App\Http\Controllers\Client\SupportTicketController;
@@ -11,7 +12,6 @@ use App\Http\Controllers\HandoverPointPublicController;
 use App\Http\Controllers\HeatmapController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SitemapController;
-use App\Http\Controllers\Verifier\HandoverConfirmationController;
 use App\Http\Controllers\WatchAreaController;
 use App\Models\AdminChatAssignment;
 use App\Models\KycVerification;
@@ -30,7 +30,18 @@ require __DIR__ . '/auth.php';
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/diem-ban-giao', [HandoverPointPublicController::class, 'index'])
     ->name('handover-points.index');
+// V-04 — API top-3 điểm tiếp nhận gần nhất (public).
+Route::get('/diem-ban-giao/nearest', [HandoverPointPublicController::class, 'nearest'])
+    ->name('handover-points.nearest');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+
+// S-01 — Trang tìm kiếm bằng ảnh công khai (không cần đăng nhập).
+Route::get('/tim-kiem-bang-anh', [PhotoSearchController::class, 'index'])
+    ->name('photo-search.index');
+
+// R-02 — Trang chi tiết found_children công khai (alias /tin-tim-thay).
+Route::get('/tin-tim-thay/{foundChild}', [\App\Http\Controllers\FoundChildController::class, 'show'])
+    ->name('found-children.public-show');
 
 Route::prefix('missing')->name('missing.')->group(function () {
     Route::get('/', [MissingController::class, 'index'])->name('index');
@@ -159,6 +170,11 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
         'destroy' => 'found-children.destroy',
     ]);
 
+    // H-03 — Xác nhận đoàn tụ (chỉ chủ tài khoản). Middleware auth+email.verified
+    // đã được áp dụng bởi group cha; policy confirmReunited kiểm tra chủ sở hữu.
+    Route::post('/missing/{missingChild}/confirm-reunited', [MissingController::class, 'confirmReunited'])
+        ->name('missing.confirm-reunited');
+
     Route::prefix('/notifications')->name('notifications.')->group(function () {
         Route::get('/', [NotificationController::class, 'center'])->name('center');
         Route::get('/dropdown', [NotificationController::class, 'dropdown'])->name('dropdown');
@@ -202,11 +218,4 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
 
         return Storage::disk('private')->response($message->attachment_path);
     })->name('admin-chat.attachment');
-
-    Route::middleware('role:THIRD_PARTY_VERIFIER')->prefix('verifier')->name('verifier.')->group(function () {
-        Route::get('/dashboard', fn() => view('verifier.dashboard'))->name('dashboard');
-        Route::post('/handover/{handoverable}/{type}', [HandoverConfirmationController::class, 'confirm'])
-            ->name('handover.confirm')
-            ->whereIn('type', ['missing', 'found']);
-    });
 });

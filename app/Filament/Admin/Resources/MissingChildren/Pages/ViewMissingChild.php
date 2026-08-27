@@ -106,6 +106,14 @@ namespace App\Filament\Admin\Resources\MissingChildren\Pages;
                         $this->refreshFormData(['status']);
                     }),
 
+                // H-04 — Mở trang xác nhận đoàn tụ hộ (chỉ hồ sơ đã bàn giao).
+                Action::make('confirm_reunion_manually')
+                    ->label('Xác nhận đoàn tụ hộ')
+                    ->icon('heroicon-o-user-group')
+                    ->color('success')
+                    ->visible(fn() => $this->record->status === \App\Models\MissingChild::STATUS_HANDED_OVER)
+                    ->url(fn() => MissingChildResource::getUrl('confirm-reunion', ['record' => $this->record])),
+
                 EditAction::make()->label('Chỉnh sửa'),
             ];
         }

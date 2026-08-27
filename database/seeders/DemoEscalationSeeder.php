@@ -83,7 +83,6 @@ class DemoEscalationSeeder extends Seeder
                         'age_estimate' => 8,
                         'gender' => 'MALE',
                         'province_id' => $province->getKey(),
-                        'district' => 'Quận Demo',
                         'address_detail' => 'Khu vực phục vụ kịch bản O-03',
                         'missing_date' => now()->subDays(2)->toDateString(),
                         'contact_name' => $family->full_name,
@@ -105,7 +104,6 @@ class DemoEscalationSeeder extends Seeder
                     [
                         'province_id' => $province->getKey(),
                         'found_date' => now()->subDay()->toDateString(),
-                        'district' => 'Quận Demo',
                         'address_detail' => 'Điểm phát hiện dùng cho kịch bản O-03',
                         'gender_estimate' => 'MALE',
                         'age_estimate' => 8,

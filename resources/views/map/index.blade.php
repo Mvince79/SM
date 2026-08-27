@@ -82,7 +82,7 @@
                     <div class="relative">
                         <x-heroicon-o-magnifying-glass
                             class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                        <input type="text" placeholder="Tìm theo tỉnh thành, quận huyện..."
+                        <input type="text" placeholder="Tìm theo tỉnh thành, xã/phường..."
                             class="w-full pl-8 pr-3 py-2 border border-slate-200/70 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent bg-white/70" />
                     </div>
 

@@ -63,11 +63,9 @@ class MissingChildFactory extends Factory
 
             'province_id' => $provinceId ?? Province::factory(),
 
-            'district' => $area['district'],
-
             'ward' => $area['ward'],
 
-            'address_detail' => 'Gần ' . $area['ward'] . ', ' . $area['district'],
+            'address_detail' => 'Gần ' . $area['ward'],
 
             'lat' => $area['lat'] + (random_int(-30, 30) / 10000),
 

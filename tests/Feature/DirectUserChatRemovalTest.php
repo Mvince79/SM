@@ -23,7 +23,6 @@ class DirectUserChatRemovalTest extends TestCase
 
     public function test_controlled_handover_and_admin_chat_routes_remain_registered(): void
     {
-        $this->assertTrue(Route::has('verifier.handover.confirm'));
         $this->assertTrue(Route::has('admin-chat.attachment'));
         $this->assertTrue(Route::has('support.index'));
     }

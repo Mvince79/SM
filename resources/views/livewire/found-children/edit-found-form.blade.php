@@ -16,7 +16,7 @@ new class extends Component {
     public string $province_id = '';
     public string $found_date = '';
     public string $found_time = '';
-    public string $current_location = '';
+    // U-01 — ĐÃ BỎ `current_location` (free-text); vị trí chỉ đến từ map picker (lat/lng).
     public string $handover_agency = '';
     public string $lat = '';
     public string $lng = '';
@@ -41,7 +41,6 @@ new class extends Component {
         $this->province_id = (string) $foundChild->province_id;
         $this->found_date = optional($foundChild->found_date)->format('Y-m-d') ?? '';
         $this->found_time = (string) ($foundChild->found_time ?? '');
-        $this->current_location = (string) ($foundChild->current_location ?? '');
         $this->handover_agency = (string) ($foundChild->handover_agency ?? '');
         $this->lat = $foundChild->lat !== null ? (string) $foundChild->lat : '';
         $this->lng = $foundChild->lng !== null ? (string) $foundChild->lng : '';
@@ -57,7 +56,6 @@ new class extends Component {
         return [
             'province_id' => ['required', 'exists:provinces,id'],
             'found_date' => ['required', 'date', 'before_or_equal:today'],
-            'current_location' => ['nullable', 'string', 'max:255'],
             'handover_agency' => ['nullable', 'string', 'max:150'],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lng' => ['nullable', 'numeric', 'between:-180,180'],
@@ -168,7 +166,6 @@ new class extends Component {
                 'province_id' => (int) $this->province_id,
                 'found_date' => $this->found_date,
                 'found_time' => preg_match('/^\d{2}:\d{2}/', $this->found_time ?? '') ? $this->found_time : null,
-                'current_location' => $this->current_location ?: null,
                 'handover_agency' => $this->handover_agency ?: null,
                 'lat' => $this->lat !== '' ? (float) $this->lat : null,
                 'lng' => $this->lng !== '' ? (float) $this->lng : null,
@@ -311,13 +308,8 @@ new class extends Component {
             </div>
         </div>
 
-        <div class="space-y-1.5">
-            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                Vị trí hiện tại
-            </label>
-            <input type="text" wire:model.blur="current_location" placeholder="Địa chỉ, tên địa điểm..."
-                class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
-        </div>
+        {{-- U-01 — ĐÃ BỎ input "Vị trí hiện tại" (free-text) để form sửa không trở
+        thành đường lách qua V-01/U-01. Vị trí chỉ khai báo qua map picker bên dưới. --}}
 
         {{-- Map picker --}}
         <div class="space-y-2">

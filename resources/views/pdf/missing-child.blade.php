@@ -334,7 +334,6 @@
                                     $address = collect([
                                         $case->address_detail,
                                         $case->ward,
-                                        $case->district,
                                         $case->province?->name,
                                     ])
                                         ->filter()

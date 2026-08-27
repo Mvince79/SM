@@ -13,20 +13,18 @@ use Tests\TestCase;
 
 class NotificationPolicyResolverTest extends TestCase
 {
-    public function test_same_event_renders_different_content_for_family_verifier_and_admin(): void
+    public function test_same_event_renders_different_content_for_family_and_admin(): void
     {
         $resolver = app(NotificationPolicyResolver::class);
         $event = $this->faceMatchConfirmedEvent();
 
         $family = $resolver->resolve($event, new User(['role' => 'USER']));
-        $verifier = $resolver->resolve($event, new User(['role' => 'THIRD_PARTY_VERIFIER']));
         $admin = $resolver->resolve($event, new User(['role' => 'ADMIN']));
 
-        $this->assertNotSame($family['title'], $verifier['title']);
-        $this->assertNotSame($verifier['title'], $admin['title']);
+        $this->assertNotSame($family['title'], $admin['title']);
         $this->assertNotSame($family['body'], $admin['body']);
 
-        foreach ([$family, $verifier, $admin] as $content) {
+        foreach ([$family, $admin] as $content) {
             $this->assertSame(['title', 'body', 'action_url'], array_keys($content));
             $this->assertSame(route('missing.detail', ['id' => 42]), $content['action_url']);
         }

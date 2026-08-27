@@ -170,19 +170,23 @@ class MissingChildForm
                             ->preload()
                             ->placeholder('Tìm tỉnh thành...'),
 
+                        // V-01/V-02 — Xã/Phường KHÔNG phải input tự do: giá trị do
+                        // reverse-geocode nội bộ suy ra từ lat/lng. Hiển thị chỉ đọc.
+                        // Hành chính VN từ 01/07/2025 chỉ còn 2 cấp: Tỉnh → Xã/Phường.
                         Grid::make(2)->schema([
-                            TextInput::make('district')
-                                ->label('Quận / Huyện')
-                                ->placeholder('Biên Hòa'),
-
                             TextInput::make('ward')
-                                ->label('Phường / Xã')
-                                ->placeholder('Phường Tam Hòa'),
+                                ->label('Xã / Phường (tự động từ toạ độ)')
+                                ->disabled()
+                                ->dehydrated(false)
+                                ->placeholder('Xác định tự động từ vị trí ghim trên bản đồ'),
                         ]),
 
+                        // V-01 — Ghi chú tuỳ chọn, KHÔNG phải địa chỉ hành chính chính thức.
                         TextInput::make('address_detail')
-                            ->label('Địa chỉ chi tiết')
-                            ->placeholder('Số nhà, tên đường, địa danh gần nhất...'),
+                            ->label('Ghi chú địa điểm (tùy chọn)')
+                            ->maxLength(500)
+                            ->helperText('Chỉ là mô tả thêm giúp nhận diện hiện trường. Địa chỉ hành chính chính thức được xác định tự động từ toạ độ.')
+                            ->placeholder('Ví dụ: gần cổng sau chợ, cạnh trạm xe buýt...'),
 
                         // Ngày + Giờ trên 1 row — label ngắn, không bị squeeze
                         Grid::make(2)->schema([

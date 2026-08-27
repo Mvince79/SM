@@ -63,7 +63,7 @@ class FoundChildSeeder extends Seeder
                 'clothes_desc' => 'Đầm màu hồng, giày thể thao trắng, đeo balo nhỏ.',
                 'special_marks' => 'Tóc buộc hai bên, có nốt ruồi ở má phải.',
                 'current_location' => 'Trung tâm hỗ trợ trẻ em Đà Nẵng',
-                'handover_agency' => 'Công an quận',
+                'handover_agency' => 'Công an',
                 'status' => 'APPROVED',
             ],
             [

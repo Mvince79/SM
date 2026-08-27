@@ -55,7 +55,7 @@
 
             <div class="text-xs font-semibold text-slate-500 flex items-center gap-1">
                 <span><x-heroicon-o-map-pin class="w-4 h-4 inline shrink-0" /></span>
-                {{ collect([$case->district, $case->province?->name])->filter()->implode(', ') }}
+                {{ collect([$case->ward, $case->province?->name])->filter()->implode(', ') }}
             </div>
 
             @if($case->clothes_desc || $case->circumstances)

@@ -25,9 +25,14 @@ class FoundChildRequest extends FormRequest
             'condition_desc' => 'nullable|string',
             'clothes_desc' => 'nullable|string',
             'special_marks' => 'nullable|string',
-            'current_location' => 'nullable|string|max:300',
+            // U-01 — `current_location` KHÔNG nhận từ input: vị trí chỉ đến từ map
+            // picker (lat/lng) và cấp hành chính do reverse-geocode nội bộ suy ra.
+            // Hành chính VN từ 01/07/2025 chỉ còn 2 cấp Tỉnh → Xã/Phường.
             'handover_agency' => 'nullable|string|max:200',
             'idempotency_key' => 'nullable|uuid',
+
+            // C-01 — Checkbox cam kết giới hạn sử dụng dữ liệu (bắt buộc).
+            'data_use_consent' => 'accepted',
         ];
     }
 
@@ -43,9 +48,9 @@ class FoundChildRequest extends FormRequest
             'condition_desc' => 'mô tả tình trạng',
             'clothes_desc' => 'mô tả quần áo',
             'special_marks' => 'dấu hiệu đặc biệt',
-            'current_location' => 'vị trí hiện tại',
             'handover_agency' => 'cơ quan/nơi bàn giao',
             'idempotency_key' => 'mã chống gửi trùng',
+            'data_use_consent' => 'đồng ý giới hạn sử dụng dữ liệu',
         ];
     }
 

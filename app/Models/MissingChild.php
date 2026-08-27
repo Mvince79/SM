@@ -23,7 +23,33 @@ class MissingChild extends Model
 
     protected $table = 'missing_children';
 
+    public const STATUS_PENDING = 'PENDING';
+    public const STATUS_APPROVED = 'APPROVED';
+    public const STATUS_REJECTED = 'REJECTED';
+    public const STATUS_FOUND = 'FOUND';
+    public const STATUS_MATCHED = 'MATCHED';
+    public const STATUS_CLOSED = 'CLOSED';
     public const STATUS_ARCHIVED = 'ARCHIVED';
+
+    // H-01 — Mốc "đã bàn giao" và "đã đoàn tụ" tách biệt (backlog nhóm H).
+    public const STATUS_HANDED_OVER = 'HANDED_OVER';
+    public const STATUS_REUNITED = 'REUNITED';
+    public const STATUS_UNREACHABLE_FAMILY = 'UNREACHABLE_FAMILY';
+
+    public const REUNION_METHOD_FAMILY_SELF = 'FAMILY_SELF';
+    public const REUNION_METHOD_ADMIN_PHONE_CALL = 'ADMIN_PHONE_CALL';
+
+    /** H-04 — Độ dài tối thiểu của lý do khi ADMIN override trạng thái thủ công. */
+    public const ADMIN_REASON_MIN_LENGTH = 20;
+
+    /** Các trạng thái đã kết thúc (không còn hiện trên bản đồ / trang chủ khẩn cấp). */
+    public const CLOSED_STATUSES = [
+        self::STATUS_REUNITED,
+        self::STATUS_CLOSED,
+        self::STATUS_REJECTED,
+        self::STATUS_ARCHIVED,
+        self::STATUS_UNREACHABLE_FAMILY,
+    ];
 
     public const EXPIRABLE_STATUSES = ['PENDING', 'APPROVED'];
 
@@ -42,7 +68,6 @@ class MissingChild extends Model
         'height_cm',
         'weight_kg',
         'province_id',
-        'district',
         'ward',
         'address_detail',
         'lat',
@@ -87,7 +112,23 @@ class MissingChild extends Model
         'archived_at' => 'datetime',
         'lat' => 'decimal:7',
         'lng' => 'decimal:7',
+        // H-04 — các mốc thời gian bàn giao / đoàn tụ (cần Carbon để tính số ngày).
+        'handover_confirmed_at' => 'datetime',
+        'reunited_confirmed_at' => 'datetime',
+        'reunion_reminder_sent_at' => 'datetime',
     ];
+
+    /**
+     * H-04 — Lý do cho các override thủ công của ADMIN (không phải cột DB).
+     *
+     * Khai báo tường minh dưới dạng property PHP để phép gán
+     * `$model->audit_reason = '...'` KHÔNG đi qua Eloquent::setAttribute():
+     * nếu đi qua setAttribute, save() sẽ sinh `UPDATE ... SET audit_reason = ?`
+     * và lỗi "Unknown column 'audit_reason'".
+     * StatusChangeAuditObserver đọc thuộc tính này khi ghi audit_logs.
+     */
+    public ?string $audit_reason = null;
+
     protected static function booted(): void
     {
         static::creating(function (MissingChild $missingChild): void {
@@ -139,6 +180,58 @@ class MissingChild extends Model
         return LogOptions::defaults()
             ->logOnly(['status']) // chỉ log field quan trọng, không log hết
             ->logOnlyDirty();     // chỉ log khi giá trị thực sự thay đổi
+    }
+
+    // H-01 — Helpers trạng thái đoàn tụ / đóng hồ sơ.
+    public function isReunited(): bool
+    {
+        return $this->status === self::STATUS_REUNITED;
+    }
+
+    public function isHandedOver(): bool
+    {
+        return $this->status === self::STATUS_HANDED_OVER;
+    }
+
+    public function isClosed(): bool
+    {
+        return in_array($this->status, self::CLOSED_STATUSES, true);
+    }
+
+    /**
+     * H-04 — Admin xác nhận đoàn tụ hộ gia đình (đã liên hệ qua điện thoại).
+     *
+     * Logic dùng chung cho Filament table action "Xác nhận đoàn tụ hộ" và trang
+     * ConfirmReunionManually. StatusChangeAuditObserver đọc $this->audit_reason
+     * và ghi audit_logs với actor_role = ADMIN.
+     *
+     * Lý do được kiểm tra NGAY TẠI ĐÂY, trước khi save(): observer chỉ chạy ở
+     * event `updated` (sau khi UPDATE đã xuống DB) nên nếu chỉ dựa vào observer
+     * thì status vẫn bị đổi thành REUNITED rồi mới ném ValidationException —
+     * không có transaction nào để rollback. Kiểm tra trước khi ghi giúp mọi
+     * caller (Filament action, page, lệnh CLI, test) đều bị chặn thật sự.
+     *
+     * @throws \Illuminate\Validation\ValidationException nếu lý do < 20 ký tự
+     */
+    public function confirmReunionByAdmin(string $reason, ?int $actorId = null): void
+    {
+        $reason = trim($reason);
+
+        if (mb_strlen($reason) < self::ADMIN_REASON_MIN_LENGTH) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'reason' => 'Lý do xác nhận đoàn tụ hộ phải có ít nhất '
+                    . self::ADMIN_REASON_MIN_LENGTH . ' ký tự.',
+            ]);
+        }
+
+        $this->audit_reason = $reason;
+
+        $this->forceFill([
+            'status' => self::STATUS_REUNITED,
+            'reunited_confirmed_at' => now(),
+            'reunited_confirmed_by' => $actorId ?? Auth::id(),
+            'reunited_verification_method' => self::REUNION_METHOD_ADMIN_PHONE_CALL,
+        ])->save();
     }
 
     protected static function generateUniqueSlug(MissingChild $missingChild): string
@@ -203,6 +296,12 @@ class MissingChild extends Model
         return $this->belongsTo(User::class);
     }
 
+    /** H-02 — Điểm bàn giao nơi trẻ đang được giữ (mốc "đã bàn giao"). */
+    public function handoverPoint()
+    {
+        return $this->belongsTo(HandoverPoint::class);
+    }
+
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable')
@@ -226,6 +325,18 @@ class MissingChild extends Model
     public function scopeFound($query)
     {
         return $query->where('status', 'FOUND');
+    }
+
+    /** H-01/H-04 — Hồ sơ đã đoàn tụ thành công. */
+    public function scopeReunited($query)
+    {
+        return $query->where('status', self::STATUS_REUNITED);
+    }
+
+    /** H-04 — Đã bàn giao (HANDED_OVER) nhưng chưa đoàn tụ (chưa REUNITED). */
+    public function scopeHandedOverNotYetReunited($query)
+    {
+        return $query->where('status', self::STATUS_HANDED_OVER);
     }
 
     // Helpers

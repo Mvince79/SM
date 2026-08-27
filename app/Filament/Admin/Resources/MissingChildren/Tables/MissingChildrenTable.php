@@ -90,6 +90,9 @@ class MissingChildrenTable
                         'PENDING' => 'warning',
                         'REJECTED' => 'danger',
                         'FOUND' => 'primary',
+                        'HANDED_OVER' => 'info',
+                        'REUNITED' => 'success',
+                        'UNREACHABLE_FAMILY' => 'danger',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn($state) => match ($state) {
@@ -98,6 +101,9 @@ class MissingChildrenTable
                         'FOUND' => 'Đã tìm thấy',
                         'CLOSED' => 'Đóng',
                         'REJECTED' => 'Từ chối',
+                        'HANDED_OVER' => 'Đã bàn giao',
+                        'REUNITED' => 'Đã đoàn tụ',
+                        'UNREACHABLE_FAMILY' => 'Không liên lạc được',
                         default => $state,
                     }),
 
@@ -295,6 +301,34 @@ class MissingChildrenTable
                         Cache::forget('badge_missing_pending');
                         Notification::make()->title('Đã từ chối hồ sơ')->danger()->send();
                         PostStatusChanged::dispatch($record->refresh());
+                    }),
+
+                // H-04 — Admin xác nhận đoàn tụ hộ (đã liên hệ gia đình).
+                // Bắt buộc nhập lý do (min 20 ký tự); observer ghi audit_logs
+                // với actor_role = ADMIN. status → REUNITED.
+                Action::make('confirm_reunion_admin')
+                    ->label('Xác nhận đoàn tụ hộ')
+                    ->icon('heroicon-o-user-group')
+                    ->color('success')
+                    ->visible(fn(MissingChild $record) => $record->status === MissingChild::STATUS_HANDED_OVER)
+                    ->schema([
+                        Textarea::make('reason')
+                            ->label('Lý do xác nhận (bắt buộc, tối thiểu 20 ký tự)')
+                            ->required()
+                            ->minLength(20)
+                            ->rows(3)
+                            ->helperText('Ghi rõ đã liên hệ gia đình qua kênh nào, kết quả xác minh ra sao.'),
+                    ])
+                    ->action(function (MissingChild $record, array $data) {
+                        // Logic dùng chung với trang ConfirmReunionManually.
+                        // Observer StatusChangeAuditObserver kiểm tra reason >= 20
+                        // với actor_role = ADMIN và ghi audit_logs tương ứng.
+                        $record->confirmReunionByAdmin($data['reason'], Auth::id());
+
+                        Notification::make()
+                            ->title('Đã xác nhận đoàn tụ (admin)')
+                            ->success()
+                            ->send();
                     }),
             ])
             ->toolbarActions([

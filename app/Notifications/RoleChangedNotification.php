@@ -35,7 +35,6 @@ class RoleChangedNotification implements NotificationStrategy
         return match (strtoupper($role)) {
             'USER' => 'Người dùng',
             'VOLUNTEER' => 'Tình nguyện viên',
-            'THIRD_PARTY_VERIFIER' => 'Bên thứ ba xác minh',
             'MODERATOR' => 'Kiểm duyệt viên',
             'ADMIN' => 'Quản trị viên',
             default => $role,

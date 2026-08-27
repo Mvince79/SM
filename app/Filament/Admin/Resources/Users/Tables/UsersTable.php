@@ -81,7 +81,6 @@ class UsersTable
                         'ADMIN' => 'Quản trị viên',
                         'MODERATOR' => 'Kiểm duyệt viên',
                         'VOLUNTEER' => 'Tình nguyện viên',
-                        'THIRD_PARTY_VERIFIER' => 'Bên thứ ba xác minh',
                         'USER' => 'Người dùng',
                         default => $state ?? 'Không xác định',
                     })
@@ -89,7 +88,6 @@ class UsersTable
                         'ADMIN' => 'danger',
                         'MODERATOR' => 'warning',
                         'VOLUNTEER' => 'info',
-                        'THIRD_PARTY_VERIFIER' => 'success',
                         default => 'gray',
                     }),
 
@@ -131,7 +129,6 @@ class UsersTable
                         'ADMIN' => 'Quản trị viên',
                         'MODERATOR' => 'Kiểm duyệt viên',
                         'VOLUNTEER' => 'Tình nguyện viên',
-                        'THIRD_PARTY_VERIFIER' => 'Bên thứ ba xác minh',
                         'USER' => 'Người dùng',
                     ])
                     ->native(false)

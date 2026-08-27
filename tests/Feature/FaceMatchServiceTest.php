@@ -129,8 +129,8 @@ class FaceMatchServiceTest extends TestCase
         config(['face_match.service_url' => 'http://ai.test']);
 
         Storage::fake('private');
-        Storage::disk('private')->put('kyc/id.jpg', 'fake-id');
-        Storage::disk('private')->put('kyc/selfie.jpg', 'fake-selfie');
+        Storage::disk('private')->putFileAs('kyc', UploadedFile::fake()->image('id.jpg', 10, 10), 'id.jpg');
+        Storage::disk('private')->putFileAs('kyc', UploadedFile::fake()->image('selfie.jpg', 10, 10), 'selfie.jpg');
 
         Http::fake([
             'ai.test/verify' => Http::response(['detail' => 'no_face_detected'], 422),

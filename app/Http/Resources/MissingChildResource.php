@@ -36,7 +36,6 @@ class MissingChildResource extends JsonResource
                     'code' => $this->province->code,
                 ];
             }),
-            'district' => $this->district,
             'ward' => $this->ward,
             'address_detail' => $this->address_detail,
             'lat' => $this->lat,

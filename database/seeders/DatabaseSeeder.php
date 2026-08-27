@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
             PhotosSeeder::class,
             CluesSeeder::class,
             HandoverPointsSeeder::class,
-            DemoVerifierSeeder::class,
+            // DemoVerifierSeeder::class,
             DemoArticlesSeeder::class,
             DemoMissingChildrenSeeder::class, // S6-A01
             DemoFoundChildrenSeeder::class,   // S6-A01

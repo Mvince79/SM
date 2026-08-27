@@ -40,7 +40,7 @@ trait GeneratesVietnameseDemoData
      * 5 tỉnh/thành dùng cho demo — khớp với O-01 (HandoverPointsSeeder):
      * Hà Nội, TP Hải Phòng, TP Đà Nẵng, TP Hồ Chí Minh, TP Cần Thơ.
      *
-     * @return array<int, array{name: string, areas: array<int, array{district: string, ward: string, lat: float, lng: float}>}>
+     * @return array<int, array{name: string, areas: array<int, array{ward: string, lat: float, lng: float}>}>
      */
     protected function demoProvinces(): array
     {
@@ -48,48 +48,48 @@ trait GeneratesVietnameseDemoData
             1 => [
                 'name' => 'Hà Nội',
                 'areas' => [
-                    ['district' => 'Hoàn Kiếm', 'ward' => 'Phường Hàng Bài', 'lat' => 21.0285, 'lng' => 105.8542],
-                    ['district' => 'Cầu Giấy', 'ward' => 'Phường Dịch Vọng', 'lat' => 21.0362, 'lng' => 105.7907],
-                    ['district' => 'Tây Hồ', 'ward' => 'Phường Nhật Tân', 'lat' => 21.0708, 'lng' => 105.8232],
-                    ['district' => 'Đống Đa', 'ward' => 'Phường Kim Liên', 'lat' => 21.0119, 'lng' => 105.8264],
-                    ['district' => 'Long Biên', 'ward' => 'Phường Bồ Đề', 'lat' => 21.0453, 'lng' => 105.8890],
+                    ['ward' => 'Phường Hàng Bài', 'lat' => 21.0285, 'lng' => 105.8542],
+                    ['ward' => 'Phường Dịch Vọng', 'lat' => 21.0362, 'lng' => 105.7907],
+                    ['ward' => 'Phường Nhật Tân', 'lat' => 21.0708, 'lng' => 105.8232],
+                    ['ward' => 'Phường Kim Liên', 'lat' => 21.0119, 'lng' => 105.8264],
+                    ['ward' => 'Phường Bồ Đề', 'lat' => 21.0453, 'lng' => 105.8890],
                 ],
             ],
             18 => [
                 'name' => 'TP Hải Phòng',
                 'areas' => [
-                    ['district' => 'Ngô Quyền', 'ward' => 'Phường Máy Tơ', 'lat' => 20.8586, 'lng' => 106.6890],
-                    ['district' => 'Hồng Bàng', 'ward' => 'Phường Hoàng Văn Thụ', 'lat' => 20.8600, 'lng' => 106.6822],
-                    ['district' => 'Lê Chân', 'ward' => 'Phường An Biên', 'lat' => 20.8480, 'lng' => 106.6740],
-                    ['district' => 'Kiến An', 'ward' => 'Phường Trần Thành Ngọ', 'lat' => 20.8028, 'lng' => 106.6229],
+                    ['ward' => 'Phường Máy Tơ', 'lat' => 20.8586, 'lng' => 106.6890],
+                    ['ward' => 'Phường Hoàng Văn Thụ', 'lat' => 20.8600, 'lng' => 106.6822],
+                    ['ward' => 'Phường An Biên', 'lat' => 20.8480, 'lng' => 106.6740],
+                    ['ward' => 'Phường Trần Thành Ngọ', 'lat' => 20.8028, 'lng' => 106.6229],
                 ],
             ],
             21 => [
                 'name' => 'TP Đà Nẵng',
                 'areas' => [
-                    ['district' => 'Hải Châu', 'ward' => 'Phường Hải Châu 1', 'lat' => 16.0678, 'lng' => 108.2208],
-                    ['district' => 'Thanh Khê', 'ward' => 'Phường Thanh Khê Đông', 'lat' => 16.0668, 'lng' => 108.1897],
-                    ['district' => 'Sơn Trà', 'ward' => 'Phường Mỹ An', 'lat' => 16.0505, 'lng' => 108.2437],
-                    ['district' => 'Liên Chiểu', 'ward' => 'Phường Hòa Khánh', 'lat' => 16.0716, 'lng' => 108.1436],
+                    ['ward' => 'Phường Hải Châu 1', 'lat' => 16.0678, 'lng' => 108.2208],
+                    ['ward' => 'Phường Thanh Khê Đông', 'lat' => 16.0668, 'lng' => 108.1897],
+                    ['ward' => 'Phường Mỹ An', 'lat' => 16.0505, 'lng' => 108.2437],
+                    ['ward' => 'Phường Hòa Khánh', 'lat' => 16.0716, 'lng' => 108.1436],
                 ],
             ],
             27 => [
                 'name' => 'TP Hồ Chí Minh',
                 'areas' => [
-                    ['district' => 'Bình Thạnh', 'ward' => 'Phường 13', 'lat' => 10.8010, 'lng' => 106.7120],
-                    ['district' => 'Quận 1', 'ward' => 'Phường Bến Nghé', 'lat' => 10.7756, 'lng' => 106.7019],
-                    ['district' => 'Quận 7', 'ward' => 'Phường Tân Phú', 'lat' => 10.7302, 'lng' => 106.7152],
-                    ['district' => 'Gò Vấp', 'ward' => 'Phường 6', 'lat' => 10.8386, 'lng' => 106.6650],
-                    ['district' => 'Tân Bình', 'ward' => 'Phường 4', 'lat' => 10.8010, 'lng' => 106.6530],
+                    ['ward' => 'Phường 13', 'lat' => 10.8010, 'lng' => 106.7120],
+                    ['ward' => 'Phường Bến Nghé', 'lat' => 10.7756, 'lng' => 106.7019],
+                    ['ward' => 'Phường Tân Phú', 'lat' => 10.7302, 'lng' => 106.7152],
+                    ['ward' => 'Phường 6', 'lat' => 10.8386, 'lng' => 106.6650],
+                    ['ward' => 'Phường 4', 'lat' => 10.8010, 'lng' => 106.6530],
                 ],
             ],
             30 => [
                 'name' => 'TP Cần Thơ',
                 'areas' => [
-                    ['district' => 'Ninh Kiều', 'ward' => 'Phường An Hòa', 'lat' => 10.0342, 'lng' => 105.7882],
-                    ['district' => 'Ninh Kiều', 'ward' => 'Phường An Phú', 'lat' => 10.0294, 'lng' => 105.7690],
-                    ['district' => 'Bình Thủy', 'ward' => 'Phường Long Hòa', 'lat' => 10.0577, 'lng' => 105.7269],
-                    ['district' => 'Cái Răng', 'ward' => 'Phường Lê Bình', 'lat' => 9.9976, 'lng' => 105.7554],
+                    ['ward' => 'Phường An Hòa', 'lat' => 10.0342, 'lng' => 105.7882],
+                    ['ward' => 'Phường An Phú', 'lat' => 10.0294, 'lng' => 105.7690],
+                    ['ward' => 'Phường Long Hòa', 'lat' => 10.0577, 'lng' => 105.7269],
+                    ['ward' => 'Phường Lê Bình', 'lat' => 9.9976, 'lng' => 105.7554],
                 ],
             ],
         ];

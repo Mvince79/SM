@@ -30,7 +30,6 @@ class MissingChildrenSeeder extends Seeder
                 'height_cm' => 110,
                 'weight_kg' => 18.50,
                 'province_id' => 27,  // TP HCM
-                'district' => 'Bình Thạnh',
                 'ward' => 'Phường 13',
                 'address_detail' => 'Gần chợ Bà Chiểu, đường Đinh Tiên Hoàng',
                 'lat' => 10.8010000,
@@ -71,7 +70,6 @@ class MissingChildrenSeeder extends Seeder
                 'height_cm' => 135,
                 'weight_kg' => 28.00,
                 'province_id' => 1,   // Hà Nội
-                'district' => 'Hoàn Kiếm',
                 'ward' => 'Phường Hàng Bài',
                 'address_detail' => 'Gần Hồ Hoàn Kiếm, cạnh nhà thờ Lớn',
                 'lat' => 21.0285000,
@@ -112,7 +110,6 @@ class MissingChildrenSeeder extends Seeder
                 'height_cm' => 100,
                 'weight_kg' => 16.00,
                 'province_id' => 28,  // Đồng Nai
-                'district' => 'Biên Hòa',
                 'ward' => 'Phường Trung Dũng',
                 'address_detail' => 'Khu phố 5, đường Nguyễn Ái Quốc',
                 'lat' => 10.9640000,
@@ -153,7 +150,6 @@ class MissingChildrenSeeder extends Seeder
                 'height_cm' => 120,
                 'weight_kg' => 22.00,
                 'province_id' => 24,  // Khánh Hòa
-                'district' => 'Nha Trang',
                 'ward' => 'Phường Vĩnh Hải',
                 'address_detail' => 'Khu dân cư gần biển, đường Trần Phú',
                 'lat' => 12.2480000,
@@ -194,7 +190,6 @@ class MissingChildrenSeeder extends Seeder
                 'height_cm' => 128,
                 'weight_kg' => 25.00,
                 'province_id' => 27,  // TP HCM
-                'district' => 'Quận 7',
                 'ward' => 'Phường Tân Phú',
                 'address_detail' => 'Chung cư Sunrise City, Nguyễn Hữu Thọ',
                 'lat' => 10.7302000,
@@ -235,7 +230,6 @@ class MissingChildrenSeeder extends Seeder
                 'height_cm' => 148,
                 'weight_kg' => 38.00,
                 'province_id' => 30,  // TP Cần Thơ
-                'district' => 'Ninh Kiều',
                 'ward' => 'Phường An Hòa',
                 'address_detail' => 'Bến Ninh Kiều, gần cầu Cái Khế',
                 'lat' => 10.0342000,

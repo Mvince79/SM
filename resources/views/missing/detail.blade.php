@@ -10,7 +10,7 @@
             'image' => 'https://api.dicebear.com/7.x/thumbs/svg?seed=' . urlencode($case->full_name),
             'description' => $case->circumstances,
             'age' => $case->age_estimate ?? \Carbon\Carbon::parse($case->dob)->age,
-            'missing_location' => $case->district . ', ' . $case->address_detail,
+            'missing_location' => collect([$case->address_detail, $case->ward, $case->province?->name])->filter()->implode(', '),
             'missing_date' => \Carbon\Carbon::parse($case->missing_date)->format('d/m/Y'),
             'case_code' => $case->case_code,
         ]" />
@@ -82,6 +82,13 @@
                                 @endif
                             </span>
                         @endif
+                    </div>
+
+                    <x-status-timeline :case="$case" />
+
+                    {{-- U-03 — Badge trạng thái dùng đúng token thiết kế --}}
+                    <div class="px-1">
+                        <x-status-badge :status="$case->status" />
                     </div>
 
                     <!-- Profile Grid -->
@@ -233,7 +240,7 @@
                                         <span class="text-slate-400 font-bold text-xs uppercase tracking-wider">Khu vực lạc
                                             mất</span>
                                         <div class="font-extrabold text-slate-800 mt-0.5">
-                                            {{ collect([$case->address_detail, $case->ward, $case->district, $case->province?->name])->filter()->implode(', ') ?: '—' }}
+                                            {{ collect([$case->address_detail, $case->ward, $case->province?->name])->filter()->implode(', ') ?: '—' }}
                                         </div>
                                     </div>
                                     <div class="col-span-full min-w-0">
@@ -305,7 +312,7 @@
                                 <span class="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Khu vực lạc
                                     mất</span>
                                 <div class="font-extrabold text-slate-800 text-xs mt-0.5 break-words">
-                                    {{ collect([$case->address_detail, $case->ward, $case->district, $case->province?->name])->filter()->implode(', ') ?: '—' }}
+                                    {{ collect([$case->address_detail, $case->ward, $case->province?->name])->filter()->implode(', ') ?: '—' }}
                                 </div>
                             </div>
                             <div class="col-span-full min-w-0">
@@ -445,6 +452,11 @@
                 @endauth
 
                 @livewire('missing.handover-suggestion-card', ['caseId' => $case->id])
+
+                {{-- H-02 — Chỉ chủ hồ sơ mới thấy khối "Việc cần làm" khi status = HANDED_OVER --}}
+                @if ($case->isHandedOver() && auth()->check() && auth()->id() === $case->user_id)
+                    <x-next-steps-card :case="$case" />
+                @endif
 
                 {{-- START: KHỐI ĐIỂM BÀN GIAO / TIẾP NHẬN --}}
                 @if(isset($handoverPoints) && $handoverPoints->isNotEmpty())
@@ -729,7 +741,6 @@
                     $missingAddress = collect([
                         $case->address_detail,
                         $case->ward,
-                        $case->district,
                         $case->province?->name,
                     ])->filter()->implode(', ');
                 @endphp

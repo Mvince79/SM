@@ -33,8 +33,10 @@ class StoreMissingChildRequest extends FormRequest
             'missing_date' => ['required', 'date', 'before_or_equal:today'],
             'missing_time' => ['nullable', 'date_format:H:i'],
             'province_id' => ['required', 'exists:provinces,id'],
-            'district' => ['nullable', 'string', 'max:100'],
-            'ward' => ['nullable', 'string', 'max:100'],
+            // V-01 — `ward` KHÔNG nhận từ input: cấp Xã/Phường chỉ do reverse-geocode
+            // nội bộ (GeoBoundaryService) suy ra từ lat/lng. Hành chính VN từ 01/07/2025
+            // chỉ còn 2 cấp Tỉnh → Xã/Phường (cấp Huyện/Quận đã bãi bỏ).
+            // `address_detail` chỉ là ghi chú tuỳ chọn, không phải địa chỉ hành chính.
             'address_detail' => ['nullable', 'string', 'max:500'],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lng' => ['nullable', 'numeric', 'between:-180,180'],
@@ -54,6 +56,9 @@ class StoreMissingChildRequest extends FormRequest
             'contact_name' => ['required', 'string', 'max:100'],
             'contact_phone' => ['required', 'string', 'regex:/^(0|\+84)[0-9]{8,10}$/'],
             'contact_relation' => ['nullable', 'string', 'max:50'],
+
+            // C-01 — Checkbox cam kết giới hạn sử dụng dữ liệu (bắt buộc).
+            'data_use_consent' => ['accepted'],
         ];
     }
 
@@ -71,6 +76,7 @@ class StoreMissingChildRequest extends FormRequest
             'contact_phone.regex' => 'Số điện thoại không hợp lệ.',
             'photos.*.max' => 'Mỗi ảnh tối đa 5MB.',
             'photos.max' => 'Tối đa 5 ảnh.',
+            'data_use_consent.accepted' => 'Vui lòng đồng ý với điều khoản giới hạn sử dụng dữ liệu.',
         ];
     }
 }

@@ -18,23 +18,29 @@ class HandoverSuggestionCard extends Component
 
     public function render(HandoverPointFinderService $finder, HandoverPointRepository $repository)
     {
-        $case = MissingChild::query()->find($this->caseId);
+        $case = MissingChild::query()
+            ->with([
+                'faceMatchResults' => fn($q) => $q->where('status', 'CONFIRMED')->with('foundChild'),
+            ])
+            ->find($this->caseId);
 
         $points = collect();
 
         if ($case) {
-            $hasCaseCoordinates = is_numeric($case->lat) && is_numeric($case->lng);
+            // V-03 — Toạ độ neo để gợi ý điểm tiếp nhận lấy từ trẻ ĐƯỢC TÌM THẤY
+            // (found_children), không dùng toạ độ nơi mất tích.
+            $anchor = $this->resolveAnchorFromFoundChild($case);
 
-            if ($hasCaseCoordinates) {
+            if ($anchor) {
                 // nearestTo() đã tự lọc active() + cache theo toạ độ + trả kèm cột "distance" (km).
                 $points = $finder->findNearest(
-                    (float) $case->lat,
-                    (float) $case->lng,
+                    $anchor['lat'],
+                    $anchor['lng'],
                     self::SUGGESTION_LIMIT,
                 );
             } else {
-                // Không có toạ độ → dùng lại byProvince()/all() có sẵn trong repository (đã active() +
-                // orderBy priority_order), rồi lọc riêng ưu tiên Tổng đài 111 / Công an ở tầng Collection.
+                // Không có toạ độ trẻ tìm thấy → fallback theo tỉnh (KHÔNG gọi nearestTo
+                // bằng toạ độ missing_children), ưu tiên Tổng đài 111 / Công an.
                 $candidates = $case->province_id
                     ? $repository->byProvince((int) $case->province_id)
                     : $repository->all();
@@ -49,5 +55,22 @@ class HandoverSuggestionCard extends Component
         return view('livewire.missing.handover-suggestion-card', [
             'points' => $points,
         ]);
+    }
+
+    /**
+     * V-03 — Trả về toạ độ của trẻ được tìm thấy (khớp xác nhận) để làm điểm neo
+     * gợi ý điểm tiếp nhận. null nếu chưa có trẻ tìm thấy nào có toạ độ.
+     */
+    private function resolveAnchorFromFoundChild(MissingChild $case): ?array
+    {
+        foreach ($case->faceMatchResults as $match) {
+            $found = $match->foundChild;
+
+            if ($found && is_numeric($found->lat) && is_numeric($found->lng)) {
+                return ['lat' => (float) $found->lat, 'lng' => (float) $found->lng];
+            }
+        }
+
+        return null;
     }
 }

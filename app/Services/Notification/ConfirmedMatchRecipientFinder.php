@@ -3,7 +3,6 @@
 namespace App\Services\Notification;
 
 use App\Models\FaceMatchResult;
-use App\Models\ThirdPartyVerifierProfile;
 use App\Models\User;
 use Illuminate\Support\Collection;
 
@@ -21,17 +20,7 @@ class ConfirmedMatchRecipientFinder
             $match->foundChild?->user,
         ])->filter();
 
-        $verifiers = ThirdPartyVerifierProfile::query()
-            ->with('user')
-            ->whereNotNull('verified_at')
-            ->whereHas('handoverPoint', fn ($query) => $query
-                ->where('province_id', $match->missingChild?->province_id)
-                ->where('is_active', true))
-            ->get()
-            ->pluck('user')
-            ->filter(fn (?User $user): bool => $user?->role === 'THIRD_PARTY_VERIFIER'
-                && $user->status === 'ACTIVE');
-
+        // G-01 — role THIRD_PARTY_VERIFIER đã gỡ bỏ; không còn gửi cho bên thứ ba xác minh.
         $onlineAdmins = User::query()
             ->admins()
             ->active()
@@ -39,7 +28,6 @@ class ConfirmedMatchRecipientFinder
             ->get();
 
         return $caseUsers
-            ->merge($verifiers)
             ->merge($onlineAdmins)
             ->unique('id')
             ->values();

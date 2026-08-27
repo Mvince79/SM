@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\MissingChildren;
 
 use App\Filament\Admin\Resources\MissingChildren\RelationManagers\PhotoActivityLogRelationManager;
+use App\Filament\Admin\Resources\MissingChildren\Pages\ConfirmReunionManually;
 use App\Filament\Admin\Resources\MissingChildren\Pages\CreateMissingChild;
 use App\Filament\Admin\Resources\MissingChildren\Pages\EditMissingChild;
 use App\Filament\Admin\Resources\MissingChildren\Pages\ListMissingChildren;
@@ -86,6 +87,8 @@ class MissingChildResource extends Resource
             'create' => CreateMissingChild::route('/create'),
             'view' => ViewMissingChild::route('/{record}'),
             'edit' => EditMissingChild::route('/{record}/edit'),
+            // H-04 — Trang admin xác nhận đoàn tụ hộ (hồ sơ HANDED_OVER).
+            'confirm-reunion' => ConfirmReunionManually::route('/{record}/confirm-reunion'),
         ];
     }
 

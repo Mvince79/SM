@@ -21,26 +21,6 @@ class MissingChildPolicy
      */
     public function view(?User $user, MissingChild $missingChild): Response
     {
-        // Verifier: giới hạn chặt hơn người dùng thường — chỉ xem case
-        // đã duyệt VÀ đúng tỉnh mình phụ trách (không được duyệt cả nước).
-        if ($user && $user->isThirdPartyVerifier()) {
-            if ($missingChild->status !== 'APPROVED') {
-                return Response::deny('Verifier chỉ được xem hồ sơ đã được duyệt.');
-            }
-
-            $profile = $user->thirdPartyVerifierProfile;
-
-            if (!$profile || !$profile->handoverPoint) {
-                return Response::deny('Tài khoản của bạn chưa được gán vào điểm bàn giao nào.');
-            }
-
-            if ((int) $missingChild->province_id !== (int) $profile->handoverPoint->province_id) {
-                return Response::deny('Hồ sơ này không thuộc khu vực bạn phụ trách.');
-            }
-
-            return Response::allow();
-        }
-
         // Anyone can view approved reports
         if ($missingChild->status === 'APPROVED') {
             return Response::allow();
@@ -52,6 +32,23 @@ class MissingChildPolicy
         }
 
         return Response::deny('Bạn không có quyền xem hồ sơ chưa được duyệt này.');
+    }
+
+    /**
+     * Determine whether the user can confirm family reunion (H-03).
+     * Chỉ chủ sở hữu hồ sơ mới được xác nhận đoàn tụ.
+     */
+    public function confirmReunited(User $user, MissingChild $missingChild): Response
+    {
+        if ($user->isBanned()) {
+            return Response::deny('Tài khoản của bạn đã bị khóa.');
+        }
+
+        if ($missingChild->user_id !== $user->id) {
+            return Response::deny('Chỉ chủ sở hữu hồ sơ mới được xác nhận đoàn tụ.');
+        }
+
+        return Response::allow();
     }
 
     /**

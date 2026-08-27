@@ -26,7 +26,7 @@ class DynamicNotificationMailTest extends TestCase
         ];
         $roles = [
             'USER' => 'Gia đình / Người dùng',
-            'THIRD_PARTY_VERIFIER' => 'Đơn vị xác minh tiếp nhận',
+            'VOLUNTEER' => 'Tình nguyện viên',
             'ADMIN' => 'Quản trị viên',
         ];
 

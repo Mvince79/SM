@@ -110,6 +110,33 @@
     }
 }
 
+/* S-03 — Dòng chữ động của trạng thái "đang quét" (dùng bởi .scanning-text). */
+@keyframes scanning-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.55;
+    }
+}
+
+@keyframes scanning-dots {
+    0% {
+        content: "";
+    }
+    25% {
+        content: ".";
+    }
+    50% {
+        content: "..";
+    }
+    75%,
+    100% {
+        content: "...";
+    }
+}
+
 /* ═══════════════════════════════════════════════════════════
    UTILITIES
 ═══════════════════════════════════════════════════════════ */
@@ -144,10 +171,9 @@
         animation: sos-pulse-ring 1.8s ease-out 2;
     }
 
-    /* ── AI Scanner overlay — tắt hẳn, chỉ giữ class để không vỡ HTML cũ ── */
-    .ai-scanner-overlay {
-        display: none;
-    }
+    /* ── S-03 — Overlay "quét AI" cũ đã được LOẠI BỎ hoàn toàn khỏi codebase
+       (không còn selector lẫn file nào tham chiếu). Trạng thái "đang quét" nay
+       dùng `.skeleton-shimmer` + dòng chữ động `.scanning-text` bên dưới. ── */
 
     /* ── Card nền đặc, viền mảnh — bỏ hiệu ứng kính mờ (glassmorphism) ── */
     .glass-premium {
@@ -176,6 +202,68 @@
         .skeleton-shimmer {
             animation: none;
             background: #e2e8f0;
+        }
+    }
+
+    /* ── S-03 — Dòng chữ động cho trạng thái đang quét ──
+       Thay thế cho overlay "quét AI" đã bị loại bỏ. */
+    .scanning-text {
+        animation: scanning-pulse 1.6s ease-in-out infinite;
+    }
+    .scanning-text::after {
+        content: "";
+        animation: scanning-dots 1.6s steps(1, end) infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .scanning-text,
+        .scanning-text::after {
+            animation: none;
+        }
+        .scanning-text::after {
+            content: "…";
+        }
+    }
+
+    /* ── S-03 — Carousel kết quả (scroll-snap ngang) ──
+       Bề rộng thẻ tính theo % của TRACK (không dùng `vw`) nên không bị tràn khi
+       track nằm trong container có padding — đây là nguyên nhân vỡ layout ở 375px.
+       `overscroll-behavior-x: contain` chặn kéo lan ra toàn trang (giật trên iOS);
+       `scroll-snap-stop: always` chặn vuốt nhanh nhảy qua nhiều thẻ. */
+    .result-carousel {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+        scroll-padding-inline-start: 1.25rem;
+        scrollbar-width: none;
+    }
+    .result-carousel::-webkit-scrollbar {
+        display: none;
+    }
+
+    .result-carousel > .result-card {
+        flex: 0 0 88%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+    }
+
+    @media (min-width: 640px) {
+        .result-carousel {
+            scroll-padding-inline-start: 2rem;
+        }
+        .result-carousel > .result-card {
+            flex-basis: 22rem;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .result-carousel {
+            scroll-behavior: auto;
         }
     }
 

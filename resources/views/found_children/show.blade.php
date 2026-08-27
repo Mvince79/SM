@@ -11,6 +11,9 @@
             </div>
         @endif
 
+        {{-- U-02 — Gợi ý 3 điểm tiếp nhận gần nhất theo vị trí trẻ được tìm thấy --}}
+        <x-nearest-handover-points :lat="$item->lat" :lng="$item->lng" />
+
         <div class="flex items-center justify-between mb-6">
             <div>
                 <h1 class="text-2xl font-bold">Chi tiết hồ sơ</h1>

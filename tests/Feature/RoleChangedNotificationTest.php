@@ -25,9 +25,9 @@ class RoleChangedNotificationTest extends TestCase
         $user = User::factory()->create(['role' => 'USER']);
 
         $changedUser = app(UserRoleChangeService::class)
-            ->changeRole($user, 'THIRD_PARTY_VERIFIER', $admin);
+            ->changeRole($user, 'MODERATOR', $admin);
 
-        $this->assertSame('THIRD_PARTY_VERIFIER', $changedUser->role);
+        $this->assertSame('MODERATOR', $changedUser->role);
 
         $event = NotificationEvent::query()->sole();
         $this->assertSame(NotificationEvent::TYPE_ROLE_CHANGED, $event->event_type);
@@ -35,15 +35,15 @@ class RoleChangedNotificationTest extends TestCase
         $this->assertSame($admin->getKey(), $event->triggered_by_user_id);
         $this->assertSame([
             'old_role' => 'USER',
-            'new_role' => 'THIRD_PARTY_VERIFIER',
+            'new_role' => 'MODERATOR',
         ], $event->payload);
 
         $recipient = NotificationRecipient::query()->sole();
         $this->assertSame($changedUser->getKey(), $recipient->user_id);
-        $this->assertSame('THIRD_PARTY_VERIFIER', $recipient->role_at_time);
+        $this->assertSame('MODERATOR', $recipient->role_at_time);
         $this->assertSame('Quyền truy cập tài khoản đã thay đổi', $recipient->rendered_title);
         $this->assertStringContainsString(
-            'Người dùng sang Bên thứ ba xác minh',
+            'Kiểm duyệt viên',
             $recipient->rendered_body,
         );
         $this->assertStringContainsString('đăng nhập lại', $recipient->rendered_body);

@@ -56,24 +56,14 @@ class MissingChildObserver
     /**
      * Handle the MissingChild "created" event.
      * Chỉ còn log, không cần tạo case_code ở đây nữa.
+     *
+     * F-01 — Không gán review_level vào missing_children: cột review_level
+     * thuộc bảng kyc_verifications (được ghi bởi ProcessKycJob), không tồn tại
+     * trên missing_children. Việc gán trước đây ném ngoại lệ và bị nuốt bởi
+     * try/catch, nên đã được gỡ bỏ.
      */
     public function created(MissingChild $missingChild): void
     {
-        try {
-            $reviewLevel = match (true) {
-                in_array($missingChild->contact_relation, ['PARENT', 'LEGAL_GUARDIAN'], true)
-                && $missingChild->user?->kyc_status === 'VERIFIED' => 'STANDARD',
-                default => 'ENHANCED',
-            };
-
-            $missingChild->review_level = $reviewLevel;
-            $missingChild->saveQuietly();
-
-            Log::info("MissingChild Observer: review_level={$reviewLevel} for {$missingChild->case_code}");
-        } catch (\Throwable $e) {
-            Log::warning('Set review_level failed: ' . $e->getMessage());
-        }
-
         Log::info("MissingChild Observer (created): Generated case_code {$missingChild->case_code} for child ID {$missingChild->id}");
 
         // Tin mới (kể cả đang PENDING chờ duyệt) có thể đổi số liệu thống

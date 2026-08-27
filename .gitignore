@@ -31,3 +31,19 @@ auth.json
 ai-service/venv/
 __pycache__/
 *.py[cod]
+
+# === Luận văn / Word-editing working files (không phải source code) ===
+# Các script sửa luận văn .docx và file tạm trích xuất — dễ bị tạo lại với
+# hậu tố _v2, _v3... nên chặn bằng wildcard để không làm bẩn repo code.
+/create_final_thesis*.py
+/fix_thesis_final*.py
+/update_thesis*.py
+/edit_docx*.py
+/insert_ui*.py
+/move_ui_sections.py
+/docx_extracted.txt
+/emoji_files.txt
+/geo_names_check.txt
+/geo_province_names.txt
+/rename_log.txt
+/nul

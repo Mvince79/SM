@@ -28,6 +28,7 @@ class CreateMissingFormIdempotencyTest extends TestCase
             'agreed' => true,
             'agreedDataPolicy' => true,
             'agreedFalseReportLiability' => true,
+            'dataUseConsent' => true,
         ];
     }
 

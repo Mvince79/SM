@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\V1\MapDataController;
 use App\Http\Controllers\Api\V1\MissingChildApiController;
 use App\Http\Controllers\Api\V1\StatsApiController;
 use App\Http\Controllers\Api\V1\VolunteerAssignmentController;
+use App\Http\Controllers\Api\GeoLookupController;
+use App\Http\Controllers\Client\PhotoSearchController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -96,3 +98,17 @@ Route::get('/health', function (Request $request) {
         'version' => 'v1',
     ]);
 })->middleware('throttle:60,1');
+
+// ────────────────────────────────────────────────────────────────────────────────
+// V-02 — Reverse-geocode (public, 100% nội bộ, không gọi API ngoài)
+// ────────────────────────────────────────────────────────────────────────────────
+Route::post('/geo/lookup', [GeoLookupController::class, 'lookup'])
+    ->middleware('throttle:60,1')
+    ->name('api.geo.lookup');
+
+// ────────────────────────────────────────────────────────────────────────────────
+// S-02 — AI photo search (public, 5 requests/hour/IP)
+// ────────────────────────────────────────────────────────────────────────────────
+Route::post('/photo-search', [PhotoSearchController::class, 'search'])
+    ->middleware('throttle:5,60')
+    ->name('api.photo-search');
