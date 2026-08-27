@@ -6,9 +6,12 @@ use App\Listeners\BroadcastNotificationReceived;
 use App\Livewire\Volunteer\AssignmentBoard;
 use App\Services\Notification\Contracts\FcmPushSender;
 use App\Services\Notification\FcmHttpV1PushSender;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
@@ -31,6 +34,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Bước 6 — Bảo vệ quota miễn phí chatbot: 20 tin nhắn/giờ khách (IP),
+        // 50/giờ tài khoản đã đăng nhập (sanctum).
+        RateLimiter::for('chatbot', function (Request $request) {
+            return $request->user('sanctum')
+                ? Limit::perHour(50)->by('chatbot:user:'.$request->user('sanctum')->id)
+                : Limit::perHour(20)->by('chatbot:ip:'.$request->ip());
+        });
+
         // Register Policy
         Gate::policy(
             \App\Models\MissingChild::class,

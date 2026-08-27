@@ -7,6 +7,7 @@ use App\Http\Requests\ChatbotMessageRequest;
 use App\Models\ChatbotSession;
 use App\Services\Chatbot\ChatbotIntentResolver;
 use App\Services\Chatbot\HandoverGuidanceIntent;
+use App\Services\Gemini\ChatbotGeminiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 
@@ -15,6 +16,7 @@ class ChatbotController extends Controller
     public function reply(
         ChatbotMessageRequest $request,
         ChatbotIntentResolver $intentResolver,
+        ChatbotGeminiService $gemini,
     ): JsonResponse {
         $validated = $request->validated();
         $sessionToken = $validated['session_token'] ?? Str::random(64);
@@ -22,7 +24,15 @@ class ChatbotController extends Controller
             'lat' => (float) $validated['lat'],
             'lng' => (float) $validated['lng'],
         ];
-        $result = $intentResolver->resolve($validated['message'], $context);
+
+        // Bước 5: Gemini là lớp chính; intent resolver chỉ là fallback duy nhất
+        // khi Gemini lỗi mạng / timeout / hết quota (service trả null).
+        $result = $gemini->reply([
+            'message' => $validated['message'],
+            'lat' => $context['lat'],
+            'lng' => $context['lng'],
+            'history' => $this->loadHistory($sessionToken),
+        ]) ?? $intentResolver->resolve($validated['message'], $context);
 
         $session = ChatbotSession::query()->firstOrNew([
             'session_token' => $sessionToken,
@@ -62,5 +72,18 @@ class ChatbotController extends Controller
                 ...$result,
             ],
         ]);
+    }
+
+    /**
+     * Lấy tối đa 6 tin nhắn gần nhất của phiên để Gemini có ngữ cảnh đa lượt.
+     *
+     * @return list<array{role: string, content: string}>
+     */
+    private function loadHistory(string $sessionToken): array
+    {
+        $session = ChatbotSession::query()->where('session_token', $sessionToken)->first();
+        $messages = $session?->collected_data['messages'] ?? [];
+
+        return array_slice((array) $messages, -6);
     }
 }

@@ -129,7 +129,7 @@
 
         {{-- Ô nhập --}}
         <form @submit.prevent="send()" class="flex shrink-0 items-center gap-2 border-t border-slate-100 p-3">
-            <input type="text" x-model="draft" :disabled="loading" maxlength="1000"
+            <input type="text" x-model="draft" :disabled="loading" maxlength="500"
                 placeholder="Nhập câu hỏi của bạn…"
                 class="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium
                        placeholder-slate-400 transition-all focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60">

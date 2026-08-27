@@ -34,10 +34,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
             ->name('map-data.index');
         Route::get('/stats', [StatsApiController::class, 'index'])
             ->name('stats.index');
-
-        Route::post('/chatbot/message', [ChatbotController::class, 'reply'])
-            ->name('chatbot.message');
     });
+
+    // Bước 6 — Chatbot: throttle riêng 20/giờ khách (IP), 50/giờ tài khoản (sanctum).
+    Route::middleware('throttle:chatbot')
+        ->post('/chatbot/message', [ChatbotController::class, 'reply'])
+        ->name('chatbot.message');
 
     Route::middleware(['auth:sanctum', 'throttle:5,1'])->group(function () {
         Route::post('/kyc/submit', [KycController::class, 'store'])
