@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import math
 import base64
 from io import BytesIO
@@ -8,6 +9,12 @@ from typing import Sequence
 import numpy as np
 from PIL import Image
 from deepface import DeepFace
+
+# Ảnh rất lớn (vd 3024x2267) khiến MTCNN chạy >60s, vượt REQUEST_TIMEOUT_SECONDS.
+# Detection không cần độ phân giải đầy đủ → thu nhỏ trước khi inference.
+MAX_DETECT_DIM = 640
+
+logger = logging.getLogger(__name__)
 
 
 class NoFaceDetectedError(RuntimeError):
@@ -30,6 +37,21 @@ class FaceService:
     def is_ready(self) -> bool:
         return self._ready
 
+    def _prepare_image(self, image_path: str):
+        """Thu nhỏ ảnh xuống tối đa MAX_DETECT_DIM px trước khi detect/recognize.
+
+        MTCNN (detector mặc định) cực kỳ chậm trên ảnh độ phân giải cao (3024x2267
+        mất >60s, vượt REQUEST_TIMEOUT_SECONDS). Detection không cần full-res nên ta
+        downscale để giữ thời gian inference an toàn dưới timeout. Trả về numpy array.
+        """
+        with Image.open(image_path) as img:
+            img = img.convert("RGB")
+            width, height = img.size
+            if max(width, height) > MAX_DETECT_DIM:
+                scale = MAX_DETECT_DIM / max(width, height)
+                img = img.resize((int(width * scale), int(height * scale)), Image.LANCZOS)
+            return np.asarray(img)
+
     def warm_up(self) -> None:
         """Load the recognition model and cache its weights before serving traffic."""
         DeepFace.build_model(model_name=self.model_name)
@@ -41,7 +63,7 @@ class FaceService:
         for detector_backend in self.detector_backends:
             try:
                 representations = DeepFace.represent(
-                    img_path=image_path,
+                    img_path=self._prepare_image(image_path),
                     model_name=self.model_name,
                     detector_backend=detector_backend,
                     enforce_detection=True,
@@ -68,7 +90,7 @@ class FaceService:
         for detector_backend in self.detector_backends:
             try:
                 faces = DeepFace.extract_faces(
-                    img_path=image_path,
+                    img_path=self._prepare_image(image_path),
                     detector_backend=detector_backend,
                     align=True,
                     enforce_detection=True,
@@ -100,7 +122,7 @@ class FaceService:
         detected_gender = "UNKNOWN"
         try:
             analysis = DeepFace.analyze(
-                img_path=image_path,
+                img_path=self._prepare_image(image_path),
                 actions=["gender"],
                 detector_backend=detector_backend,
                 enforce_detection=False,

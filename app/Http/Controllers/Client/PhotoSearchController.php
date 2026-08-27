@@ -87,8 +87,15 @@ class PhotoSearchController extends Controller
                 }
 
                 try {
-                    $candidateEncoding = Crypt::decryptString($photo->face_encoding);
+                    $candidateEncoding = json_decode(Crypt::decryptString($photo->face_encoding), true);
                 } catch (\Throwable) {
+                    continue;
+                }
+
+                // face_encoding lưu dưới dạng Crypt::encryptString(json_encode([...])).
+                // Giải mã xong vẫn là chuỗi JSON → phải json_decode thành array trước
+                // khi truyền cho compare() (hàm yêu cầu array).
+                if (! is_array($candidateEncoding)) {
                     continue;
                 }
 
