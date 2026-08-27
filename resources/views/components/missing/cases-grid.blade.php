@@ -33,7 +33,7 @@ new class extends Component
         $repo  = new MissingChildRepository();
         $cases = $repo->searchPublic($this->filters, 15, $this->sort);
 
-        return view('components.missing.⚡cases-grid', compact('cases'));
+        return view('components.missing.cases-grid', compact('cases'));
     }
 };
 ?>

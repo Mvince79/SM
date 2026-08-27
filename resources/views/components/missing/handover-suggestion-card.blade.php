@@ -18,7 +18,7 @@ new class extends Component
     {
         return collect([
             ['name' => 'Công an Phường 1', 'distance_km' => 1.2, 'hotline' => '113', 'lat' => 10.762, 'lng' => 106.660],
-            ['name' => 'Trung tâm CTXH Quận 1', 'distance_km' => 2.5, 'hotline' => '1800-1234', 'lat' => 10.776, 'lng' => 106.700],
+            ['name' => 'Trung tâm CTXH Bến Nghé', 'distance_km' => 2.5, 'hotline' => '1800-1234', 'lat' => 10.776, 'lng' => 106.700],
             ['name' => 'Bệnh viện Nhi Đồng 1', 'distance_km' => 3.8, 'hotline' => '028-3927-1119', 'lat' => 10.756, 'lng' => 106.669],
         ]);
     }

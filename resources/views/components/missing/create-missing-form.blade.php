@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Traits\HasIdempotency;
 use App\Models\UserConsent;
 use App\Traits\HasRedisLock;
+use App\Services\GeoBoundaryService;
 
 new class extends Component {
     use WithFileUploads;
@@ -26,13 +27,21 @@ new class extends Component {
     public string $missing_date = '';
     public string $missing_time = '';
     public string $province_id = '';
-    public string $district = '';
-    public string $ward = '';
+    // V-01 — KHÔNG còn input địa chỉ tự do. Vị trí chỉ đến từ map picker (lat/lng)
+    // và cấp hành chính (Tỉnh → Xã/Phường) do reverse-geocode nội bộ suy ra.
+    // `address_detail` giữ lại nhưng CHỈ là ghi chú tuỳ chọn, không phải địa chỉ pháp lý.
     public string $address_detail = '';
     public string $lat = '';
     public string $lng = '';
     public string $circumstances = '';
     public string $urgency = 'urgent';
+
+    // ── V-02 — Kết quả reverse-geocode (chỉ đọc, KHÔNG cho người dùng nhập) ──
+    // Hành chính VN 2025: chỉ 2 cấp Tỉnh → Xã/Phường (cấp Huyện/Quận đã bãi bỏ).
+    // '' = chưa ghim | PENDING | OK | NOT_FOUND (ngoài lãnh thổ VN) | ERROR
+    public string $geoStatus = '';
+    public ?string $geoProvince = null;
+    public ?string $geoWard = null;
 
     // ── Bước 2 — Đặc điểm & ảnh ──────────────────────────────────────────
     public string $skin_tone = '';
@@ -51,6 +60,8 @@ new class extends Component {
     public bool $agreed = false;
     public bool $agreedDataPolicy = false;
     public bool $agreedFalseReportLiability = false;
+    // C-01 — Checkbox cam kết giới hạn sử dụng dữ liệu (chỉ phục vụ tìm kiếm trẻ thất lạc).
+    public bool $dataUseConsent = false;
 
     public string $idempotencyKey = '';
     public $provinces;
@@ -77,12 +88,17 @@ new class extends Component {
             'age_estimate' => ['nullable', 'integer', 'min:0', 'max:' . (config('app.child_age_limit') - 1)],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lng' => ['nullable', 'numeric', 'between:-180,180'],
+            // `address_detail` chỉ là ghi chú tuỳ chọn (V-01) — không bắt buộc.
+            'address_detail' => ['nullable', 'string', 'max:500'],
+            // V-02 — chặn server-side khi điểm ghim nằm ngoài lãnh thổ Việt Nam.
+            'geoStatus' => ['not_in:NOT_FOUND'],
         ];
     }
 
     protected function messagesStep1(): array
     {
         return [
+            'geoStatus.not_in' => 'Vị trí đã ghim nằm ngoài lãnh thổ Việt Nam. Vui lòng ghim lại một điểm trong lãnh thổ Việt Nam.',
             'full_name.required' => 'Vui lòng nhập họ và tên của bé.',
             'gender.required' => 'Vui lòng chọn giới tính.',
             'missing_date.required' => 'Vui lòng nhập ngày mất tích.',
@@ -119,6 +135,7 @@ new class extends Component {
             'agreed' => ['accepted'],
             'agreedDataPolicy' => ['accepted'],
             'agreedFalseReportLiability' => ['accepted'],
+            'dataUseConsent' => ['accepted'],
         ];
     }
 
@@ -131,12 +148,59 @@ new class extends Component {
             'agreed.accepted' => 'Vui lòng đồng ý cam kết trước khi gửi.',
             'agreedDataPolicy.accepted' => 'Vui lòng đồng ý với Chính sách Bảo vệ Dữ liệu Trẻ em.',
             'agreedFalseReportLiability.accepted' => 'Vui lòng xác nhận đã hiểu trách nhiệm pháp lý khi khai báo sai sự thật trước khi gửi.',
+            'dataUseConsent.accepted' => 'Vui lòng đồng ý với điều khoản giới hạn sử dụng dữ liệu.',
         ];
+    }
+
+    // ── V-02 — Reverse-geocode nội bộ ─────────────────────────────────────
+
+    /**
+     * Nhận kết quả tra cứu từ JS (POST /api/geo/lookup) để render field CHỈ ĐỌC.
+     *
+     * CHỈ dùng cho HIỂN THỊ. Server luôn tự giải lại toạ độ trong
+     * syncGeoResolution() trước khi validate/lưu, nên client không thể giả mạo
+     * tên tỉnh/xã hay vượt qua chặn "ngoài lãnh thổ Việt Nam".
+     */
+    public function applyGeoResult(?string $status = null, ?string $province = null, ?string $ward = null): void
+    {
+        $this->geoStatus = in_array($status, ['PENDING', 'OK', 'NOT_FOUND', 'UNVERIFIED', 'ERROR'], true) ? $status : '';
+        $this->geoProvince = $this->geoStatus === 'OK' ? ($province ?: null) : null;
+        $this->geoWard = $this->geoStatus === 'OK' ? ($ward ?: null) : null;
+    }
+
+    /**
+     * Giải lại lat/lng → {Tỉnh, Xã/Phường} bằng GeoBoundaryService (100% nội bộ,
+     * point-in-polygon, không gọi API ngoài). Đây là nguồn SỰ THẬT dùng để
+     * validate và lưu DB — chạy trước mọi lần validate.
+     *
+     * Hành chính VN 2025 chỉ có 2 cấp Tỉnh → Xã/Phường; không có cấp Huyện/Quận.
+     */
+    protected function syncGeoResolution(): void
+    {
+        if ($this->lat === '' || $this->lng === '' || ! is_numeric($this->lat) || ! is_numeric($this->lng)) {
+            $this->geoStatus = '';
+            $this->geoProvince = null;
+            $this->geoWard = null;
+
+            return;
+        }
+
+        $result = app(GeoBoundaryService::class)->lookup((float) $this->lat, (float) $this->lng);
+
+        $status = $result['status'] ?? 'NOT_FOUND';
+
+        // UNVERIFIED = dataset ranh giới còn là placeholder → KHÔNG chặn người dùng.
+        // Chỉ NOT_FOUND (ngoài lãnh thổ VN, dữ liệu thật) mới bị chặn.
+        $this->geoStatus = in_array($status, ['OK', 'UNVERIFIED'], true) ? $status : 'NOT_FOUND';
+        $this->geoProvince = $this->geoStatus === 'OK' ? ($result['province'] ?? null) : null;
+        $this->geoWard = $this->geoStatus === 'OK' ? ($result['ward'] ?? null) : null;
     }
 
     // ── Navigation ────────────────────────────────────────────────────────
     public function next(): void
     {
+        $this->syncGeoResolution();
+
         match ($this->step) {
             1 => $this->validate($this->rulesStep1(), $this->messagesStep1()),
             2 => $this->validate($this->rulesStep2(), $this->messagesStep2()),
@@ -222,6 +286,10 @@ new class extends Component {
 
     public function submit(): void
     {
+        // V-02 — Giải lại toạ độ ở biên tin cậy: không tin geoStatus/geoProvince/
+        // geoWard do client gửi lên, tự tra cứu nội bộ rồi mới validate.
+        $this->syncGeoResolution();
+
         // Re-validate every step at the trust boundary. A user can submit the
         // Livewire action directly without navigating through each wizard step.
         $this->validate(
@@ -257,8 +325,10 @@ new class extends Component {
                     'height_cm' => $this->height_cm !== '' ? (int) $this->height_cm : null,
                     'weight_kg' => $this->weight_kg !== '' ? (float) $this->weight_kg : null,
                     'province_id' => (int) $this->province_id,
-                    'district' => $this->district ?: null,
-                    'ward' => $this->ward ?: null,
+                    // V-01/V-02 — `ward` KHÔNG còn là free-text: giá trị duy nhất được
+                    // chấp nhận là kết quả reverse-geocode nội bộ từ điểm ghim trên bản đồ.
+                    'ward' => $this->geoWard ?: null,
+                    // Ghi chú địa điểm (tuỳ chọn) — không phải địa chỉ hành chính.
                     'address_detail' => $this->address_detail ?: null,
                     'lat' => $this->lat !== '' ? (float) $this->lat : null,
                     'lng' => $this->lng !== '' ? (float) $this->lng : null,
@@ -298,6 +368,17 @@ new class extends Component {
                     'accepted_at' => now(),
                     'ip_address' => request()->ip(),
                 ]);
+
+                // C-01 — Ghi 1 bản ghi cam kết giới hạn sử dụng dữ liệu (chỉ khi user tick).
+                if ($this->dataUseConsent) {
+                    UserConsent::create([
+                        'user_id' => Auth::id(),
+                        'consent_type' => 'DATA_USE_LIMITATION',
+                        'version' => config('legal.versions.DATA_USE_LIMITATION', '1.0'),
+                        'accepted_at' => now(),
+                        'ip_address' => request()->ip(),
+                    ]);
+                }
 
                 foreach ($this->photos as $index => $photo) {
                     $path = $photo->storePublicly("missing/{$case->id}", 'public');
@@ -523,25 +604,23 @@ new class extends Component {
                         @enderror
                     </div>
 
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Quận/Huyện</label>
-                        <input type="text" wire:model.blur="district" placeholder="Quận 6"
-                            class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Phường/Xã</label>
-                        <input type="text" wire:model.blur="ward" placeholder="Phường 2"
-                            class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
-                    </div>
+                    {{-- V-01 — ĐÃ BỎ input Xã/Phường tự do. Cấp Xã/Phường chỉ do
+                    reverse-geocode nội bộ suy ra từ điểm ghim trên bản đồ (xem khối
+                    "Đơn vị hành chính" chỉ đọc bên dưới bản đồ). --}}
                 </div>
 
-                {{-- Địa chỉ + Hoàn cảnh --}}
+                {{-- V-01 — Ghi chú tuỳ chọn, KHÔNG phải địa chỉ hành chính chính thức --}}
                 <div class="space-y-1.5">
-                    <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Địa chỉ cụ thể nơi
-                        mất
-                        tích</label>
-                    <input type="text" wire:model.blur="address_detail" placeholder="Ví dụ: Chợ Bình Tây, Quận 6, TP.HCM"
+                    <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Ghi chú địa điểm (tùy
+                        chọn)</label>
+                    <input type="text" wire:model.blur="address_detail"
+                        placeholder="Ví dụ: gần cổng sau chợ, cạnh trạm xe buýt..."
                         class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
+                    <p class="text-[10px] text-slate-400 font-medium">Chỉ là mô tả thêm giúp nhận diện hiện trường. Địa
+                        chỉ hành chính chính thức được xác định tự động từ vị trí ghim trên bản đồ.</p>
+                    @error('address_detail')
+                        <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="space-y-1.5">
@@ -562,11 +641,11 @@ new class extends Component {
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
                         </svg>
-                        Ghim vị trí trên bản đồ (tuỳ chọn)
+                        Ghim vị trí trên bản đồ
                     </label>
-                    <p class="text-xs text-slate-400">Bấm nút bên dưới để lấy vị trí hiện tại, hoặc click trực tiếp vào
-                        bản
-                        đồ để ghim tay.</p>
+                    <p class="text-xs text-slate-400">Đây là cách DUY NHẤT để khai báo nơi mất tích. Bấm nút bên dưới để
+                        lấy vị trí hiện tại, hoặc click trực tiếp vào bản đồ để ghim tay — hệ thống sẽ tự xác định
+                        Tỉnh/Thành và Xã/Phường.</p>
 
                     <div wire:ignore x-data="{}" x-init="
                                         $nextTick(() => {
@@ -595,6 +674,8 @@ new class extends Component {
                                             if (hasSavedLocation) {
                                                 marker = L.marker([savedLat, savedLng]).addTo(map)
                                                     .bindPopup('Vị trí đã chọn').openPopup();
+                                                // V-02 — hiển thị lại Tỉnh/Xã cho điểm đã ghim trước đó.
+                                                window.vnGeoLookupAndSync($wire, savedLat, savedLng);
                                             }
 
                                             if (!hasSavedLocation && navigator.geolocation) {
@@ -606,6 +687,7 @@ new class extends Component {
                                                             .bindPopup('Vị trí của bạn — bấm vào bản đồ để sửa nếu sai').openPopup();
                                                         $wire.set('lat', latitude.toFixed(6));
                                                         $wire.set('lng', longitude.toFixed(6));
+                                                        window.vnGeoLookupAndSync($wire, latitude, longitude);
                                                     },
                                                     () => {},
                                                     { timeout: 8000, enableHighAccuracy: true }
@@ -619,6 +701,8 @@ new class extends Component {
                                                     .bindPopup('Vị trí đã chọn').openPopup();
                                                 $wire.set('lat', lat.toFixed(6));
                                                 $wire.set('lng', lng.toFixed(6));
+                                                // V-02 — reverse-geocode nội bộ → Tỉnh/Xã chỉ đọc.
+                                                window.vnGeoLookupAndSync($wire, lat, lng);
                                             });
 
                                             setTimeout(() => map.invalidateSize(), 100);
@@ -638,6 +722,9 @@ new class extends Component {
                                                     L.marker([lat, lng]).addTo(map).bindPopup('Vị trí hiện tại của bạn').openPopup();
                                                 }
                                                 @this.set('lat', lat.toFixed(6));
+                                                @this.set('lng', lng.toFixed(6));
+                                                // V-02 — reverse-geocode nội bộ → Tỉnh/Xã chỉ đọc.
+                                                window.vnGeoLookupAndSync(@this, lat, lng);
                                                 onDone();
                                             };
                                             const onError = (err) => { onDone(); alert('Không thể lấy vị trí: ' + err.message); };
@@ -674,6 +761,63 @@ new class extends Component {
                             <span>Đã ghim: {{ round($lat, 6) }}, {{ round($lng, 6) }}</span>
                         </p>
                     @endif
+
+                    {{-- V-02 — Đơn vị hành chính suy ra từ điểm ghim (CHỈ ĐỌC).
+                    Hành chính VN từ 01/07/2025 chỉ còn 2 cấp: Tỉnh → Xã/Phường. --}}
+                    <div class="mt-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                        <p class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
+                            Đơn vị hành chính (tự động xác định — không thể sửa)
+                        </p>
+
+                        <div class="grid sm:grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tỉnh/Thành
+                                    phố</label>
+                                <input type="text" readonly tabindex="-1"
+                                    value="{{ $geoProvince ?? '' }}"
+                                    placeholder="Ghim vị trí để xác định"
+                                    class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-100 text-slate-600 font-semibold cursor-not-allowed placeholder-slate-400" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Xã/Phường</label>
+                                <input type="text" readonly tabindex="-1" value="{{ $geoWard ?? '' }}"
+                                    placeholder="Ghim vị trí để xác định"
+                                    class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-100 text-slate-600 font-semibold cursor-not-allowed placeholder-slate-400" />
+                            </div>
+                        </div>
+
+                        @if ($geoStatus === 'PENDING')
+                            <p class="text-xs text-slate-500 font-semibold flex items-center gap-1.5">
+                                <span
+                                    class="inline-block w-3 h-3 border-2 border-slate-300 border-t-slate-500 rounded-full animate-spin"></span>
+                                Đang xác định đơn vị hành chính…
+                            </p>
+                        @elseif ($geoStatus === 'NOT_FOUND')
+                            <p class="text-xs text-red-600 font-bold flex items-start gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="2.5" stroke="currentColor" class="w-4 h-4 shrink-0 mt-px">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                                </svg>
+                                <span>Vị trí đã ghim nằm NGOÀI lãnh thổ Việt Nam. Vui lòng ghim lại một điểm trong lãnh
+                                    thổ Việt Nam — không thể gửi hồ sơ với vị trí này.</span>
+                            </p>
+                        @elseif ($geoStatus === 'UNVERIFIED')
+                            <p class="text-xs text-amber-600 font-bold">
+                                Hệ thống chưa cài bộ ranh giới hành chính 2025 nên chưa thể xác định Tỉnh/Xã từ toạ độ.
+                                Vị trí bạn ghim vẫn được ghi nhận đầy đủ.
+                            </p>
+                        @elseif ($geoStatus === 'ERROR')
+                            <p class="text-xs text-amber-600 font-bold">
+                                Không xác định được đơn vị hành chính lúc này. Vị trí vẫn được ghi nhận; hệ thống sẽ kiểm
+                                tra lại khi bạn gửi hồ sơ.
+                            </p>
+                        @endif
+
+                        @error('geoStatus')
+                            <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
             </div>
 
@@ -883,8 +1027,10 @@ new class extends Component {
                         @endif
                         <div><span class="text-slate-400 font-bold">Ngày mất tích:</span> <span
                                 class="font-extrabold text-slate-800">{{ $missing_date }}</span></div>
+                        {{-- V-02 — Khu vực lấy từ reverse-geocode (2 cấp: Xã/Phường → Tỉnh/Thành),
+                        fallback về tỉnh đã chọn khi chưa ghim được vị trí. --}}
                         <div class="col-span-2"><span class="text-slate-400 font-bold">Khu vực:</span> <span
-                                class="font-extrabold text-slate-800">{{ collect([$ward, $district, $provinces->firstWhere('id', $province_id)?->name])->filter()->implode(', ') }}</span>
+                                class="font-extrabold text-slate-800">{{ collect([$geoWard, $geoProvince ?: $provinces->firstWhere('id', $province_id)?->name])->filter()->implode(', ') }}</span>
                         </div>
                         @if ($lat && $lng)
                             <div class="col-span-2"><span class="text-slate-400 font-bold">Toạ độ:</span> <span
@@ -957,6 +1103,23 @@ new class extends Component {
                         <p class="text-red-600 text-xs font-bold mt-1.5">{{ $message }}</p>
                     @enderror
                 </div>
+
+                {{-- C-01 — Checkbox cam kết giới hạn sử dụng dữ liệu --}}
+                <div class="bg-blue-50 border border-blue-200 p-4 rounded-2xl mt-3">
+                    <label class="flex items-start gap-2.5 cursor-pointer">
+                        <input type="checkbox" wire:model="dataUseConsent" class="mt-1 accent-blue-600" />
+                        <span class="text-[11px] text-slate-700 leading-relaxed">
+                            Tôi đồng ý dữ liệu chỉ được dùng cho mục đích
+                            <span class="font-bold">tìm kiếm trẻ thất lạc</span>, không chia sẻ cho bên
+                            thứ ba ngoài phạm vi hệ thống.
+                            <a href="{{ route('legal.child-data') }}" target="_blank"
+                                class="font-bold text-blue-700 underline">Xem chính sách dữ liệu trẻ em</a>.
+                        </span>
+                    </label>
+                    @error('dataUseConsent')
+                        <p class="text-red-600 text-xs font-bold mt-1.5">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
         @endif
 
@@ -974,16 +1137,19 @@ new class extends Component {
                 </a>
             @endif
 
+            {{-- V-02 — Chặn client-side: điểm ghim ngoài lãnh thổ VN thì không cho đi tiếp/gửi. --}}
             @if ($step < 3)
                 <button type="button" wire:click="next" wire:loading.attr="disabled" wire:target="next"
-                    class="px-6 py-3 rounded-2xl bg-primary text-white font-extrabold text-sm hover:bg-primary-dark shadow-md shadow-primary/20 transition-all flex items-center gap-2">
+                    @disabled($geoStatus === 'NOT_FOUND')
+                    class="px-6 py-3 rounded-2xl bg-primary text-white font-extrabold text-sm hover:bg-primary-dark shadow-md shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary">
                     <span wire:loading wire:target="next"
                         class="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
                     Tiếp theo →
                 </button>
             @else
                 <button type="button" wire:click="submit" wire:loading.attr="disabled" wire:target="submit"
-                    class="px-6 py-3 rounded-2xl bg-primary text-white font-extrabold text-sm hover:bg-primary-dark shadow-md shadow-primary/20 transition-all flex items-center gap-2">
+                    @disabled($geoStatus === 'NOT_FOUND')
+                    class="px-6 py-3 rounded-2xl bg-primary text-white font-extrabold text-sm hover:bg-primary-dark shadow-md shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary">
                     <span wire:loading wire:target="submit"
                         class="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
                     Gửi hồ sơ
@@ -1001,4 +1167,6 @@ new class extends Component {
 @push('scripts')
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ asset('js/map/vn-sovereignty-layer.js') }}"></script>
+    {{-- V-02 — reverse-geocode nội bộ (POST /api/geo/lookup), không gọi API ngoài --}}
+    <script src="{{ asset('js/map/geo-lookup.js') }}"></script>
 @endpush
