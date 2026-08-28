@@ -46,6 +46,76 @@
                 <p id="photo-error" class="hidden text-xs text-primary font-semibold mt-2" role="alert"></p>
             </div>
 
+            {{-- Bộ lọc (thu gọn/mở) — chuẩn châu Âu, tối ưu mobile. --}}
+            <div class="border-t border-slate-100 pt-4">
+                <button type="button" id="filter-toggle"
+                        class="group flex w-full items-center justify-between text-left"
+                        aria-expanded="false" aria-controls="filter-panel">
+                    <span class="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                             stroke-width="2" stroke="currentColor" class="h-4 w-4 text-slate-400">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-12h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+                        </svg>
+                        Bộ lọc
+                    </span>
+                    <svg id="filter-chevron" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                         stroke-width="2" stroke="currentColor"
+                         class="h-4 w-4 text-slate-400 transition-transform duration-200 group-hover:text-slate-600">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </button>
+
+                <div id="filter-panel" class="hidden mt-4 space-y-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        {{-- Giới tính --}}
+                        <div>
+                            <label for="filter-gender" class="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Giới tính</label>
+                            <select id="filter-gender"
+                                    class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                <option value="">Tất cả</option>
+                                <option value="MALE">Nam</option>
+                                <option value="FEMALE">Nữ</option>
+                                <option value="UNKNOWN">Không rõ</option>
+                            </select>
+                        </div>
+
+                        {{-- Độ tuổi --}}
+                        <div>
+                            <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Độ tuổi</label>
+                            <div class="flex items-center gap-2">
+                                <input id="filter-age-min" type="number" min="0" max="120" inputmode="numeric"
+                                       placeholder="Từ"
+                                       class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                <span class="text-slate-400">–</span>
+                                <input id="filter-age-max" type="number" min="0" max="120" inputmode="numeric"
+                                       placeholder="Đến"
+                                       class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                        </div>
+
+                        {{-- Tỉnh / Thành phố --}}
+                        <div>
+                            <label for="filter-province" class="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Tỉnh / Thành phố</label>
+                            <select id="filter-province"
+                                    class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
+                                <option value="">Tất cả</option>
+                                @foreach ($provinces as $p)
+                                    <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end">
+                        <button type="button" id="filter-reset"
+                                class="text-xs font-bold text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline">
+                            Đặt lại
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <button type="submit" id="search-btn"
                     class="w-full py-3.5 rounded-2xl bg-primary text-white font-black text-sm hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20">
                 Tìm kiếm

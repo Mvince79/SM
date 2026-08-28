@@ -20,8 +20,7 @@ class AuditLogsTable
                 TextColumn::make('created_at')
                     ->label('Thời gian')
                     ->dateTime('d/m/Y H:i:s')
-                    ->sortable()
-                    ->defaultSort('desc'),
+                    ->sortable(),
 
                 TextColumn::make('actor')
                     ->label('Người thực hiện')
@@ -49,7 +48,7 @@ class AuditLogsTable
 
                 TextColumn::make('change')
                     ->label('Thay đổi trạng thái')
-                    ->getStateUsing(fn (AuditLog $r) => ($r->old_value['status'] ?? '—') . ' → ' . ($r->new_value['status'] ?? '—')),
+                    ->getStateUsing(fn (AuditLog $r) => data_get($r->old_value, 'status', '—') . ' → ' . data_get($r->new_value, 'status', '—')),
 
                 TextColumn::make('reason')
                     ->label('Lý do')
@@ -60,7 +59,7 @@ class AuditLogsTable
                 SelectFilter::make('target_type')
                     ->label('Loại hồ sơ')
                     ->options(
-                        AuditLog::query()->distinct()->pluck('target_type', 'target_type')->toArray()
+                        fn () => AuditLog::query()->distinct()->pluck('target_type', 'target_type')->toArray()
                     ),
 
                 SelectFilter::make('actor_role')

@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\MissingChild;
 use App\Models\Photo;
+use App\Models\Province;
+use Illuminate\Support\Facades\DB;
 use App\Services\FaceMatchService;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 
@@ -28,7 +31,13 @@ class PhotoSearchController extends Controller
     /** S-01 — Trang tìm kiếm bằng ảnh công khai. */
     public function index()
     {
-        return view('photo-search.index');
+        // Danh sách tỉnh/thành phố cho bộ lọc (chuẩn châu Âu, tối ưu mobile).
+        $provinces = Province::query()
+            ->where('is_active', 1)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('photo-search.index', compact('provinces'));
     }
 
     /**
@@ -40,6 +49,12 @@ class PhotoSearchController extends Controller
     {
         $data = $request->validate([
             'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:50'],
+            'gender' => ['sometimes', 'nullable', 'in:MALE,FEMALE,UNKNOWN'],
+            'age_min' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:120'],
+            'age_max' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:120'],
+            'province_id' => ['sometimes', 'nullable', 'integer', 'exists:provinces,id'],
         ]);
 
         $tmpPath = null;
@@ -64,12 +79,36 @@ class PhotoSearchController extends Controller
             $queryEncoding = $encoded['encoding'];
             $threshold = (float) config('face_match.search_threshold', 0.5);
 
-            // Lấy toàn bộ ảnh hồ sơ trẻ mất tích chưa đoàn tù (có face_encoding).
+            // Lấy toàn bộ ảnh hồ sơ trẻ mất tích chưa đoàn tù (có face_encoding),
+            // đã áp dụng bộ lọc giao diện (giới tính / độ tuổi / tỉnh) để thu nhỏ
+            // tập ứng viên trước khi so khớp — tối ưu cả băng thông lẫn thời gian.
+            // Lưu ý: 'model' là quan hệ morphTo (cả MissingChild & FoundChild), nên
+            // KHÔNG dùng whereHas('model', ...) — nó sẽ sinh subquery cho CẢ 2 bảng và
+            // gãy ở cột không tồn tại (vd: found_children không có 'gender'). Thay vào
+            // đó dùng whereExists scoped đúng vào bảng missing_children.
             $candidatePhotos = Photo::query()
                 ->where('model_type', MissingChild::class)
                 ->where('has_face', 1)
                 ->whereNotNull('face_encoding')
                 ->with('model')
+                ->whereExists(function ($sub) use ($request) {
+                    $sub->select(DB::raw('1'))
+                        ->from('missing_children')
+                        ->whereColumn('missing_children.id', 'photos.model_id');
+
+                    if ($request->filled('gender')) {
+                        $sub->where('missing_children.gender', $request->input('gender'));
+                    }
+                    if ($request->filled('age_min')) {
+                        $sub->where('missing_children.age_estimate', '>=', (int) $request->input('age_min'));
+                    }
+                    if ($request->filled('age_max')) {
+                        $sub->where('missing_children.age_estimate', '<=', (int) $request->input('age_max'));
+                    }
+                    if ($request->filled('province_id')) {
+                        $sub->where('missing_children.province_id', (int) $request->input('province_id'));
+                    }
+                })
                 ->get();
 
             $results = [];
@@ -116,13 +155,32 @@ class PhotoSearchController extends Controller
                 ];
             }
 
-            // Sắp theo score giảm dần, lấy tối đa 5.
+            // Sắp theo score giảm dần.
             usort($results, fn ($a, $b) => $b['score'] <=> $a['score']);
-            $results = array_slice($results, 0, 5);
+
+            // Phân trang (tối ưu UI/UX khi có nhiều hồ sơ): so khớp vẫn duyệt toàn
+            // bộ ứng viên, nhưng chỉ trả về đúng 1 trang để giảm payload. Ngưỡng
+            // hiển thị đã lọc ở trên (search_threshold, mặc định 0.45).
+            $perPage = (int) ($request->input('per_page', 6));
+            $page = (int) ($request->input('page', 1));
+            $total = count($results);
+            $paginator = new LengthAwarePaginator(
+                $results,
+                $total,
+                $perPage,
+                $page,
+                ['path' => route('api.photo-search')]
+            );
 
             return response()->json([
                 'status' => 'OK',
-                'results' => $results,
+                'results' => $paginator->items(),
+                'pagination' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                ],
             ]);
         } catch (\Throwable $e) {
             return response()->json([

@@ -30,7 +30,9 @@ class ProcessPhotoJob implements ShouldQueue
 
     public function __construct(public int $photoId)
     {
-        $this->onQueue(config('face_match.queue', 'face-match'));
+        // Chạy ĐỒNG BỘ (sync) thay vì qua queue worker: đảm bảo mọi ảnh upload
+        // đều được detect + encode ngay lập tức, không bao giờ kẹt chờ worker.
+        $this->onConnection('sync');
     }
 
     public function handle(FaceMatchService $faceMatchService): void
@@ -43,47 +45,64 @@ class ProcessPhotoJob implements ShouldQueue
 
         $photo->forceFill(['ai_status' => 'processing'])->save();
 
-        if (! $faceMatchService->isHealthy()) {
-            throw new AIServiceUnavailableException('AI service is unavailable.');
-        }
-
+        // Tạo ảnh phái sinh (không cần AI) trước, phòng AI tạm ngắt.
         $this->generateDerivatives($photo);
 
-        $detection = $faceMatchService->detectFace($photo->path_original);
+        try {
+            if (! $faceMatchService->isHealthy()) {
+                throw new AIServiceUnavailableException('AI service is unavailable.');
+            }
 
-        if (! $detection['has_face']) {
-            $photo->forceFill([
-                'has_face' => 0,
-                'detected_gender' => $detection['detected_gender'] ?? 'UNKNOWN',
-                'ai_status' => 'done',
-            ])->save();
+            $detection = $faceMatchService->detectFace($photo->path_original);
+
+            if (! $detection['has_face']) {
+                $photo->forceFill([
+                    'has_face' => 0,
+                    'detected_gender' => $detection['detected_gender'] ?? 'UNKNOWN',
+                    'ai_status' => 'done',
+                ])->save();
+
+                return;
+            }
+
+            $photo->face_bounding_box = $detection['bounding_box'] ?? null;
+            $photo->detected_gender = $detection['detected_gender'] ?? 'UNKNOWN';
+
+            if (! empty($detection['crop_image_base64'])) {
+                $cropPath = $this->derivePath($photo->path_original, '_face_crop');
+                $cropData = base64_decode($detection['crop_image_base64'], true);
+
+                if ($cropData !== false) {
+                    Storage::disk('public')->put($cropPath, $cropData);
+                    $photo->face_crop_path = $cropPath;
+                }
+            }
+
+            // LUÔN encode từ ảnh gốc (path_original) để ĐỒNG NHẤT với truy vấn tìm kiếm
+            // bằng hình ảnh (PhotoSearchController cũng encode từ ảnh gốc upload). Nếu encode
+            // từ face_crop_path, encoding lưu và encoding truy vấn sẽ lệch nguồn → cùng 1 ảnh
+            // không khớp 100% (thực tế ~0.78). Ảnh crop vẫn sinh riêng để hiển thị UI.
+            $encodingPath = $photo->path_original;
+            $result = $faceMatchService->encode($encodingPath);
+            $photo->has_face = $result['has_face'] ? 1 : 0;
+
+            if ($result['encoding']) {
+                $photo->face_encoding = Crypt::encryptString(json_encode($result['encoding']));
+            }
+
+            $photo->ai_status = 'done';
+            $photo->save();
+        } catch (AIServiceUnavailableException $e) {
+            // AI tạm ngắt: để ảnh ở 'pending' để xử lý lại sau, KHÔNG ném lỗi làm
+            // hỏng request upload của người dùng.
+            $photo->forceFill(['ai_status' => 'pending'])->save();
+            Log::warning('ProcessPhotoJob skipped (AI unavailable), left pending.', [
+                'photo_id' => $photo->id,
+                'message' => $e->getMessage(),
+            ]);
 
             return;
         }
-
-        $photo->face_bounding_box = $detection['bounding_box'] ?? null;
-        $photo->detected_gender = $detection['detected_gender'] ?? 'UNKNOWN';
-
-        if (! empty($detection['crop_image_base64'])) {
-            $cropPath = $this->derivePath($photo->path_original, '_face_crop');
-            $cropData = base64_decode($detection['crop_image_base64'], true);
-
-            if ($cropData !== false) {
-                Storage::disk('public')->put($cropPath, $cropData);
-                $photo->face_crop_path = $cropPath;
-            }
-        }
-
-        $encodingPath = $photo->face_crop_path ?: $photo->path_original;
-        $result = $faceMatchService->encode($encodingPath);
-        $photo->has_face = $result['has_face'] ? 1 : 0;
-
-        if ($result['encoding']) {
-            $photo->face_encoding = Crypt::encryptString(json_encode($result['encoding']));
-        }
-
-        $photo->ai_status = 'done';
-        $photo->save();
 
         if ($photo->has_face && $photo->face_encoding && in_array($photo->model_type, [MissingChild::class, FoundChild::class], true)) {
             TriggerFaceMatchJob::dispatch($photo->id);

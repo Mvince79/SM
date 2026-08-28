@@ -56,14 +56,21 @@
         <span id="results-count" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider"></span>
     </div>
 
-    {{-- Carousel: `.result-carousel` (app.css) lo scroll-snap + đà cuộn mobile.
-         Âm margin bằng đúng padding của card cha để track rộng hết khổ mà không
-         gây tràn ngang trang; padding trong giữ lề cho thẻ đầu/cuối. --}}
-    <div id="results-carousel"
-         class="result-carousel -mx-5 px-5 pb-4 sm:-mx-8 sm:px-8"
-         role="region" aria-label="Danh sách hồ sơ AI gợi ý, cuộn ngang để xem thêm"
-         tabindex="0">
-    </div>
+    {{-- Lưới kết quả (grid responsive) + phân trang phía dưới. --}}
+    <div id="results-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+
+    <nav id="pagination" class="hidden mt-5 flex items-center justify-center gap-2"
+         aria-label="Phân trang kết quả tìm kiếm">
+        <button type="button" id="page-prev"
+                class="px-4 py-2 rounded-2xl bg-white border border-slate-200 text-xs font-black text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+            ← Trước
+        </button>
+        <span id="page-info" class="text-xs font-bold text-slate-500 px-2" aria-live="polite"></span>
+        <button type="button" id="page-next"
+                class="px-4 py-2 rounded-2xl bg-white border border-slate-200 text-xs font-black text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+            Sau →
+        </button>
+    </nav>
 
     {{-- Không có kết quả → 1 thẻ trung tính duy nhất, không bao giờ là màn hình trống --}}
     <div id="no-results" class="hidden">
@@ -105,11 +112,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsArea = document.getElementById('results-area');
     const resultsHeader = document.getElementById('results-header');
     const resultsCount = document.getElementById('results-count');
-    const carousel = document.getElementById('results-carousel');
+    const grid = document.getElementById('results-grid');
+    const pagination = document.getElementById('pagination');
+    const pagePrev = document.getElementById('page-prev');
+    const pageNext = document.getElementById('page-next');
+    const pageInfo = document.getElementById('page-info');
     const noResults = document.getElementById('no-results');
     const noResultsTitle = document.getElementById('no-results-title');
     const noResultsMessage = document.getElementById('no-results-message');
     const photoError = document.getElementById('photo-error');
+
+    // Bộ lọc (panel thu gọn/mở).
+    const filterToggle = document.getElementById('filter-toggle');
+    const filterPanel = document.getElementById('filter-panel');
+    const filterChevron = document.getElementById('filter-chevron');
+    const filterGender = document.getElementById('filter-gender');
+    const filterAgeMin = document.getElementById('filter-age-min');
+    const filterAgeMax = document.getElementById('filter-age-max');
+    const filterProvince = document.getElementById('filter-province');
+    const filterReset = document.getElementById('filter-reset');
 
     // Text từ API/DB được nhúng qua innerHTML → phải escape để chặn XSS.
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({
@@ -120,6 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const NO_RESULT_DEFAULT = noResultsMessage.textContent.trim();
 
     let selectedFile = null;
+    let currentPage = 1;
+    let currentPagination = null;
 
     input.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -143,20 +166,55 @@ document.addEventListener('DOMContentLoaded', () => {
         hidePhotoError();
     });
 
-    form.addEventListener('submit', async (e) => {
+    // Thu gọn / mở panel bộ lọc.
+    filterToggle.addEventListener('click', () => {
+        const open = filterPanel.classList.toggle('hidden') === false;
+        filterToggle.setAttribute('aria-expanded', String(open));
+        filterChevron.classList.toggle('rotate-180', open);
+    });
+
+    // Đặt lại bộ lọc.
+    filterReset.addEventListener('click', () => {
+        filterGender.value = '';
+        filterAgeMin.value = '';
+        filterAgeMax.value = '';
+        filterProvince.value = '';
+    });
+
+    form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (!selectedFile) {
             showPhotoError('Vui lòng chọn ảnh trước khi tìm kiếm.');
             return;
         }
+        runSearch(1);
+    });
+
+    pagePrev.addEventListener('click', () => {
+        if (currentPagination && currentPage > 1) runSearch(currentPage - 1);
+    });
+    pageNext.addEventListener('click', () => {
+        if (currentPagination && currentPage < currentPagination.last_page) runSearch(currentPage + 1);
+    });
+
+    async function runSearch(page) {
+        if (!selectedFile) return;
         hidePhotoError();
 
         const formData = new FormData();
         formData.append('photo', selectedFile);
+        formData.append('page', page);
+
+        // Bộ lọc giao diện.
+        if (filterGender.value) formData.append('gender', filterGender.value);
+        if (filterAgeMin.value !== '') formData.append('age_min', filterAgeMin.value);
+        if (filterAgeMax.value !== '') formData.append('age_max', filterAgeMax.value);
+        if (filterProvince.value) formData.append('province_id', filterProvince.value);
 
         searchBtn.disabled = true;
         loading.classList.remove('hidden');
         resultsArea.classList.add('hidden');
+        pagination.classList.add('hidden');
 
         try {
             const res = await fetch('{{ route("api.photo-search") }}', {
@@ -173,9 +231,10 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsArea.classList.remove('hidden');
 
             const results = Array.isArray(data.results) ? data.results : [];
+            const pag = data.pagination || null;
 
             if (data.status === 'OK' && results.length > 0) {
-                renderResults(results);
+                renderResults(results, pag);
             } else if (data.status === 'NO_FACE') {
                 showNoResults(data.message, 'Không nhận diện được khuôn mặt trong ảnh');
             } else if (data.status === 'OK') {
@@ -195,15 +254,20 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             searchBtn.disabled = false;
         }
-    });
+    }
 
-    function renderResults(results) {
+    function renderResults(results, pag) {
+        currentPage = pag ? pag.current_page : 1;
+        currentPagination = pag;
+
         noResults.classList.add('hidden');
         resultsHeader.classList.remove('hidden');
         resultsHeader.classList.add('flex');
-        resultsCount.textContent = results.length + ' kết quả';
+        const total = pag ? pag.total : results.length;
+        const pageTxt = pag && pag.last_page > 1 ? ` · trang ${pag.current_page}/${pag.last_page}` : '';
+        resultsCount.textContent = `${total} kết quả${pageTxt}`;
 
-        carousel.innerHTML = results.map((item) => {
+        grid.innerHTML = results.map((item) => {
             const score = parseFloat(item.score) || 0;
             // Chỉ dùng 3 token màu: Carmine (primary) / Navy (brand) / Forest (success).
             const badgeClass = score >= 80 ? 'bg-primary' : 'bg-brand';
@@ -211,45 +275,51 @@ document.addEventListener('DOMContentLoaded', () => {
             const code = esc(item.case_code);
 
             return `
-                <article class="result-card">
-                    <div class="h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-premium overflow-hidden">
-                        <div class="relative bg-slate-100">
-                            <img src="${esc(item.photo_url)}" alt="Ảnh hồ sơ ${name}"
-                                 loading="lazy" decoding="async"
-                                 class="w-full aspect-[4/3] object-cover" />
-                            <div class="absolute top-3 right-3 ${badgeClass} text-white text-xs font-black px-3 py-1.5 rounded-full shadow-lg">
-                                ${score.toFixed(1)}% tương đồng
-                            </div>
+                <article class="result-card h-full flex flex-col bg-white rounded-3xl border border-slate-200 shadow-premium overflow-hidden">
+                    <div class="relative bg-slate-100">
+                        <img src="${esc(item.photo_url)}" alt="Ảnh hồ sơ ${name}"
+                             loading="lazy" decoding="async"
+                             class="w-full aspect-[4/3] object-cover" />
+                        <div class="absolute top-3 right-3 ${badgeClass} text-white text-xs font-black px-3 py-1.5 rounded-full shadow-lg">
+                            ${score.toFixed(1)}% tương đồng
                         </div>
-                        <div class="p-4 flex flex-col flex-1 gap-3">
-                            <div>
-                                <h3 class="text-base font-black text-slate-900">${name}</h3>
-                                <p class="text-xs text-slate-500 font-semibold mt-0.5">
-                                    ${item.age ? esc(item.age) + ' tuổi' : 'Tuổi không rõ'} · Mã: ${code}
-                                </p>
-                            </div>
-                            <div class="mt-auto grid grid-cols-2 gap-2">
-                                <a href="{{ url('/missing') }}/${encodeURIComponent(item.case_code)}"
-                                   class="text-center py-2.5 rounded-2xl bg-brand-light text-brand-dark text-xs font-black hover:bg-brand/15 transition-all">
-                                    Xem chi tiết
-                                </a>
-                                {{-- S-04 — nhãn trung tính, KHÔNG khẳng định chắc chắn ("đây chính là bé"). --}}
-                                <a href="{{ route('found-children.create') }}?match=${encodeURIComponent(item.case_code)}"
-                                   class="text-center py-2.5 rounded-2xl bg-primary text-white text-xs font-black hover:bg-primary-dark transition-all shadow-md">
-                                    Báo tin ngay
-                                </a>
-                            </div>
+                    </div>
+                    <div class="p-4 flex flex-col flex-1 gap-3">
+                        <div>
+                            <h3 class="text-base font-black text-slate-900">${name}</h3>
+                            <p class="text-xs text-slate-500 font-semibold mt-0.5">
+                                ${item.age ? esc(item.age) + ' tuổi' : 'Tuổi không rõ'} · Mã: ${code}
+                            </p>
+                        </div>
+                        <div class="mt-auto grid grid-cols-2 gap-2">
+                            <a href="{{ url('/missing') }}/${encodeURIComponent(item.case_code)}"
+                               class="text-center py-2.5 rounded-2xl bg-brand-light text-brand-dark text-xs font-black hover:bg-brand/15 transition-all">
+                                Xem chi tiết
+                            </a>
+                            <a href="{{ route('found-children.create') }}?match=${encodeURIComponent(item.case_code)}"
+                               class="text-center py-2.5 rounded-2xl bg-primary text-white text-xs font-black hover:bg-primary-dark transition-all shadow-md">
+                                Báo tin ngay
+                            </a>
                         </div>
                     </div>
                 </article>
             `;
         }).join('');
 
-        carousel.scrollLeft = 0;
+        // Thanh phân trang: chỉ hiện khi có nhiều hơn 1 trang.
+        if (pag && pag.last_page > 1) {
+            pageInfo.textContent = `Trang ${pag.current_page} / ${pag.last_page}`;
+            pagePrev.disabled = pag.current_page <= 1;
+            pageNext.disabled = pag.current_page >= pag.last_page;
+            pagination.classList.remove('hidden');
+        } else {
+            pagination.classList.add('hidden');
+        }
     }
 
     function showNoResults(message, title) {
-        carousel.innerHTML = '';
+        grid.innerHTML = '';
+        pagination.classList.add('hidden');
         resultsHeader.classList.add('hidden');
         resultsHeader.classList.remove('flex');
         resultsCount.textContent = '';

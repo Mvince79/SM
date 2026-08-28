@@ -34,7 +34,9 @@ class TriggerFaceMatchJob implements ShouldQueue
     public function __construct(public int $photoId, ?string $trackingId = null)
     {
         $this->trackingId = $trackingId ?? (string) Str::uuid();
-        $this->onQueue(config('face_match.queue', 'face-match'));
+        // Chạy ĐỒNG BỘ (sync) cùng với ProcessPhotoJob để so khớp diễn ra ngay
+        // khi ảnh được encode, không cần queue worker.
+        $this->onConnection('sync');
     }
 
     public function handle(FaceMatchService $faceMatchService): void
