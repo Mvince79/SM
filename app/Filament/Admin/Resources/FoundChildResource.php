@@ -20,6 +20,9 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -28,8 +31,6 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use App\Filament\Admin\Resources\FoundChildResource\RelationManagers\MatchedMissingChildrenRelationManager;
 use App\Filament\Forms\Components\LocationPicker;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Section;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -61,10 +62,9 @@ class FoundChildResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
+            View::make('filament.forms.components.record-hero'),
 
-            // ────────────────────────────────────────────────────────────────
             // BLOCK 1 — Thông tin phát hiện
-            // ────────────────────────────────────────────────────────────────
             Section::make('Thông tin phát hiện')
                 ->icon('heroicon-o-magnifying-glass')
                 ->schema([
@@ -117,9 +117,7 @@ class FoundChildResource extends Resource
                     ]),
                 ]),
 
-            // ────────────────────────────────────────────────────────────────
             // BLOCK 2 — Đặc điểm nhận dạng
-            // ────────────────────────────────────────────────────────────────
             Section::make('Đặc điểm nhận dạng')
                 ->icon('heroicon-o-eye')
                 ->description('Mô tả càng chi tiết càng giúp đối chiếu với hồ sơ mất tích.')
@@ -145,9 +143,7 @@ class FoundChildResource extends Resource
                     ]),
                 ]),
 
-            // ────────────────────────────────────────────────────────────────
             // BLOCK 3 — Khu vực & bàn giao
-            // ────────────────────────────────────────────────────────────────
             Section::make('Khu vực & bàn giao')
                 ->icon('heroicon-o-map-pin')
                 ->schema([
@@ -188,9 +184,7 @@ class FoundChildResource extends Resource
                         ->maxLength(255),
                 ]),
 
-            // ────────────────────────────────────────────────────────────────
             // BLOCK 4 — Vị trí trên bản đồ (thay nhập lat/lng tay — V-01)
-            // ────────────────────────────────────────────────────────────────
             Section::make('Vị trí trên bản đồ')
                 ->description('Chạm/click vào bản đồ hoặc kéo marker để chọn vị trí. Vĩ độ và kinh độ được cập nhật tự động.')
                 ->schema([
@@ -214,9 +208,7 @@ class FoundChildResource extends Resource
                     ]),
                 ]),
 
-            // ────────────────────────────────────────────────────────────────
             // BLOCK 5 — Ảnh đại diện
-            // ────────────────────────────────────────────────────────────────
             Section::make('Ảnh đại diện')
                 ->icon('heroicon-o-photo')
                 ->schema([
@@ -234,7 +226,8 @@ class FoundChildResource extends Resource
                         )
                         ->imagePreviewHeight(80),
                 ]),
-        ]);
+
+        ])->dense();
     }
 
     public static function table(Table $table): Table

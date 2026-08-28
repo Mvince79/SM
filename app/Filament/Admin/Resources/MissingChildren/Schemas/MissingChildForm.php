@@ -11,6 +11,7 @@ use Filament\Forms\Components\TimePicker;
 use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 
 class MissingChildForm
@@ -18,10 +19,9 @@ class MissingChildForm
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
+            View::make('filament.forms.components.record-hero'),
 
-            // ══════════════════════════════════════════════════════════════
             // BLOCK 1 — Thông tin cơ bản (full width)
-            // ══════════════════════════════════════════════════════════════
             Section::make('Thông tin cơ bản')
                 ->icon('heroicon-o-identification')
                 ->schema([
@@ -105,9 +105,7 @@ class MissingChildForm
 
                 ]),
 
-            // ══════════════════════════════════════════════════════════════
             // BLOCK 2 — Đặc điểm nhận dạng (full width, textarea lớn)
-            // ══════════════════════════════════════════════════════════════
             Section::make('Đặc điểm nhận dạng')
                 ->icon('heroicon-o-eye')
                 ->description('Mô tả càng chi tiết càng tốt — giúp cộng đồng nhận ra trẻ')
@@ -133,10 +131,8 @@ class MissingChildForm
                     ]),
                 ]),
 
-            // ══════════════════════════════════════════════════════════════
             // BLOCK 3 — Người liên hệ (sidebar) | Địa điểm & Thời gian
             // Flex để sidebar co đúng, không bị flatten
-            // ══════════════════════════════════════════════════════════════
             Flex::make([
 
                 Section::make('Người liên hệ')
@@ -210,10 +206,8 @@ class MissingChildForm
 
             ])->from('md'),
 
-            // ────────────────────────────────────────────────────────────────
             // BLOCK 3b — Vị trí trên bản đồ (full-width, tách khỏi Flex bên trên
             // để không bị co hẹp vào cột hẹp gây khoảng trống)
-            // ────────────────────────────────────────────────────────────────
             Section::make('Vị trí trên bản đồ')
                 ->description('Chạm/click vào bản đồ hoặc kéo marker để chọn vị trí. Vĩ độ và kinh độ được cập nhật tự động.')
                 ->schema([
@@ -238,6 +232,6 @@ class MissingChildForm
                     ]),
                 ]),
 
-        ]);
+        ])->dense();
     }
 }
