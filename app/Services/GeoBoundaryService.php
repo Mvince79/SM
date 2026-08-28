@@ -24,77 +24,95 @@ use Illuminate\Support\Facades\Log;
  * (form báo tin, API, Filament, seeder) đều giả định đúng 2 cấp.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * ⚠️ DỮ LIỆU GEOJSON CẦN ĐƯỢC THAY BẰNG BỘ RANH GIỚI 2025
+ * DỮ LIỆU GEOJSON
  * ─────────────────────────────────────────────────────────────────────────────
- * File `storage/app/geo/vn-provinces-wards.geojson` phải là FeatureCollection
- * các polygon hành chính với properties {province, ward} theo ĐÚNG ranh giới &
- * tên đơn vị sau sáp nhập 01/07/2025 (34 tỉnh/thành, tên xã/phường mới).
+ *  • storage/app/geo/vn-provinces-wards.geojson  — 34 feature cấp TỈNH, mỗi
+ *    feature có properties {province, ward:null}. Dùng để xác định Tỉnh/Thành
+ *    (tên chuẩn, khớp DB provinces → auto-fill province_id hoạt động).
+ *  • storage/app/geo/vn-communes-simplified.geojson — 3.321 feature cấp XÃ/PHƯỜNG
+ *    (sau sáp nhập 2025), mỗi feature có properties {ten, parent_ten} và geometry
+ *    đã simplify (~6 MB). Dùng để xác định Xã/Phường. Được prefilter theo tỉnh
+ *    vừa tìm được để tăng tốc point-in-polygon (không quét 3.321 feature mỗi lần).
  *
- * CODE ở đây đã đúng cho mô hình 2 cấp, nhưng ASSET dữ liệu là thứ quyết định
- * độ chính xác của tên tỉnh/xã trả về. Nếu file hiện tại vẫn là bộ ranh giới
- * TRƯỚC sáp nhập (63 tỉnh / có cấp huyện), kết quả `province`/`ward` sẽ mang tên
- * hành chính CŨ dù logic vẫn chạy. Cần tải và thay thế bằng dataset ranh giới
- * 2025 (nguồn chính thức: Cục Đo đạc, Bản đồ và Thông tin địa lý Việt Nam /
- * dữ liệu mở theo Nghị quyết 202/2025/QH15), giữ nguyên schema properties
- * {province, ward}. KHÔNG tự bịa toạ độ polygon.
+ * Khi thiếu file tỉnh hoặc file tỉnh là placeholder: mọi điểm trả NOT_FOUND /
+ * UNVERIFIED → form sẽ chặn gửi (fail-safe có chủ đích). Khi thiếu file xã/phường:
+ * province vẫn trả đúng, ward trả null (degrade nhẹ, không crash).
  *
- * Khi thiếu file hoặc file rỗng: mọi điểm trả NOT_FOUND → form sẽ chặn gửi,
- * đây là hành vi fail-safe có chủ đích.
- *
- * Caching theo lat/lng làm tròn 4 chữ số (~11m).
+ * Caching theo lat/lng làm tròn 4 chữ số (~11m), gắn fingerprint cả 2 file GeoJSON
+ * để tự vô hiệu khi thay dữ liệu.
  */
 class GeoBoundaryService
 {
     private const CACHE_TTL = 60 * 24; // 24h
 
-    private ?array $features = null;
+    private ?array $features = null;        // 34 tỉnh/thành (vn-provinces-wards.geojson)
+    private ?array $communeFeatures = null; // 3.321 xã/phường (vn-communes-simplified.geojson)
 
-    /** Dataset hiện tại chỉ là placeholder (cờ `_placeholder` trong GeoJSON)? */
     private ?bool $isPlaceholder = null;
 
     /**
      * @return array{status: string, province?: ?string, ward?: ?string}
      *
      * status:
-     *   OK         — điểm nằm trong một đơn vị hành chính, có province (+ward nếu dataset đủ chi tiết)
+     *   OK         — điểm nằm trong một đơn vị hành chính, có province (+ ward nếu dataset đủ chi tiết)
      *   NOT_FOUND  — điểm nằm NGOÀI lãnh thổ Việt Nam → form phải CHẶN gửi
-     *   UNVERIFIED — chưa thể kết luận vì dataset đang là placeholder → form KHÔNG chặn
+     *   UNVERIFIED — chưa thể kết luận vì dataset tỉnh đang là placeholder → form KHÔNG chặn
      */
     public function lookup(float $lat, float $lng): array
     {
-        // Cache key gắn fingerprint dataset để tự vô hiệu khi thay file GeoJSON.
+        // Cache key gắn fingerprint cả 2 dataset để tự vô hiệu khi thay file GeoJSON.
         $cacheKey = 'geo:lookup:' . $this->datasetFingerprint() . ':' . round($lat, 4) . ',' . round($lng, 4);
 
         return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($lat, $lng) {
-            // Dataset placeholder KHÔNG đủ tin cậy để chặn người dùng: polygon bao rất
-            // thô nên sai cả hai chiều (loại trừ điểm trong VN, bao cả điểm ngoài VN).
-            // Trả UNVERIFIED để form hiển thị "chưa xác định" mà không chặn oan.
-            // Khi cài dataset ranh giới 2025 thật (xoá cờ `_placeholder`), nhánh này
-            // tắt và cơ chế chặn NOT_FOUND hoạt động đúng như thiết kế V-02.
+            // Dataset tỉnh placeholder KHÔNG đủ tin cậy để chặn người dùng → trả UNVERIFIED.
             if ($this->datasetIsPlaceholder()) {
                 return ['status' => 'UNVERIFIED', 'province' => null, 'ward' => null];
             }
 
-            $match = $this->findContainingFeature($lat, $lng);
+            // 1) Xác định Tỉnh/Thành từ file 34 tỉnh (polygon thô, tên chuẩn, khớp DB provinces).
+            $provinceMatch = $this->findContainingFeature($this->loadFeatures(), $lat, $lng);
 
-            if (! $match) {
+            if (! $provinceMatch) {
                 return ['status' => 'NOT_FOUND'];
             }
 
+            $province = $provinceMatch['province'] ?? null;
+
+            // 2) Xác định Xã/Phường từ file xã/phường đã simplify, prefilter theo tỉnh
+            //    vừa tìm được để tăng tốc (không quét 3.321 feature mỗi lần).
+            $ward = $this->findWard($lat, $lng, $province);
+
             return [
                 'status' => 'OK',
-                'province' => $match['province'] ?? null,
-                'ward' => $match['ward'] ?? null,
+                'province' => $province,
+                'ward' => $ward,
             ];
         });
     }
 
     /**
      * Đổi khi file GeoJSON được thay → cache lookup cũ tự bị bỏ qua.
+     * Fingerprint = provinces_fp + '_' + communes_fp.
      */
     private function datasetFingerprint(): string
     {
+        return $this->provincesFingerprint() . '_' . $this->communesFingerprint();
+    }
+
+    private function provincesFingerprint(): string
+    {
         $path = storage_path('app/geo/vn-provinces-wards.geojson');
+
+        if (! File::exists($path)) {
+            return 'none';
+        }
+
+        return substr(md5(File::lastModified($path) . ':' . File::size($path)), 0, 10);
+    }
+
+    private function communesFingerprint(): string
+    {
+        $path = storage_path('app/geo/vn-communes-simplified.geojson');
 
         if (! File::exists($path)) {
             return 'none';
@@ -113,16 +131,63 @@ class GeoBoundaryService
     }
 
     /**
-     * Tìm feature chứa điểm. Ưu tiên cấp xã (ward) > tỉnh (province)
-     * bằng cách chọn feature "nhỏ nhất" chứa điểm (diện tích ước lượng qua bounding box).
+     * Tìm Xã/Phường chứa điểm.
+     *  - Prefilter: chỉ xét các xã/phường có parent_ten (tỉnh cha) khớp tỉnh vừa tìm
+     *    được → point-in-polygon rất nhanh (vài chục ~ vài trăm feature thay vì 3.321).
+     *  - Fallback: nếu prefilter không ghim được (tên tỉnh lệch / điểm sát ranh giới
+     *    do khác biệt 2 dataset), quét TOÀN BỘ xã/phường để không bỏ sót.
+     */
+    private function findWard(float $lat, float $lng, ?string $province): ?string
+    {
+        $communes = $this->loadCommuneFeatures();
+
+        if (empty($communes)) {
+            return null;
+        }
+
+        $pn = $province !== null ? $this->normAdmin($province) : null;
+
+        $filtered = [];
+
+        if ($pn !== null) {
+            foreach ($communes as $c) {
+                $parent = $c['properties']['parent_ten'] ?? null;
+
+                if ($this->normAdmin((string) $parent) === $pn) {
+                    $filtered[] = $c;
+                }
+            }
+        }
+
+        $ward = $this->wardFromFeatures($filtered, $lat, $lng);
+
+        if ($ward === null && $pn !== null) {
+            $ward = $this->wardFromFeatures($communes, $lat, $lng);
+        }
+
+        return $ward;
+    }
+
+    private function wardFromFeatures(array $features, float $lat, float $lng): ?string
+    {
+        if (empty($features)) {
+            return null;
+        }
+
+        $match = $this->findContainingFeature($features, $lat, $lng);
+
+        return $match['ten'] ?? null;
+    }
+
+    /**
+     * Tìm feature chứa điểm. Chọn feature có diện tích nhỏ nhất (cấp hành chính
+     * nhỏ nhất) để ưu tiên Xã/Phường > Tỉnh khi cả hai chứa điểm.
      *
      * Chỉ có 2 cấp để phân giải (Tỉnh → Xã/Phường) — không có cấp huyện/quận
      * trung gian kể từ 01/07/2025.
      */
-    private function findContainingFeature(float $lat, float $lng): ?array
+    private function findContainingFeature(array $features, float $lat, float $lng): ?array
     {
-        $features = $this->loadFeatures();
-
         $candidates = [];
 
         foreach ($features as $feature) {
@@ -148,6 +213,45 @@ class GeoBoundaryService
         usort($candidates, fn ($a, $b) => $a['area'] <=> $b['area']);
 
         return $candidates[0]['props'];
+    }
+
+    private function loadCommuneFeatures(): array
+    {
+        if ($this->communeFeatures !== null) {
+            return $this->communeFeatures;
+        }
+
+        $path = storage_path('app/geo/vn-communes-simplified.geojson');
+
+        if (! File::exists($path)) {
+            Log::warning('GeoBoundaryService: thiếu file xã/phường tại ' . $path . ' — ward sẽ trả null.');
+
+            return $this->communeFeatures = [];
+        }
+
+        try {
+            $data = json_decode(File::get($path), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable $e) {
+            Log::error('GeoBoundaryService: không đọc được GeoJSON xã/phường: ' . $e->getMessage());
+
+            return $this->communeFeatures = [];
+        }
+
+        return $this->communeFeatures = $data['features'] ?? [];
+    }
+
+    /**
+     * Chuẩn hóa tên đơn vị hành chính để so khớp bất chấp tiền tố/thể hiện,
+     * bao gồm cả tiền tố đặc biệt của dataset xã/phường (Thủ đô, Thành phố, Tỉnh):
+     *   "Cần Thơ"        ↔ "Thành phố Cần Thơ"
+     *   "TP. Hồ Chí Minh" ↔ "Thành phố Hồ Chí Minh"
+     *   "Hà Nội"         ↔ "Thủ đô Hà Nội"
+     *   "An Giang"       ↔ "Tỉnh An Giang"
+     * Bỏ tiền tố "TP." / "TP " / "Tỉnh " / "Thành phố " / "Thủ đô ", lower-case, trim.
+     */
+    private function normAdmin(string $name): string
+    {
+        return mb_strtolower(trim((string) preg_replace('/^(tp\.?|tỉnh|thành phố|thủ đô)\s+/iu', '', $name)));
     }
 
     private function extractRings(?array $geometry): array

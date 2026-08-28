@@ -56,4 +56,28 @@ class GeoBoundaryServiceTest extends TestCase
         // Placeholder từng trả UNVERIFIED; dataset thật phải trả OK.
         $this->assertNotSame('UNVERIFIED', $r['status']);
     }
+
+    /**
+     * V-02b — Sau khi tích hợp dataset xã/phường 2025, reverse-geocode phải trả
+     * đúng TÊN XÃ/PHƯỜNG (ward) chứ không còn trống (bug gốc: ward luôn null).
+     */
+    public function test_lookup_returns_ward_for_known_coordinates(): void
+    {
+        $hn = $this->service()->lookup(21.0278, 105.8342);
+        $this->assertSame('OK', $hn['status']);
+        $this->assertSame('Hà Nội', $hn['province']);
+        $this->assertNotEmpty($hn['ward']);
+        $this->assertIsString($hn['ward']);
+
+        $ct = $this->service()->lookup(10.0340, 105.7827);
+        $this->assertSame('OK', $ct['status']);
+        $this->assertSame('Cần Thơ', $ct['province']);
+        $this->assertNotEmpty($ct['ward']);
+        $this->assertIsString($ct['ward']);
+
+        // Điểm ngoài VN: không có ward (và status NOT_FOUND).
+        $foreign = $this->service()->lookup(13.7563, 100.5018);
+        $this->assertSame('NOT_FOUND', $foreign['status']);
+        $this->assertArrayNotHasKey('ward', $foreign);
+    }
 }

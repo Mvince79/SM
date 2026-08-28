@@ -179,9 +179,12 @@
             }
 
             // Bản đồ luôn dùng tile sáng, không đổi theo theme.
+            // keepBuffer + updateWhenZooming:false → kéo/zoom tới lui không bị nhá hàng xám.
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
-                attribution: '© OpenStreetMap'
+                attribution: '© OpenStreetMap',
+                keepBuffer: 2,
+                updateWhenZooming: false
             }).addTo(this.map);
 
             if (saved) {

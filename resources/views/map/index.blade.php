@@ -163,23 +163,51 @@
                 syncLoadingOverlay();
             }, 6000);
 
-            // PB-UI-10: theo yêu cầu, bản đồ LUÔN dùng tile sáng (OpenStreetMap)
-            // bất kể trang đang ở light hay dark mode — không đổi sang tile tối
-            // (CartoDB Dark Matter) nữa vì tile tối quá khó nhìn dù đã chỉnh filter.
-            const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
-                maxZoom: 19
+            // Đảm bảo bản đồ tính đúng kích thước khi cửa sổ thay đổi (tránh hiện
+            // nửa bản đồ / kéo zoom giật do container từng có kích thước 0 lúc init).
+            setTimeout(function () { map.invalidateSize(); }, 300);
+            let resizeTimer = null;
+            window.addEventListener('resize', function () {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function () { map.invalidateSize(); }, 150);
             });
 
-            tileLayer.on('loading', function () {
-                startLoading('tiles');
-            });
-
-            tileLayer.on('load', function () {
-                finishLoading('tiles');
-            });
-
-            tileLayer.addTo(map);
+            // PB-UI-10: bản đồ LUÔN dùng tile SÁNG. OSM làm nền chính; nếu OSM bị
+            // lỗi/chặn mạng (thực tế máy này từng trả HTTP 000), tự động fallback
+            // sang Esri để ngày thi/chấm điểm vẫn mượt. keepBuffer + updateWhenZooming:false
+            // giúp kéo/zoom tới lui không bị nhá hàng xám hay giật.
+            const TILE_PROVIDERS = [
+                {
+                    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    opts: { attribution: '© OpenStreetMap contributors', maxZoom: 19, keepBuffer: 2, updateWhenZooming: false }
+                },
+                {
+                    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+                    opts: { attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics', maxZoom: 19, keepBuffer: 2, updateWhenZooming: false }
+                }
+            ];
+            let tileLayer = null;
+            let tileProviderIndex = 0;
+            let tileFailedOver = false;
+            const addTileLayer = function (index) {
+                if (tileLayer) {
+                    map.removeLayer(tileLayer);
+                }
+                tileProviderIndex = index;
+                tileLayer = L.tileLayer(TILE_PROVIDERS[index].url, TILE_PROVIDERS[index].opts).addTo(map);
+                tileLayer.on('loading', function () { startLoading('tiles'); });
+                tileLayer.on('load', function () { finishLoading('tiles'); });
+                tileLayer.on('tileerror', function () {
+                    // Chỉ fallback đúng 1 lần (OSM → Esri) để tránh lặp vô hạn
+                    // khi cả 2 provider đều lỗi.
+                    if (!tileFailedOver && tileProviderIndex < TILE_PROVIDERS.length - 1) {
+                        tileFailedOver = true;
+                        console.warn('Tile provider lỗi, chuyển sang fallback:', TILE_PROVIDERS[tileProviderIndex].url);
+                        addTileLayer(tileProviderIndex + 1);
+                    }
+                });
+            };
+            addTileLayer(0);
 
             // Gom toàn bộ marker vào 1 layerGroup để dễ clear/vẽ lại khi đổi filter (C-04)
             const markersLayer = L.layerGroup().addTo(map);

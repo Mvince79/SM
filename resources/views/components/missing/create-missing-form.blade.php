@@ -166,6 +166,16 @@ new class extends Component {
         $this->geoStatus = in_array($status, ['PENDING', 'OK', 'NOT_FOUND', 'UNVERIFIED', 'ERROR'], true) ? $status : '';
         $this->geoProvince = $this->geoStatus === 'OK' ? ($province ?: null) : null;
         $this->geoWard = $this->geoStatus === 'OK' ? ($ward ?: null) : null;
+
+        // V-02b — Tự động chọn tỉnh trong dropdown từ kết quả định vị (bất chấp
+        // khác biệt tiền tố tên giữa GeoJSON và DB). Tên tỉnh ở đây đến từ endpoint
+        // nội bộ /api/geo/lookup (server tính point-in-polygon) nên tin cậy.
+        if ($this->geoStatus === 'OK' && $this->geoProvince) {
+            $matched = \App\Models\Province::resolveByName($this->geoProvince);
+            if ($matched) {
+                $this->province_id = (string) $matched->id;
+            }
+        }
     }
 
     /**
@@ -194,6 +204,15 @@ new class extends Component {
         $this->geoStatus = in_array($status, ['OK', 'UNVERIFIED'], true) ? $status : 'NOT_FOUND';
         $this->geoProvince = $this->geoStatus === 'OK' ? ($result['province'] ?? null) : null;
         $this->geoWard = $this->geoStatus === 'OK' ? ($result['ward'] ?? null) : null;
+
+        // V-02b — Giải lại province_id từ toạ độ (nguồn sự thật, chạy trước save).
+        // Đảm bảo dropdown Tỉnh luôn khớp ranh giới dù user không ghim lại.
+        if ($this->geoStatus === 'OK' && $this->geoProvince) {
+            $matched = \App\Models\Province::resolveByName($this->geoProvince);
+            if ($matched) {
+                $this->province_id = (string) $matched->id;
+            }
+        }
     }
 
     // ── Navigation ────────────────────────────────────────────────────────
@@ -563,6 +582,21 @@ new class extends Component {
                                     this.query = '';
                                     this.open = false;
                                     $wire.set('province_id', opt.id);
+                                },
+                                init() {
+                                    // V-02b — Khi định vị tự điền province_id (từ server
+                                    // applyGeoResult/syncGeoResolution), cập nhật nhãn hiển thị
+                                    // của combobox cho khớp, dù user chưa tự chọn.
+                                    if (window.Livewire && this.$wire) {
+                                        this.$wire.$watch('province_id', (val) => {
+                                            if (val === '' || val === null) {
+                                                this.selectedLabel = '';
+                                                return;
+                                            }
+                                            const o = this.options.find(o => String(o.id) === String(val));
+                                            this.selectedLabel = o ? o.name : '';
+                                        });
+                                    }
                                 }
                             }" @click.outside="open = false">
                         <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
@@ -666,8 +700,11 @@ new class extends Component {
                                             window._mapPickerInstance = map;
 
                                             // Theo yêu cầu: bản đồ luôn dùng tile sáng, không đổi theo theme.
+                                            // keepBuffer + updateWhenZooming:false → kéo/zoom tới lui mượt.
                                             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                                attribution: '© OpenStreetMap'
+                                                attribution: '© OpenStreetMap',
+                                                keepBuffer: 2,
+                                                updateWhenZooming: false
                                             }).addTo(map);
 
                                             let marker = null;
@@ -818,6 +855,12 @@ new class extends Component {
                             <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
                         @enderror
                     </div>
+
+                    {{-- V-04 — Gợi ý điểm tiếp nhận gần nhất theo vị trí ghim.
+                    Tự động tính khoảng cách (reactive theo lat/lng Livewire). --}}
+                    <x-nearest-handover-points :lat="$lat" :lng="$lng" reactive="true"
+                        title="Điểm tiếp nhận gần vị trí này" />
+
                 </div>
             </div>
 

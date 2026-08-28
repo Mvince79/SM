@@ -33,13 +33,23 @@ window.gpsRealtime = (wire) => ({
             zoomControl: true,
         }).setView([10.0452, 105.7469], 15);
 
+        // keepBuffer + updateWhenZooming:false → kéo/zoom tới lui không bị giật/xám.
         window.L.tileLayer(
             'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
             {
                 attribution: '&copy; OpenStreetMap contributors',
                 maxZoom: 19,
+                keepBuffer: 2,
+                updateWhenZooming: false
             },
         ).addTo(this.map);
+
+        // Đảm bảo tính đúng kích thước khi cửa sổ thay đổi (tránh nửa bản đồ / giật).
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => this.map.invalidateSize(), 150);
+        });
     },
 
     startTracking() {
