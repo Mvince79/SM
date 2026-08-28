@@ -18,7 +18,9 @@ class FaceMatchNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database', 'broadcast'];
+        // Chỉ lưu DB; realtime đã được push qua event FaceMatchFound
+        // (broadcast trên user.{id}) để tránh hiển thị thông báo trùng.
+        return ['database'];
     }
 
     public function toArray(object $notifiable): array

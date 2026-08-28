@@ -43,7 +43,7 @@ class ProcessPhotoJobTest extends TestCase
             ]);
         $service->shouldReceive('encode')
             ->once()
-            ->with('photos/original_face_crop.jpg')
+            ->with('photos/original.jpg')
             ->andReturn([
                 'has_face' => true,
                 'encoding' => array_fill(0, 512, 1.0),

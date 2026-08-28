@@ -3,8 +3,10 @@
 namespace App\Filament\Admin\Resources\MissingChildren\Pages;
     use App\Filament\Admin\Resources\MissingChildren\MissingChildResource;
     use App\Filament\Admin\Resources\MissingChildren\Widgets\MissingChildStatsWidget;
+    use App\Models\HandoverPoint;
     use Filament\Actions\Action;
     use Filament\Actions\EditAction;
+    use Filament\Forms\Components\Select;
     use Filament\Forms\Components\Textarea;
     use Filament\Notifications\Notification;
     use Filament\Resources\Pages\ViewRecord;
@@ -92,6 +94,38 @@ namespace App\Filament\Admin\Resources\MissingChildren\Pages;
                         $this->refreshFormData(['status', 'found_at']);
                     }),
 
+                // H-01/H-04 — Đánh dấu "đã bàn giao" cho cơ quan chức năng.
+                // Mở khóa toàn bộ Nhóm H: card "Việc cần làm" cho gia đình, job nhắc 3/7
+                // ngày, và trang "Xác nhận hộ". Hệ thống chỉ ghi nhận, không thay thế
+                // cơ quan chức năng (bàn giao thật diễn ra ngoài hệ thống).
+                Action::make('mark_handed_over')
+                    ->label('Đánh dấu đã bàn giao')
+                    ->icon('heroicon-o-arrow-right-circle')
+                    ->color('info')
+                    ->visible(fn() => in_array($this->record->status, ['APPROVED', 'FOUND'], true))
+                    ->form([
+                        Select::make('handover_point_id')
+                            ->label('Điểm tiếp nhận / bàn giao')
+                            ->options(fn() => HandoverPoint::active()->pluck('name', 'id')->toArray())
+                            ->searchable()
+                            ->nullable()
+                            ->helperText('Nơi trẻ đang được giữ (nếu biết). Gia đình sẽ thấy địa chỉ & hotline này trong mục "Việc cần làm".'),
+                    ])
+                    ->modalHeading('Đánh dấu đã bàn giao cho cơ quan chức năng?')
+                    ->modalDescription('Hồ sơ chuyển sang trạng thái "Đã bàn giao". Gia đình sẽ nhận hướng dẫn để đến nhận lại con. Hệ thống chỉ ghi nhận thông tin, không thay thế cơ quan chức năng.')
+                    ->modalSubmitActionLabel('Đánh dấu bàn giao')
+                    ->action(function (array $data) {
+                        $this->record->update([
+                            'status' => 'HANDED_OVER',
+                            'handover_point_id' => $data['handover_point_id'] ?: null,
+                            'handover_confirmed_at' => now(),
+                            'handover_confirmed_by' => Auth::id(),
+                        ]);
+                        Cache::forget('dashboard_stats_overview');
+                        Notification::make()->title('Đã đánh dấu bàn giao')->success()->send();
+                        $this->refreshFormData(['status', 'handover_point_id', 'handover_confirmed_at', 'handover_confirmed_by']);
+                    }),
+
                 Action::make('close')
                     ->label('Đóng hồ sơ')
                     ->icon('heroicon-o-archive-box')
@@ -108,7 +142,7 @@ namespace App\Filament\Admin\Resources\MissingChildren\Pages;
 
                 // H-04 — Mở trang xác nhận đoàn tụ hộ (chỉ hồ sơ đã bàn giao).
                 Action::make('confirm_reunion_manually')
-                    ->label('Xác nhận đoàn tụ hộ')
+                    ->label('Ghi nhận xác nhận của gia đình')
                     ->icon('heroicon-o-user-group')
                     ->color('success')
                     ->visible(fn() => $this->record->status === \App\Models\MissingChild::STATUS_HANDED_OVER)

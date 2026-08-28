@@ -44,9 +44,14 @@ class ChatbotIntentResolver
 
         $suggestions = $this->suggestionsFor($message);
 
+        // Nhánh này chỉ đạt tới khi Gemini trả null (quá tải/429/mất mạng) VÀ không
+        // khớp từ khóa nào. Không nói "tôi không hiểu" một cách bế tắc — báo AI tạm
+        // bận, hướng hotline khẩn cấp và gợi ý câu hỏi đúng.
         return [
             'intent' => 'GENERAL',
-            'message' => "Tôi chưa hiểu rõ yêu cầu này. Bạn có thể hỏi ví dụ:\n- ".implode("\n- ", $suggestions),
+            'message' => "Hiện tại trợ lý AI tạm thời quá tải hoặc mất kết nối, nên mình chưa xử lý được câu này. "
+                ."Bạn vui lòng thử lại sau ít phút. Trường hợp khẩn cấp, hãy gọi ngay Tổng đài Quốc gia Bảo vệ Trẻ em 111 (miễn phí) hoặc Công an 113.\n\n"
+                ."Bạn cũng có thể thử hỏi:\n- ".implode("\n- ", $suggestions),
             'handover_points' => [],
             'suggested_questions' => $suggestions,
         ];

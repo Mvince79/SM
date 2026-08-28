@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\MissingChildren\Schemas;
 
+use App\Filament\Forms\Components\LocationPicker;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -153,13 +154,16 @@ class MissingChildForm
                             ->tel()
                             ->placeholder('0912 345 678'),
 
-                        TextInput::make('contact_relation')
+                        Select::make('contact_relation')
                             ->label('Quan hệ với bé')
-                            ->placeholder('Cha / Mẹ / Ông / Bà...'),
+                            ->options(\App\Models\MissingChild::CONTACT_RELATION_LABELS)
+                            ->placeholder('Chọn mối quan hệ…')
+                            ->native(false)
+                            ->searchable(),
                     ]),
 
                 Section::make('Địa điểm & thời gian mất tích')
-                    ->icon('heroicon-o-map-pin')
+                    ->icon('heroicon-o-calendar-days')
                     ->schema([
 
                         Select::make('province_id')
@@ -202,25 +206,37 @@ class MissingChildForm
                                 ->placeholder('Không rõ'),
                         ]),
 
-                        // GPS trên row riêng — tách ra để label không bị cắt
-                        Grid::make(2)->schema([
-                            TextInput::make('lat')
-                                ->label('Vĩ độ')
-                                ->numeric()
-                                ->step(0.0000001)
-                                ->placeholder('10.7769')
-                                ->helperText('Lấy từ Google Maps'),
-
-                            TextInput::make('lng')
-                                ->label('Kinh độ')
-                                ->numeric()
-                                ->step(0.0000001)
-                                ->placeholder('106.7009'),
-                        ]),
-
                     ]),
 
             ])->from('md'),
+
+            // ────────────────────────────────────────────────────────────────
+            // BLOCK 3b — Vị trí trên bản đồ (full-width, tách khỏi Flex bên trên
+            // để không bị co hẹp vào cột hẹp gây khoảng trống)
+            // ────────────────────────────────────────────────────────────────
+            Section::make('Vị trí trên bản đồ')
+                ->description('Chạm/click vào bản đồ hoặc kéo marker để chọn vị trí. Vĩ độ và kinh độ được cập nhật tự động.')
+                ->schema([
+                    LocationPicker::make('location_picker')
+                        ->label('Chọn vị trí')
+                        ->dehydrated(false)
+                        ->columnSpanFull(),
+
+                    Grid::make(2)->schema([
+                        TextInput::make('lat')
+                            ->label('Vĩ độ')
+                            ->numeric()
+                            ->step('any')
+                            ->placeholder('10.7769')
+                            ->helperText('Cập nhật tự động từ bản đồ'),
+
+                        TextInput::make('lng')
+                            ->label('Kinh độ')
+                            ->numeric()
+                            ->step('any')
+                            ->placeholder('106.7009'),
+                    ]),
+                ]),
 
         ]);
     }

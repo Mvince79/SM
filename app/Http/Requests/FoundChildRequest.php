@@ -12,13 +12,24 @@ class FoundChildRequest extends FormRequest
         return auth()->check();
     }
 
+    // F-trim — mặc định found_date = hôm nay khi bỏ trống, tránh vi phạm
+    // ràng buộc NOT NULL của DB (form người dùng đã để optional).
+    protected function prepareForValidation(): void
+    {
+        if (empty($this->found_date)) {
+            $this->merge(['found_date' => now()->toDateString()]);
+        }
+    }
+
     public function rules(): array
     {
         return [
             'province_id' => 'required|exists:provinces,id',
             'photos' => 'required|array|min:1',
             'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:5120', new SecureImage],
-            'found_date' => 'required|date',
+            // F-trim — để optional (form mặc định hôm nay). prepareForValidation
+            // đảm bảo API không bao giờ insert NULL vào cột found_date NOT NULL.
+            'found_date' => 'nullable|date',
             'found_time' => 'nullable|date_format:H:i',
             'gender_estimate' => 'nullable|in:MALE,FEMALE,UNKNOWN',
             'age_estimate' => 'nullable|integer|min:0|max:120',

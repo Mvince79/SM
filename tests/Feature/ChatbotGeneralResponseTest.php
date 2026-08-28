@@ -22,6 +22,6 @@ class ChatbotGeneralResponseTest extends TestCase
             ->assertJsonCount(3, 'data.suggested_questions')
             ->assertJsonFragment(['message' => $response->json('data.message')]);
 
-        $this->assertStringContainsString('Bạn có thể hỏi ví dụ:', $response->json('data.message'));
+        $this->assertStringContainsString('Bạn cũng có thể thử hỏi:', $response->json('data.message'));
     }
 }

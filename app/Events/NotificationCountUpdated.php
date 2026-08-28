@@ -10,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class NotificationCountUpdated
+class NotificationCountUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -26,5 +26,12 @@ class NotificationCountUpdated
     public function broadcastAs(): string
     {
         return 'notification.received';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'unread_count' => $this->unreadCount,
+        ];
     }
 }

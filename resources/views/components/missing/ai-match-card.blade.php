@@ -2,12 +2,15 @@
 @php
     $found = $match->foundChild;
     $auth = Auth::check();
-    $photo = $found->photos->first();
-    $imgUrl = $photo
-        ? ($auth ? asset('storage/' . $photo->path_thumb) : asset('storage/' . $photo->path_blurred))
-        : null;
 @endphp
-<div class="flex gap-3 items-center bg-white border border-slate-200 rounded-xl p-3">
+@if($found)
+    @php
+        $photo = $found->photos->first();
+        $imgUrl = $photo
+            ? ($auth ? asset('storage/' . $photo->path_thumb) : asset('storage/' . $photo->path_blurred))
+            : null;
+    @endphp
+    <div class="flex gap-3 items-center bg-white border border-slate-200 rounded-xl p-3">
     {{-- Thumbnail --}}
     <div
         class="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100 flex items-center justify-center"
@@ -32,7 +35,7 @@
                 alt="Ảnh hồ sơ {{ $found->full_name ?? 'trẻ được tìm thấy' }}"
                 class="w-full h-full object-cover {{ $auth ? '' : 'blur-sm' }}"
                 @load="imageLoaded = true"
-                @error="imageLoaded = true"
+                @@error="imageLoaded = true"
             >
         @else
             <x-heroicon-s-user class="w-6 h-6 text-slate-300" />
@@ -54,3 +57,4 @@
         Xem chi tiết →
     </a>
 </div>
+@endif

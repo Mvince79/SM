@@ -52,6 +52,10 @@
 
     <!-- MAIN CONTENT GRID -->
     <main class="max-w-7xl mx-auto px-3 sm:px-4 pb-12 sm:pb-20">
+        <!-- Toast notifications -->
+        <div id="toast-container"
+            class="fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex flex-col gap-2 items-center pointer-events-none"></div>
+
         <div class="grid lg:grid-cols-12 gap-3 sm:gap-6 lg:gap-8 items-start">
 
             <!-- LEFT: 8 cols -->
@@ -93,7 +97,7 @@
 
                     <!-- Profile Grid -->
                     <div class="p-3 sm:p-6 lg:p-8 space-y-3 sm:space-y-6">
-                        <div class="flex gap-3 sm:gap-8 items-start">
+                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-8 items-start">
 
                             <!-- Avatar photo container + Gallery -->
                             <div class="w-full sm:w-44 flex-shrink-0" x-data="{
@@ -190,7 +194,7 @@
                                 </template>
                             </div>
 
-                            <div class="flex-1 min-w-0 hidden sm:block">
+                            <div class="flex-1 min-w-0 w-full">
                                 <div class="flex items-start justify-between gap-1.5">
                                     <div class="min-w-0 flex-1">
                                         <h1
@@ -206,13 +210,13 @@
                                         </div>
                                     </div>
                                     <button title="Sao chép liên kết"
-                                        onclick="navigator.clipboard.writeText(window.location.href); alert('Đã sao chép link hồ sơ!')"
+                                        onclick="navigator.clipboard.writeText(window.location.href); showToast('Đã sao chép link hồ sơ!','success')"
                                         class="p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors shadow-sm flex-shrink-0">
                                         <x-heroicon-o-share class="w-4 h-4 text-slate-500" />
                                     </button>
                                 </div>
 
-                                <!-- Info matrix — desktop only (sm+) -->
+                                <!-- Info matrix — unified (all breakpoints) -->
                                 <div class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm border-t border-slate-100 pt-4">
                                     <div class="min-w-0">
                                         <span class="text-slate-400 font-bold text-xs uppercase tracking-wider">Tuổi</span>
@@ -281,77 +285,10 @@
                                         </div>
                                     @endif
                                 </div>
-                            </div>{{-- end hidden sm:block --}}
+                            </div>{{-- end name block --}}
 
                         </div>{{-- end flex row (avatar + desktop-info) --}}
 
-                        {{-- Info matrix — MOBILE only, full width bên dưới row avatar+tên --}}
-                        <div class="sm:hidden grid grid-cols-2 gap-x-4 gap-y-2.5 text-sm border-t border-slate-100 pt-3">
-                            <div class="min-w-0">
-                                <span class="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Tuổi</span>
-                                <div class="font-extrabold text-slate-800 text-xs mt-0.5 break-words">
-                                    {{ $case->age }} tuổi
-                                    @if ($case->dob)
-                                        (Sinh năm {{ $case->dob->year }})
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="min-w-0">
-                                <span class="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Giới tính</span>
-                                <div class="font-extrabold text-slate-800 text-xs mt-0.5">
-                                    @if ($case->gender === 'MALE')
-                                        Nam
-                                    @elseif($case->gender === 'FEMALE')
-                                        Nữ
-                                    @else
-                                        Không rõ
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="col-span-full min-w-0">
-                                <span class="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Khu vực lạc
-                                    mất</span>
-                                <div class="font-extrabold text-slate-800 text-xs mt-0.5 break-words">
-                                    {{ collect([$case->address_detail, $case->ward, $case->province?->name])->filter()->implode(', ') ?: '—' }}
-                                </div>
-                            </div>
-                            <div class="col-span-full min-w-0">
-                                <span class="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Thời gian bị
-                                    lạc</span>
-                                <div class="font-extrabold text-slate-800 text-xs mt-0.5">
-                                    {{ $case->missing_date?->format('d/m/Y') }}
-                                    @if ($case->formatted_time)
-                                        · Lúc {{ $case->formatted_time }}
-                                    @endif
-                                </div>
-                            </div>
-                            @if ($case->height_cm || $case->weight_kg)
-                                <div class="min-w-0">
-                                    <span class="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Thể
-                                        trạng</span>
-                                    <div class="font-extrabold text-slate-800 text-xs mt-0.5">
-                                        @if ($case->height_cm)
-                                            Cao {{ $case->height_cm }}cm
-                                        @endif
-                                        @if ($case->height_cm && $case->weight_kg)
-                                            ·
-                                        @endif
-                                        @if ($case->weight_kg)
-                                            Nặng {{ $case->weight_kg }}kg
-                                        @endif
-                                    </div>
-                                </div>
-                            @endif
-                            @if ($case->clothes_desc || $case->clothes_color)
-                                <div class="col-span-full min-w-0">
-                                    <span class="text-slate-400 font-bold text-[9px] uppercase tracking-wider">Trang phục
-                                        khi lạc</span>
-                                    <div class="font-extrabold text-primary text-xs mt-0.5 break-words">
-                                        {{ $case->clothes_desc ?? ($case->clothes_color ?? '—') }}
-                                    </div>
-                                </div>
-                            @endif
-                        </div>{{-- end sm:hidden info grid --}}
 
                         <!-- Detailed Description Box -->
                         @if ($case->circumstances || $case->special_marks)
@@ -389,8 +326,7 @@
                     </p>
                     <button onclick="shareGPS()"
                         class="w-full bg-white text-primary font-black py-3.5 rounded-xl hover:bg-slate-50 transition-premium text-sm shadow-md">
-                        <x-heroicon-o-map-pin class="w-4 h-4 inline" /> Chia sẻ vị trí GPS tức thời Chia sẻ vị trí GPS tức
-                        thời
+                        <x-heroicon-o-map-pin class="w-4 h-4 inline" /> Chia sẻ vị trí GPS tức thời
                     </button>
                 </div>
 
@@ -454,7 +390,7 @@
                 @livewire('missing.handover-suggestion-card', ['caseId' => $case->id])
 
                 {{-- H-02 — Chỉ chủ hồ sơ mới thấy khối "Việc cần làm" khi status = HANDED_OVER --}}
-                @if ($case->isHandedOver() && auth()->check() && auth()->id() === $case->user_id)
+                @if (in_array($case->status, ['APPROVED', 'FOUND', 'HANDED_OVER'], true) && auth()->check() && auth()->id() === $case->user_id)
                     <x-next-steps-card :case="$case" />
                 @endif
 
@@ -568,11 +504,11 @@
                                             <span class="text-xs font-extrabold text-slate-900">{{ $clue->display_name }}</span>
                                             @if ($clue->is_verified)
                                                 <span
-                                                    class="bg-success-light text-success border border-success/35 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">Đã
+                                                    class="bg-success-light text-success border border-success/35 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">Đã
                                                     xác minh ✓</span>
                                             @else
                                                 <span
-                                                    class="bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">Đang
+                                                    class="bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">Đang
                                                     xác minh</span>
                                             @endif
                                             <span
@@ -600,7 +536,9 @@
                                                     {{ number_format($clue->lng, 4) }}</span>
                                             </a>
                                         @endif
-                                        <button class="hover:text-primary transition-colors">Phản hồi</button>
+                                        <button type="button"
+                                            onclick="var b=document.getElementById('clue-box-form'); if(b){b.classList.remove('hidden'); b.scrollIntoView({behavior:'smooth', block:'center'}); var t=b.querySelector('textarea'); if(t){t.focus();}}"
+                                            class="hover:text-primary transition-colors">Phản hồi</button>
                                     </div>
                                 </div>
                             </div>
@@ -661,7 +599,7 @@
                     @else
                         <div class="space-y-1.5 sm:space-y-2">
                             <p class="text-sm font-bold text-slate-900">{{ $case->contact_name }}</p>
-                            <p class="text-xs text-slate-500">{{ $case->contact_relation }}</p>
+                            <p class="text-xs text-slate-500">{{ $case->contact_relation_label }}</p>
                             @if (Auth::check())
                                 @if ($case->contact_phone)
                                     <p class="text-sm font-extrabold text-slate-800">SĐT: <a href="tel:{{ $case->contact_phone }}"
@@ -690,7 +628,7 @@
                         <div>
                             <h4 class="font-extrabold text-slate-900 text-xs sm:text-sm uppercase tracking-wider">QR hồ sơ
                             </h4>
-                            <p class="text-[9px] sm:text-[10px] text-slate-400 font-semibold mt-0.5 sm:mt-1">Mở nhanh hồ sơ
+                            <p class="text-[10px] sm:text-xs text-slate-400 font-semibold mt-0.5 sm:mt-1">Mở nhanh hồ sơ
                                 bằng quét mã</p>
                         </div>
                         <span
@@ -713,7 +651,7 @@
                             Mở QR
                         </a>
                         <button type="button"
-                            onclick="navigator.clipboard.writeText(document.getElementById('qr-link').value); alert('Đã sao chép link QR!')"
+                            onclick="navigator.clipboard.writeText(document.getElementById('qr-link').value); showToast('Đã sao chép link QR!','success')"
                             class="rounded-xl sm:rounded-2xl bg-primary text-white px-3 py-2.5 sm:py-3 text-xs font-extrabold hover:bg-primary-dark transition-colors">
                             Sao chép
                         </button>
@@ -808,7 +746,7 @@
                             <span>Zalo</span>
                         </a>
                     </div>
-                    <button onclick="navigator.clipboard.writeText(window.location.href); alert('Đã sao chép link hồ sơ!')"
+                    <button onclick="navigator.clipboard.writeText(window.location.href); showToast('Đã sao chép link hồ sơ!','success')"
                         class="w-full border border-slate-200 text-slate-700 text-xs font-bold py-3 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
                         Sao chép đường dẫn hồ sơ
                     </button>
@@ -879,8 +817,8 @@
                             });
                             // Show brief confirmation so user knows coords were captured
                             try {
-                                alert('Đã lấy tọa độ: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) +
-                                    '\nBạn có thể chỉnh mô tả và gửi manh mối.');
+                                showToast('Đã lấy tọa độ: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) +
+                                    '\nBạn có thể chỉnh mô tả và gửi manh mối.', 'success');
                             } catch (e) { }
 
                             // Removed automatic immediate POST sharing — only populate form and emit Livewire.
@@ -891,7 +829,7 @@
                                 } catch (e) { }
                             }
                         }, function (err) {
-                            alert('Không thể lấy vị trí GPS: ' + (err.message || 'Lỗi không xác định'));
+                            showToast('Không thể lấy vị trí GPS: ' + (err.message || 'Lỗi không xác định'), 'error');
                             if (btn) {
                                 try {
                                     btn.disabled = false;
@@ -951,10 +889,10 @@
                         behavior: 'smooth',
                         block: 'center'
                     });
-                    alert('Đã lấy tọa độ: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) +
-                        '\nBạn có thể chỉnh mô tả và gửi manh mối.');
+                    showToast('Đã lấy tọa độ: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) +
+                        '\nBạn có thể chỉnh mô tả và gửi manh mối.', 'success');
                 }, function (err) {
-                    alert('Không thể lấy vị trí GPS: ' + (err.message || 'Lỗi không xác định'));
+                    showToast('Không thể lấy vị trí GPS: ' + (err.message || 'Lỗi không xác định'), 'error');
                     if (btn) {
                         try {
                             btn.disabled = false;
@@ -975,7 +913,7 @@
                     }
                 }, 12000);
             } else {
-                alert('Trình duyệt không hỗ trợ GPS.');
+                showToast('Trình duyệt không hỗ trợ GPS.', 'error');
             }
         }
 
@@ -1032,10 +970,10 @@
                 });
 
                 // Brief confirmation
-                alert('Đã lấy tọa độ: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) +
-                    '\nBạn có thể chỉnh mô tả và gửi manh mối.');
+                showToast('Đã lấy tọa độ: ' + lat.toFixed(6) + ', ' + lng.toFixed(6) +
+                    '\nBạn có thể chỉnh mô tả và gửi manh mối.', 'success');
             }, function (err) {
-                alert('Không thể lấy vị trí GPS: ' + (err.message || 'Lỗi không xác định'));
+                showToast('Không thể lấy vị trí GPS: ' + (err.message || 'Lỗi không xác định'), 'error');
                 if (btn) {
                     try {
                         btn.disabled = false;
@@ -1048,32 +986,8 @@
             });
         }
 
-        // Use Permissions API to check state
-        if (navigator.permissions && navigator.permissions.query) {
-            navigator.permissions.query({
-                name: 'geolocation'
-            }).then(function (result) {
-                if (result.state === 'denied') {
-                    if (btn) {
-                        try {
-                            btn.disabled = false;
-                            if (oldHtml !== null) btn.innerHTML = oldHtml;
-                        } catch (e) { }
-                    }
-                    alert(
-                        'Quyền vị trí đã bị chặn cho trang này. Vui lòng cho phép vị trí trong cài đặt trình duyệt và thử lại.'
-                    );
-                    return;
-                }
-                // allow next geolocation call (user gesture)
-                if (window.allowGeolocationForNextCall) window.allowGeolocationForNextCall();
-                doGetPosition();
-            }).catch(function () {
-                doGetPosition();
-            });
-        } else {
-            doGetPosition();
-        }
+        // NOTE: Việc lấy GPS chỉ kích hoạt khi người dùng bấm nút "Chia sẻ vị trí GPS" (onclick="shareGPS()").
+        // Không tự động hỏi quyền vị trí khi tải trang để tránh làm phiền người dùng.
     </script>
 
     {{-- Lightbox modal for avatar and clue images --}}

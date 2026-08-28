@@ -163,6 +163,7 @@ class MissingChildInfolist
 
                         TextEntry::make('contact_relation')
                             ->label('Quan hệ với bé')
+                            ->formatStateUsing(fn($state) => \App\Models\MissingChild::CONTACT_RELATION_LABELS[$state] ?? $state)
                             ->placeholder('—'),
 
                         TextEntry::make('contact_phone')

@@ -55,6 +55,11 @@ class ChatbotGeminiService
                     'temperature' => 0.4,
                     'maxOutputTokens' => 800,
                     'candidateCount' => 1,
+                    // Tắt "thinking" để Gemini 3.6 Flash KHÔNG sinh thoughtSignature.
+                    // Với thoughtSignature, việc echo nhiều lượt function-calling rất dễ lỗi
+                    // 400 ("missing thought_signature"). Tắt đi → định dạng function-calling
+                    // chuẩn, ổn định, và nhanh hơn (phù hợp chatbot hỗ trợ).
+                    'thinkingConfig' => ['thinkingBudget' => 0],
                 ],
             ];
 
@@ -116,11 +121,15 @@ class ChatbotGeminiService
                     $handoverPoints = $result['handover_points'];
                 }
 
-                // Echo lại TOÀN BỘ part functionCall NGUYÊN BẢN (giữ nguyên vị trí
-                // thoughtSignature — có thể nằm ở cấp Part, không phải trong functionCall).
-                // Gemini 3.6 bắt buộc giữ thoughtSignature khi gọi lại, nếu không 400.
-                // Echo cả part thay vì tự tái tạo ['name','args'] (tránh mất thoughtSignature
-                // và tránh biến args rỗng thành [] sai kiểu Struct).
+                // Thực thi hàm rồi echo kết quả về Gemini (format chuẩn function-calling).
+                // LƯU Ý: json_decode() biến args rỗng `{}` thành `[]` (array), Gemini từ chối
+                // `[]` cho field args (phải là object/Struct) → 400 "cannot start list".
+                // Ép args rỗng về stdClass để json_encode xuất lại thành `{}`.
+                // (Thinking đã tắt ở generationConfig nên không sinh thoughtSignature —
+                // không cần mang thoughtSignature qua nhiều lượt.)
+                if (empty($functionCall['args'])) {
+                    $functionCallPart['functionCall']['args'] = new \stdClass();
+                }
                 $contents[] = [
                     'role' => 'model',
                     'parts' => [$functionCallPart],

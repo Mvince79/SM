@@ -338,17 +338,28 @@
         @apply bg-slate-900 text-slate-400;
     }
     .site-footer-main {
-        @apply max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10;
+        @apply max-w-7xl mx-auto px-4 pt-10 pb-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 items-start;
     }
     .site-footer-copy {
-        @apply max-w-7xl mx-auto px-4 border-t border-slate-800 mt-12 pt-8
+        @apply max-w-7xl mx-auto px-4 border-t border-slate-800 mt-14 pt-8
                text-center text-[10px] text-slate-500;
     }
     .footer-heading {
-        @apply text-white font-bold text-sm tracking-wider uppercase mb-3;
+        @apply text-white font-extrabold text-[13px] tracking-widest uppercase mb-4;
     }
     .footer-link {
-        @apply hover:text-white transition-colors;
+        @apply hover:text-white hover:underline underline-offset-2 transition-colors;
+    }
+    /* Khối cảnh báo khẩn cấp 113 — tách riêng, nổi bật nhưng không lấn át */
+    .footer-emergency {
+        @apply flex items-center gap-2.5 rounded-xl bg-red-500/10 border border-red-500/30
+               px-3 py-2.5 mt-1;
+    }
+    .footer-emergency svg {
+        @apply w-5 h-5 text-red-500 flex-shrink-0;
+    }
+    .footer-emergency .footer-emergency-number {
+        @apply text-red-400;
     }
 
     .footer-simple {

@@ -21,6 +21,14 @@ class ReportMissingChildIntent extends KeywordIntent
             'tim con',
             'tre bi lac',
             'tre mat tich',
+            // Mở rộng: các cách nói phổ biến thiếu chữ "bị", hoặc nói về
+            // trẻ/bé bị lạc, thấy trẻ, tìm thấy bé, báo trẻ lạc...
+            'tre lac',
+            'be lac',
+            'thay tre',
+            'thay be',
+            'tim thay',
+            'bao tre lac',
         ];
     }
 

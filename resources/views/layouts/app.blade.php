@@ -130,6 +130,9 @@
     {{-- ── Top Navigation ── --}}
     @include('components.nav.topnav')
 
+    {{-- ── Banner định vị "kênh hỗ trợ" (toàn trang, dismissible) ── --}}
+    @include('components.emergency-disclaimer')
+
     {{-- ── Flash Messages ── --}}
     @include('components.ui.success-message')
     @include('components.ui.error-message')
@@ -208,12 +211,13 @@
                         <span class="text-slate-500"><x-heroicon-o-phone class="w-4 h-4 text-slate-500" /></span>
                         <span>1800 1234 <span class="text-slate-500">(miễn phí)</span></span>
                     </li>
-                    <li class="flex items-center gap-2 pt-1 border-t border-slate-800 mt-1">
-                        <span><x-heroicon-o-exclamation-triangle class="w-4 h-4 text-red-500" /></span>
-                        <strong class="text-white font-black">Cảnh sát Cứu Hộ: <span
-                                class="text-primary">113</span></strong>
-                    </li>
                 </ul>
+                {{-- Khối cảnh báo khẩn cấp riêng biệt --}}
+                <div class="footer-emergency">
+                    <x-heroicon-o-exclamation-triangle />
+                    <strong class="text-white font-black">Cảnh sát Cứu Hộ: <span
+                            class="footer-emergency-number">113</span></strong>
+                </div>
             </div>
 
         </div>

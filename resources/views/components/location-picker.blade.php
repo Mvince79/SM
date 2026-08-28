@@ -44,6 +44,9 @@
     'sovereignty' => true,
     'hiddenFields' => true,
     'draggable' => true,
+    // Tắt nút "Lấy vị trí hiện tại" (icon ghim nhỏ) ở admin để chỉ còn
+    // duy nhất marker trên bản đồ — tránh 2 icon định vị (1 to, 1 nhỏ).
+    'gpsButton' => true,
     // 'app' = bundle resources/css/app.css (.btn-oauth/.form-label…);
     // 'filament' = panel admin dùng CSS precompiled của Filament (không có class app.css).
     'theme' => 'app',
@@ -57,7 +60,7 @@
         : 'btn-oauth mb-3 w-full sm:w-auto px-5 font-extrabold text-primary disabled:opacity-50 disabled:cursor-not-allowed';
 
     $wrapperClass = $isFilament ? 'relative w-full' : 'relative w-full ' . $height . ' rounded-2xl overflow-hidden border border-slate-200';
-    $wrapperStyle = $isFilament ? 'height:420px;border-radius:12px;overflow:hidden;' : '';
+    $wrapperStyle = $isFilament ? 'height:300px;border-radius:12px;overflow:hidden;' : '';
 
     $mapClass = $isFilament ? 'w-full h-full' : 'map-container w-full h-full z-0';
     $mapStyle = $isFilament ? 'height:100%;width:100%;z-index:1;' : '';
@@ -67,12 +70,17 @@
         : 'mt-2 text-xs font-semibold text-amber-600';
 @endphp
 
+<style>
+    /* V-01 — bỏ nền/viền mặc định của Leaflet cho divIcon (tránh hộp trắng quanh SVG) */
+    .lp-marker.leaflet-div-icon {
+        background: transparent !important;
+        border: none !important;
+    }
+</style>
+
 <div class="space-y-2">
     @if ($label)
-        <label class="form-label flex items-center gap-1.5">
-            <x-heroicon-o-map-pin class="w-4 h-4 text-slate-500" />
-            {{ $label }}
-        </label>
+        <label class="form-label">{{ $label }}</label>
     @endif
 
     @if ($hint)
@@ -104,31 +112,45 @@
                 });
         },
 
-        /** Leaflet có thể đã được trang nạp sẵn; nếu chưa (vd. trong Filament) thì tự nạp. */
+        /**
+         * Tự nạp Leaflet (CSS + JS) khi trang chưa có (vd. admin Filament).
+         * QUAN TRỌNG: phải chờ CẢ CSS lẫn JS sẵn sàng rồi mới init map —
+         * nếu chỉ chờ JS (script.onload) mà CSS chưa apply, tile/marker sẽ
+         * render thiếu style (không hiện nền, marker vỡ, không tương tác).
+         * Trang client nạp CSS tĩnh qua <link> nên không gặp race này.
+         */
         ensureLeaflet() {
+            const ensureCss = () => new Promise((resolve) => {
+                if (document.querySelector('link[data-leaflet-css]')) {
+                    resolve();
+                    return;
+                }
+                const css = document.createElement('link');
+                css.rel = 'stylesheet';
+                css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                css.setAttribute('data-leaflet-css', '');
+                css.onload = resolve;
+                css.onerror = resolve; // vẫn init tiếp dù CSS bị chặn
+                document.head.appendChild(css);
+            });
+
             if (typeof window.L !== 'undefined') {
-                return Promise.resolve();
+                // JS đã có (do widget khác nạp trước) — nhưng CSS có thể thiếu → vẫn đảm bảo CSS.
+                return ensureCss();
             }
 
-            if (!window.__leafletLoaderPromise) {
-                window.__leafletLoaderPromise = new Promise((resolve, reject) => {
-                    if (!document.querySelector('link[data-leaflet-css]')) {
-                        const css = document.createElement('link');
-                        css.rel = 'stylesheet';
-                        css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-                        css.setAttribute('data-leaflet-css', '');
-                        document.head.appendChild(css);
-                    }
-
+            if (!window.__leafletJsPromise) {
+                window.__leafletJsPromise = new Promise((resolve, reject) => {
                     const script = document.createElement('script');
                     script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-                    script.onload = resolve;
+                    script.onload = () => { window.__leafletJsPromise = null; resolve(); };
                     script.onerror = reject;
                     document.head.appendChild(script);
                 });
             }
 
-            return window.__leafletLoaderPromise;
+            // Chờ CẢ CSS và JS trước khi init map.
+            return Promise.all([ensureCss(), window.__leafletJsPromise]);
         },
 
         /** Điểm đã ghim: ưu tiên state Livewire hiện tại, sau đó tới giá trị server render. */
@@ -200,14 +222,34 @@
                 this.locateMe(true);
             }
 
-            setTimeout(() => this.map.invalidateSize(), 150);
+            // Filament thường render field trong panel/section có thể chưa có kích
+            // thước chính xác ngay khi init → gọi invalidateSize nhiều lần (sau các
+            // khoảng lệch nhau) để ép Leaflet tính lại kích thước và vẽ tile đúng.
+            // Thiếu bước này tile có thể không hiện dù CSS/JS đã sẵn sàng.
+            [50, 200, 500, 1000].forEach((t) => setTimeout(() => {
+                try { this.map.invalidateSize(); } catch (e) {}
+            }, t));
         },
 
         placeMarker(lat, lng, popup, sync = true) {
+            // V-01 — Marker tinh chỉnh: SVG inline qua L.divIcon thay vì
+            // Leaflet default (ảnh marker-icon.png hay bị 404 khi load CDN
+            // → trông to, vỡ, chưa ăn CSS). SVG tự có style, nhỏ gọn, đồng bộ.
+            const markerIcon = L.divIcon({
+                className: 'lp-marker',
+                html: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='28' height='28' style='filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))'><path fill='#ef4444' stroke='#ffffff' stroke-width='1.5' d='M12 2.2C8.1 2.2 5 5.3 5 9.2c0 5 7 12.6 7 12.6s7-7.6 7-12.6c0-3.9-3.1-7-7-7z'/><circle cx='12' cy='9.2' r='2.9' fill='#ffffff'/></svg>`,
+                iconSize: [28, 28],
+                iconAnchor: [14, 25],
+                popupAnchor: [0, -23],
+            });
+
             if (this.marker) {
                 this.marker.setLatLng([lat, lng]);
             } else {
-                this.marker = L.marker([lat, lng], { draggable: this.draggable }).addTo(this.map);
+                this.marker = L.marker([lat, lng], {
+                    draggable: this.draggable,
+                    icon: markerIcon,
+                }).addTo(this.map);
 
                 // KÉO marker — cách ghim thứ hai khi không có GPS.
                 this.marker.on('dragend', () => {
@@ -283,6 +325,7 @@
         },
     }" x-init="$nextTick(() => init())">
 
+        @if ($gpsButton)
         {{-- U-01 — nút GPS dùng style .btn-oauth --}}
         <button type="button" @click="locateMe()" :disabled="locating" class="{{ $btnClass }}">
             <template x-if="!locating">
@@ -299,6 +342,7 @@
             </template>
             <span x-text="locating ? 'Đang định vị…' : 'Lấy vị trí hiện tại'"></span>
         </button>
+        @endif
 
         <div class="{{ $wrapperClass }}" @if ($wrapperStyle) style="{{ $wrapperStyle }}" @endif>
             <div id="{{ $mapId }}" x-ref="map" class="{{ $mapClass }}"

@@ -15,8 +15,12 @@
                         class="flex flex-col items-center flex-shrink-0 group">
                         <div
                             class="w-12 h-12 rounded-full p-0.5 border-2 {{ $index < 3 ? 'border-primary pulse-dot' : 'border-slate-300' }} flex items-center justify-center transform group-hover:scale-105 transition-all">
-                            @if ($kid->primaryPhoto)
-                                <img src="{{ asset('storage/' . $kid->primaryPhoto->path_thumb) }}"
+                            @php
+                                $storyPhoto = $kid->primaryPhoto
+                                    ?? ($kid->photos->isNotEmpty() ? $kid->photos->first() : null);
+                            @endphp
+                            @if ($storyPhoto)
+                                <img src="{{ asset('storage/' . ($storyPhoto->path_thumb ?: $storyPhoto->path_display ?: $storyPhoto->path_blurred)) }}"
                                     class="w-full h-full rounded-full object-cover bg-slate-100" alt="" loading="lazy" />
                             @else
                                 <img src="https://api.dicebear.com/7.x/initials/svg?seed={{ $kid->full_name }}&backgroundColor=1c3a5e&textColor=ffffff&fontWeight=700"
@@ -123,7 +127,7 @@
                         </div>
                         <div class="bg-white/5 rounded-xl p-3 border border-white/5">
                             <div class="text-slate-400">Thời gian phản hồi TB</div>
-                            <div class="text-base font-extrabold text-brand mt-0.5">48 giờ</div>
+                            <div class="text-base font-extrabold text-success mt-0.5">48 giờ</div>
                         </div>
                     </div>
                 </div>

@@ -36,6 +36,18 @@ class MissingChild extends Model
     public const STATUS_REUNITED = 'REUNITED';
     public const STATUS_UNREACHABLE_FAMILY = 'UNREACHABLE_FAMILY';
 
+    /** Nhãn tiếng Việt cho field contact_relation (enum thô → hiển thị thân thiện).
+     *  Giá trị lấy từ migration 2026_07_07 (map ngược từ nhãn cũ sang enum). */
+    public const CONTACT_RELATION_LABELS = [
+        'PARENT'              => 'Cha mẹ',
+        'GRANDPARENT'        => 'Ông bà',
+        'LEGAL_GUARDIAN'     => 'Người giám hộ hợp pháp',
+        'SIBLING'            => 'Anh chị em ruột',
+        'RELATIVE_OTHER'     => 'Họ hàng khác',
+        'WITNESS_NO_RELATION' => 'Người phát hiện trẻ đi lạc',
+        'ORGANIZATION'       => 'Tổ chức',
+    ];
+
     public const REUNION_METHOD_FAMILY_SELF = 'FAMILY_SELF';
     public const REUNION_METHOD_ADMIN_PHONE_CALL = 'ADMIN_PHONE_CALL';
 
@@ -97,6 +109,7 @@ class MissingChild extends Model
         'meta_title',
         'meta_description',
         'og_image_url',
+        'handover_point_id',
         'handover_confirmed_at',
         'handover_confirmed_by',
     ];
@@ -368,6 +381,17 @@ class MissingChild extends Model
         } catch (\Exception) {
             return null;
         }
+    }
+
+    /**
+     * Nhãn tiếng Việt cho trường contact_relation (enum thô → hiển thị thân thiện).
+     * Dùng chung cho mọi nơi hiển thị (trang chi tiết, PDF, admin infolist...).
+     */
+    public function getContactRelationLabelAttribute(): string
+    {
+        return self::CONTACT_RELATION_LABELS[$this->contact_relation]
+            ?? $this->contact_relation
+            ?? '';
     }
 
     /**

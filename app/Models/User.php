@@ -18,6 +18,16 @@ class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes, LogsActivity;
 
+    /**
+     * Kênh dùng cho broadcast notification của Laravel
+     * (Illuminate\Notifications\Events\BroadcastNotificationCreated).
+     * Phải khớp với Echo.private('user.{id}') ở frontend và routes/channels.php.
+     */
+    public function routeNotificationForBroadcast($notification = null): string
+    {
+        return 'user.' . $this->getKey();
+    }
+
     protected $fillable = [
         'full_name',
         'email',

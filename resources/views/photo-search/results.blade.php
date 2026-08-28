@@ -57,7 +57,7 @@
     </div>
 
     {{-- Lưới kết quả (grid responsive) + phân trang phía dưới. --}}
-    <div id="results-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+    <div id="results-carousel" class="result-carousel"></div>
 
     <nav id="pagination" class="hidden mt-5 flex items-center justify-center gap-2"
          aria-label="Phân trang kết quả tìm kiếm">
@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsArea = document.getElementById('results-area');
     const resultsHeader = document.getElementById('results-header');
     const resultsCount = document.getElementById('results-count');
-    const grid = document.getElementById('results-grid');
+    const grid = document.getElementById('results-carousel');
     const pagination = document.getElementById('pagination');
     const pagePrev = document.getElementById('page-prev');
     const pageNext = document.getElementById('page-next');

@@ -275,6 +275,11 @@ if (bells.length) {
         ['.FaceMatchFound', '.NewClueSubmitted', '.PostStatusChanged'].forEach((eventName) => {
             channel.listen(eventName, handleIncomingNotification);
         });
+
+        // Server push số lượng chưa đọc chuẩn xác (sự kiện NotificationCountUpdated).
+        channel.listen('.notification.received', (payload) => {
+            setUnreadCount(payload.unread_count ?? unreadCount);
+        });
     }
 
     loadDropdownNotifications();

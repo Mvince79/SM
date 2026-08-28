@@ -38,9 +38,9 @@ class ConfirmReunionManually extends Page
 
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedUserGroup;
 
-    protected static ?string $title = 'Xác nhận đoàn tụ hộ';
+    protected static ?string $title = 'Ghi nhận xác nhận của gia đình';
 
-    protected static ?string $breadcrumb = 'Xác nhận đoàn tụ hộ';
+    protected static ?string $breadcrumb = 'Ghi nhận xác nhận của gia đình';
 
     /**
      * @var array<string, mixed> | null
@@ -86,7 +86,7 @@ class ConfirmReunionManually extends Page
                     ->required()
                     ->minLength(20)
                     ->rows(4)
-                    ->helperText('Ghi rõ đã liên hệ gia đình qua kênh nào, kết quả xác minh ra sao.'),
+                    ->helperText('Ghi rõ đã liên hệ gia đình qua kênh nào, kết quả xác minh ra sao. Hệ thống CHỈ ghi nhận theo lời xác nhận của gia đình, không tự xác minh đoàn tụ.'),
             ]);
     }
 
@@ -120,7 +120,7 @@ class ConfirmReunionManually extends Page
     {
         return [
             Action::make('confirm')
-                ->label('Xác nhận đoàn tụ hộ')
+                ->label('Ghi nhận xác nhận của gia đình')
                 ->icon('heroicon-o-user-group')
                 ->color('success')
                 ->submit('confirmReunion')

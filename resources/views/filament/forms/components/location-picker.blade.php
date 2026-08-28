@@ -17,7 +17,7 @@
 
 <x-location-picker :lat-wire="$latPath" :lng-wire="$lngPath" :map-id="'lp-' . str_replace(['.', '_'], '-', $statePath)"
     :label="null" :hint="null" :hidden-fields="false" :sovereignty="false" theme="filament" :default-lat="10.045162"
-    :default-lng="105.746857" :default-zoom="13" />
+    :default-lng="105.746857" :default-zoom="13" :gps-button="false" />
 
 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
     Chạm/click vào bản đồ hoặc kéo marker để chọn vị trí. Vĩ độ và kinh độ được cập nhật tự động.

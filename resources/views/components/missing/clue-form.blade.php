@@ -153,7 +153,7 @@
                         },
                         locateMe() {
                             if (!navigator.geolocation) {
-                                alert('Trình duyệt không hỗ trợ định vị.');
+                                showToast('Trình duyệt không hỗ trợ định vị.', 'error');
                                 return;
                             }
                             const self = this;
@@ -163,7 +163,7 @@
                             const hardTimer = setTimeout(() => {
                                 if (self.locating) {
                                     self.locating = false;
-                                    alert('Hết thời gian chờ định vị. Vui lòng thử lại hoặc nhấn vào bản đồ để ghim tay.');
+                                    showToast('Hết thời gian chờ định vị. Vui lòng thử lại hoặc nhấn vào bản đồ để ghim tay.', 'error');
                                 }
                             }, 12000);
 
@@ -191,7 +191,7 @@
                                     2: 'Không xác định được vị trí. Hãy thử lại hoặc nhấn vào bản đồ để ghim tay.',
                                     3: 'Hết thời gian chờ. Hãy thử lại hoặc nhấn vào bản đồ để ghim tay.',
                                 };
-                                alert(msgs[err.code] || 'Lỗi định vị: ' + err.message);
+                                showToast(msgs[err.code] || 'Lỗi định vị: ' + err.message, 'error');
                             };
 
                             const opts = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };

@@ -392,7 +392,7 @@
                             <strong>Người báo tin:</strong>
                             {{ $case->contact_name ?: 'Ẩn danh' }}
                             @if ($case->contact_relation)
-                                ({{ $case->contact_relation }})
+                                ({{ $case->contact_relation_label }})
                             @endif
                         </div>
                     @endif

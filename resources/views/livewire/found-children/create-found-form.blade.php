@@ -157,7 +157,9 @@ new class extends Component {
     {
         return [
             'province_id' => ['required', 'exists:provinces,id'],
-            'found_date' => ['required', 'date', 'before_or_equal:today'],
+            // F-trim — Người đi đường báo ngay lúc thấy → gần như luôn là hôm nay.
+            // Chuyển thành không bắt buộc, mặc định hôm nay (mount + submit fallback).
+            'found_date' => ['nullable', 'date', 'before_or_equal:today'],
             'handover_agency' => ['nullable', 'string', 'max:150'],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lng' => ['nullable', 'numeric', 'between:-180,180'],
@@ -171,7 +173,6 @@ new class extends Component {
         return [
             'geoStatus.not_in' => 'Vị trí đã ghim nằm ngoài lãnh thổ Việt Nam. Vui lòng ghim lại một điểm trong lãnh thổ Việt Nam.',
             'province_id.required' => 'Vui lòng chọn tỉnh/thành phố.',
-            'found_date.required' => 'Vui lòng nhập ngày phát hiện.',
             'found_date.before_or_equal' => 'Ngày phát hiện không thể ở tương lai.',
         ];
     }
@@ -179,14 +180,18 @@ new class extends Component {
     protected function rulesStep2(): array
     {
         return [
-            'gender_estimate' => ['required', 'in:MALE,FEMALE,UNKNOWN'],
+            // F-trim — Giới tính để optional: AI đối chiếu KHÔNG dùng trường này
+            // (chỉ dùng ảnh). Mặc định UNKNOWN; sau này có thể auto-fill từ
+            // detected_gender của ProcessPhotoJob. Giữ manual chọn tay (không bắt buộc).
+            'gender_estimate' => ['nullable', 'in:MALE,FEMALE,UNKNOWN'],
             // F-05: trước đây hardcode max:120 — không khớp với form đăng tin
             // tìm trẻ (dùng config('app.child_age_limit'), đúng Luật Trẻ em
             // 2016 = dưới 16 tuổi). Đồng bộ lại theo cùng 1 nguồn config.
             'age_estimate' => ['nullable', 'integer', 'min:0', 'max:' . (config('app.child_age_limit') - 1)],
-            'condition_desc' => ['nullable', 'string', 'max:2000'],
-            'clothes_desc' => ['nullable', 'string', 'max:1000'],
-            'special_marks' => ['required', 'string', 'min:10'],
+            // F-trim — Gộp tình trạng/quần áo/dấu hiệu vào 1 ô mô tả tự do duy nhất
+            // (special_marks). condition_desc & clothes_desc không còn nhập từ form,
+            // giữ nullable trong DB cho tương thích ngược với dữ liệu/admin cũ.
+            'special_marks' => ['nullable', 'string', 'max:2000'],
             'photos' => ['required', 'array', 'min:1', 'max:5'],
             'photos.*' => ['file', 'image', 'max:5120', new \App\Rules\SecureImage],
         ];
@@ -196,8 +201,6 @@ new class extends Component {
     {
         return [
             'age_estimate.max' => 'Hệ thống chỉ tiếp nhận báo tin cho trẻ dưới ' . config('app.child_age_limit') . ' tuổi theo quy định của Luật Trẻ em 2016.',
-            'special_marks.required' => 'Vui lòng mô tả dấu hiệu/đặc điểm nhận dạng để gia đình dễ nhận ra bé.',
-            'special_marks.min' => 'Mô tả cần ít nhất 10 ký tự.',
             'photos.required' => 'Vui lòng tải lên ít nhất 1 ảnh để cộng đồng nhận diện.',
             'photos.min' => 'Vui lòng tải lên ít nhất 1 ảnh.',
             'photos.*.image' => 'Tệp tải lên phải là hình ảnh.',
@@ -485,6 +488,9 @@ new class extends Component {
                 Bạn vừa gặp/đang giữ một em bé chưa rõ danh tính? Hãy điền nhanh các thông tin dưới đây, hệ thống AI
                 sẽ tự đối chiếu với các hồ sơ mất tích để tìm gia đình giúp bé.
             </p>
+            <p class="text-slate-400 text-[11px] sm:text-xs max-w-md mx-auto font-medium">
+                Bạn chỉ cần báo tin — hệ thống gợi ý điểm tiếp nhận gần nhất và nối với gia đình. Bạn không cần quản lý hồ sơ sau khi báo.
+            </p>
         </div>
 
         {{-- S-03 — Hồ sơ mất tích được liên kết sẵn từ kết quả tìm kiếm bằng ảnh.
@@ -621,32 +627,45 @@ new class extends Component {
 
                     <div class="space-y-1.5">
                         <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                            Ngày phát hiện *
+                            Ngày phát hiện
                         </label>
                         <input type="date" wire:model="found_date" class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600
                                         {{ $errors->has('found_date') ? 'border-red-400' : 'border-slate-200' }}" />
+                        <p class="text-[11px] text-slate-400 font-medium">Để trống = hôm nay (bạn đang báo ngay lúc thấy bé).</p>
                         @error('found_date')
                             <p class="text-xs text-red-500 font-semibold">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
 
-                <div class="grid sm:grid-cols-2 gap-4">
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                            Giờ phát hiện (nếu biết)
-                        </label>
-                        <input type="time" wire:model.blur="found_time"
-                            class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600" />
+                {{-- F-trim — Giờ phát hiện & Cơ quan bàn giao là thông tin phụ, không
+                phục vụ đối chiếu khuôn mặt cũng không liên hệ gia đình → ẩn dưới mục
+                "Thêm chi tiết (không bắt buộc)" để giảm thao tác cho người đi đường. --}}
+                <details class="group rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-3">
+                    <summary class="cursor-pointer text-xs font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-2 list-none select-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+                            stroke="currentColor" class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-90">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                        </svg>
+                        Thêm chi tiết (không bắt buộc)
+                    </summary>
+                    <div class="grid sm:grid-cols-2 gap-4 pt-4">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                                Giờ phát hiện (nếu biết)
+                            </label>
+                            <input type="time" wire:model.blur="found_time"
+                                class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white focus:bg-white transition-all font-bold text-slate-600" />
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                                Cơ quan/Nơi bàn giao
+                            </label>
+                            <input type="text" wire:model.blur="handover_agency" placeholder="Nơi bạn đã giao bé, nếu có (VD: đội công an phường, nhà thiếu nhi, bệnh viện…)."
+                                class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white focus:bg-white transition-all font-medium placeholder-slate-400" />
+                        </div>
                     </div>
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                            Cơ quan/Nơi bàn giao
-                        </label>
-                        <input type="text" wire:model.blur="handover_agency" placeholder="VD: Công an phường"
-                            class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium placeholder-slate-400" />
-                    </div>
-                </div>
+                </details>
 
                 {{-- U-01 — ĐÃ BỎ input "Vị trí hiện tại" (free-text). Vị trí phát hiện
                 chỉ được khai báo qua map picker bên dưới; Tỉnh/Thành và Xã/Phường do
@@ -849,7 +868,7 @@ new class extends Component {
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div class="space-y-1.5">
                         <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                            Giới tính ước tính *
+                            Giới tính ước tính <span class="text-slate-400 font-medium normal-case">(không bắt buộc)</span>
                         </label>
                         <select wire:model="gender_estimate"
                             class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-bold text-slate-600">
@@ -872,30 +891,16 @@ new class extends Component {
                     </div>
                 </div>
 
+                {{-- F-trim — Gộp "tình trạng / quần áo / dấu hiệu đặc biệt" (vốn 3 ô
+                bắt/optional rời rạc) thành 1 ô mô tả tự do duy nhất → giảm số ô phải
+                điền cho người đi đường. Lưu vào special_marks; condition_desc &
+                clothes_desc không còn nhập từ form (giữ nullable trong DB). --}}
                 <div class="space-y-1.5">
                     <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                        Mô tả tình trạng
+                        Mô tả nhận dạng <span class="text-slate-400 font-medium normal-case">(không bắt buộc)</span>
                     </label>
-                    <textarea wire:model.blur="condition_desc" rows="3"
-                        placeholder="Mô tả chi tiết tình trạng sức khỏe, dấu hiệu khác thường..."
-                        class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium resize-none placeholder-slate-400"></textarea>
-                </div>
-
-                <div class="space-y-1.5">
-                    <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                        Mô tả quần áo
-                    </label>
-                    <textarea wire:model.blur="clothes_desc" rows="2"
-                        placeholder="Mô tả chi tiết quần áo, tính chất đặc biệt..."
-                        class="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium resize-none placeholder-slate-400"></textarea>
-                </div>
-
-                <div class="space-y-1.5">
-                    <label class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                        Dấu hiệu đặc biệt *
-                    </label>
-                    <textarea wire:model.blur="special_marks" rows="3"
-                        placeholder="Ghi cụ thể: vết sẹo, nốt ruồi, cách bé nói chuyện, đồ vật mang theo... — chi tiết hơn giúp gia đình nhận ra bé nhanh hơn"
+                    <textarea wire:model.blur="special_marks" rows="4"
+                        placeholder="Mô tả tự do: tình trạng sức khỏe, quần áo, dấu hiệu nhận dạng (vết sẹo, nốt ruồi, đồ vật mang theo…). Chi tiết hơn giúp gia đình nhận ra bé nhanh hơn."
                         class="w-full px-4 py-3 border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-slate-50 focus:bg-white transition-all font-medium resize-none placeholder-slate-400
                                     {{ $errors->has('special_marks') ? 'border-red-400' : 'border-slate-200' }}"></textarea>
                     @error('special_marks')
@@ -1006,6 +1011,12 @@ new class extends Component {
                             <div>
                                 <span class="text-slate-400 font-bold">Tuổi ước tính:</span>
                                 <span class="font-extrabold text-slate-800 ml-1">{{ $age_estimate }} tuổi</span>
+                            </div>
+                        @endif
+                        @if ($special_marks)
+                            <div class="col-span-2">
+                                <span class="text-slate-400 font-bold">Mô tả nhận dạng:</span>
+                                <span class="font-extrabold text-slate-800 ml-1">{{ $special_marks }}</span>
                             </div>
                         @endif
                         @if ($lat && $lng)

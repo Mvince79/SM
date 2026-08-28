@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\MissingChildren\Tables;
 
 use App\Mail\MissingChildApproved;
 use App\Mail\MissingChildRejected;
+use App\Models\HandoverPoint;
 use App\Models\MissingChild;
 use App\Models\Province;
 use Filament\Actions\Action;
@@ -14,6 +15,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\ImageColumn;
@@ -303,11 +305,40 @@ class MissingChildrenTable
                         PostStatusChanged::dispatch($record->refresh());
                     }),
 
+                // H-01/H-04 — Đánh dấu "đã bàn giao" (mở khóa toàn bộ Nhóm H).
+                // Hệ thống chỉ ghi nhận, không thay thế cơ quan chức năng.
+                Action::make('mark_handed_over')
+                    ->label('Đánh dấu đã bàn giao')
+                    ->icon('heroicon-o-arrow-right-circle')
+                    ->color('info')
+                    ->visible(fn(MissingChild $record) => in_array($record->status, ['APPROVED', 'FOUND'], true))
+                    ->form([
+                        Select::make('handover_point_id')
+                            ->label('Điểm tiếp nhận / bàn giao')
+                            ->options(fn() => HandoverPoint::active()->pluck('name', 'id')->toArray())
+                            ->searchable()
+                            ->nullable()
+                            ->helperText('Nơi trẻ đang được giữ (nếu biết). Gia đình sẽ thấy địa chỉ & hotline này.'),
+                    ])
+                    ->modalHeading('Đánh dấu đã bàn giao?')
+                    ->modalDescription('Chuyển sang trạng thái "Đã bàn giao". Gia đình sẽ nhận hướng dẫn nhận lại con. Hệ thống chỉ ghi nhận thông tin, không thay thế cơ quan chức năng.')
+                    ->modalSubmitActionLabel('Đánh dấu bàn giao')
+                    ->action(function (MissingChild $record, array $data) {
+                        $record->update([
+                            'status' => MissingChild::STATUS_HANDED_OVER,
+                            'handover_point_id' => $data['handover_point_id'] ?: null,
+                            'handover_confirmed_at' => now(),
+                            'handover_confirmed_by' => Auth::id(),
+                        ]);
+                        Cache::forget('dashboard_stats_overview');
+                        Notification::make()->title('Đã đánh dấu bàn giao')->success()->send();
+                    }),
+
                 // H-04 — Admin xác nhận đoàn tụ hộ (đã liên hệ gia đình).
                 // Bắt buộc nhập lý do (min 20 ký tự); observer ghi audit_logs
                 // với actor_role = ADMIN. status → REUNITED.
                 Action::make('confirm_reunion_admin')
-                    ->label('Xác nhận đoàn tụ hộ')
+                    ->label('Ghi nhận xác nhận của gia đình')
                     ->icon('heroicon-o-user-group')
                     ->color('success')
                     ->visible(fn(MissingChild $record) => $record->status === MissingChild::STATUS_HANDED_OVER)
