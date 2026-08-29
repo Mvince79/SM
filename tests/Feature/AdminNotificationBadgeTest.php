@@ -52,7 +52,10 @@ class AdminNotificationBadgeTest extends TestCase
         $response = $this->actingAs($admin)->get('/admin');
 
         $response->assertOk();
-        $response->assertDontSee('data-admin-notification-badge');
+        // Icon chuông LUÔN hiện (kể cả khi không có thông báo chưa đọc)
+        $response->assertSee('data-admin-notification-badge');
+        // Nhưng phần tử số đếm phải ẨN khi count = 0
+        $response->assertDontSee('data-admin-notification-count');
         $this->assertSame(
             0,
             (int) $admin->notificationRecipients()->whereNull('read_at')->count()
