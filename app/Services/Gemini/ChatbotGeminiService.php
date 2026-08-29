@@ -223,6 +223,10 @@ class ChatbotGeminiService
             [
                 'name' => 'getProjectStats',
                 'description' => 'Lấy số liệu tổng quan thời gian thực: tổng hồ sơ, số đã đoàn tụ, số tỉnh có hồ sơ, số điểm tiếp nhận.',
+                'parameters' => [
+                    'type' => 'OBJECT',
+                    'properties' => new \stdClass(),
+                ],
             ],
             [
                 'name' => 'getNearestHandoverPoints',
@@ -239,6 +243,10 @@ class ChatbotGeminiService
             [
                 'name' => 'getSafeHandoverProcess',
                 'description' => 'Trả tóm tắt quy trình bàn giao trẻ an toàn qua cơ quan có thẩm quyền. Dùng khi hỏi về bàn giao, an toàn, khẩn cấp.',
+                'parameters' => [
+                    'type' => 'OBJECT',
+                    'properties' => new \stdClass(),
+                ],
             ],
         ];
     }

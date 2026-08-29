@@ -21,6 +21,18 @@ class FcmTokensResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Token thiết bị';
 
+    // Ẩn menu "Token thiết bị" khỏi sidebar admin.
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
+    // Chặn truy cập trực tiếp qua URL (/admin/fcm-tokens) dù đã ẩn menu.
+    public static function canAccess(): bool
+    {
+        return false;
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return 'Thiết bị';

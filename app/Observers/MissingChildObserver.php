@@ -3,13 +3,23 @@
 namespace App\Observers;
 
 use App\Jobs\DispatchProvinceCaseApprovedNotificationsJob;
+use App\Models\EscalationQueue;
 use App\Models\MissingChild;
+use App\Models\NotificationEvent;
+use App\Services\Notification\Notifier;
+use App\Services\Notification\RecipientResolver;
 use App\Support\CacheVersion;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MissingChildObserver
 {
+    public function __construct(
+        private readonly Notifier $notifier,
+        private readonly RecipientResolver $recipients,
+    ) {
+    }
+
     private function invalidateMapAndHomeCache(): void
     {
         try {
@@ -94,6 +104,65 @@ class MissingChildObserver
     {
         if ($missingChild->wasChanged('status') && $missingChild->status === 'APPROVED') {
             DispatchProvinceCaseApprovedNotificationsJob::dispatch($missingChild->getKey());
+        }
+
+        // Đánh dấu "Đã bàn giao" → thông báo cho gia đình/chủ hồ sơ đến nhận lại con.
+        // Pattern tương tự nhánh APPROVED ở trên: observer phát hiện đổi status,
+        // không gọi từ nút bấm. Tái dùng RecipientResolver::familyOf() lấy chủ hồ sơ.
+        if ($missingChild->wasChanged('status') && $missingChild->status === MissingChild::STATUS_HANDED_OVER) {
+            $family = $this->recipients->familyOf($missingChild);
+
+            if ($family) {
+                $this->notifier->send(
+                    NotificationEvent::TYPE_HANDOVER_READY,
+                    $missingChild,
+                    [$family],
+                    [
+                        'case_code' => $missingChild->case_code,
+                        'full_name' => $missingChild->full_name,
+                    ],
+                    $missingChild->handover_confirmed_by,
+                );
+            }
+        }
+
+        // Xác nhận "Đã đoàn tụ" → báo cho admin/moderator đang active (hồ sơ đã đóng).
+        // Song song với các nhánh trên: observer phát hiện đổi status. Tái dùng
+        // RecipientResolver::admins() (admin/moderator đang active) — đã dùng ở
+        // luồng So khớp AI (Item 3).
+        if ($missingChild->wasChanged('status') && $missingChild->status === MissingChild::STATUS_REUNITED) {
+            $admins = $this->recipients->admins();
+
+            if ($admins->isNotEmpty()) {
+                $this->notifier->send(
+                    NotificationEvent::TYPE_REUNION_CONFIRMED,
+                    $missingChild,
+                    $admins,
+                    [
+                        'case_code' => $missingChild->case_code,
+                        'full_name' => $missingChild->full_name,
+                    ],
+                    null,
+                );
+            }
+
+            // Tự động đóng các EscalationQueue đang chờ liên quan đến hồ sơ này.
+            // escalation_queue không lưu subject trực tiếp mà qua
+            // notification_recipient -> notification_events(subject_type/subject_id),
+            // nên tra qua relation đó (đúng cách EscalateUnconfirmedReunionJob tạo row).
+            // Khi hồ sơ đã đoàn tụ, không còn hiển thị "cần hỗ trợ khẩn cấp" trên dashboard.
+            EscalationQueue::query()
+                ->where('status', EscalationQueue::STATUS_PENDING)
+                ->whereHas('notificationRecipient', function ($query) use ($missingChild) {
+                    $query->whereHas('event', function ($query) use ($missingChild) {
+                        $query->where('subject_type', $missingChild->getMorphClass())
+                            ->where('subject_id', $missingChild->getKey());
+                    });
+                })
+                ->update([
+                    'status' => EscalationQueue::STATUS_RESOLVED,
+                    'resolved_at' => now(),
+                ]);
         }
 
         if ($missingChild->wasChanged(['status', 'lat', 'lng'])) {

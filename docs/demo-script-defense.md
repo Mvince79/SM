@@ -12,8 +12,8 @@
 | 0–3 | Khang | Mở đầu, báo tin, tìm kiếm |
 | 3–7 | Linh | AI tìm kiếm bằng ảnh, bản đồ GPS |
 | 7–12 | Thanh | Chatbot, KYC, realtime |
-| 12–17 | Nhân | Admin panel, duyệt case, chat |
-| 17–22 | Khang | Đoàn tụ, bàn giao an toàn, thông báo |
+| 12–17 | Nhân | Admin panel, duyệt case, KYC, AI match, **audit log**, chat |
+| 17–22 | Khang | Đoàn tụ, bàn giao an toàn, **thông báo đa kênh**, thống kê |
 | 22–27 | Linh | Tin tìm thấy, manh mối, tình nguyện |
 | 27–32 | Thanh | Chat realtime, escalation, PDF |
 | 32–35 | Nhân | Thống kê, SEO, responsive |
@@ -24,12 +24,19 @@
 
 Ngồi trước máy, tay trên bàn phím.
 
-1. **Trang chủ** (`/`)
-   - "Đây là giao diện người dùng cuối. Một bà mẹ mất con, hoảng loạn, vẫn nhìn vào đây và biết phải bấm vào đâu."
+0. **Khung luồng nghiệp vụ (30 giây đầu)** — *giúp giám khảo theo dõi cả 35 phút*
+   - Chiếu sơ đồ 7 bước (file `TimTre_UseCase_Updated.svg` / `.drawio`): **Báo tin → Duyệt → AI gợi ý → Admin xác nhận → Đoàn tụ → Bàn giao an toàn → Thông báo & Log**.
+   - "35 phút tới, 4 bạn sẽ đi hết luồng này. Tôi bắt đầu ở bước 'Báo tin'."
 
-2. **Bấm "Báo tin tìm con"**
-   - Điền nhanh: Bé An, 4 tuổi, TP.HCM, chọn ảnh mẫu trong `storage/demo-assets/`.
-   - "Form đủ thông tin nhưng không rối. Vì lúc đó người dùng đang căng thẳng."
+1. **Trang chủ** (`/`)
+   - "Đây là giao diện người dùng cuối — thiết kế tối giản, khoảng trắng rộng, chuẩn châu âu. Một bà mẹ mất con, hoảng loạn, vẫn nhìn vào đây và biết phải bấm vào đâu."
+
+2. **Bấm "Báo tin tìm con" — demo định vị auto fill**
+   - Điền nhanh: Bé An, 4 tuổi, chọn ảnh mẫu trong `storage/demo-assets/`.
+   - Tại trường vị trí: bấm **"Lấy vị trí hiện tại"** (nếu phòng thi chặn GPS → chạm hoặc kéo thẳng marker trên bản đồ, vẫn ghim được điểm).
+   - Map ghim → 2 ô **Tỉnh/Thành phố** và **Xã/Phường tự động điền, bị khóa (disabled)** — không ai gõ tay được.
+   - "Hệ thống reverse-geocode **100% nội bộ**: point-in-polygon trên GeoJSON, **không gọi Google/Nominatim**. Vừa nhanh, vừa chống giả mạo hành chính. Thử ghim ra ngoài lãnh thổ VN → form báo đỏ, chặn gửi hồ sơ."
+   - "Form đủ thông tin nhưng không rối — người dùng đang căng thẳng vẫn biết bấm đâu."
    - Submit → "Đã gửi, đang chờ duyệt."
 
 3. **Tìm kiếm**
@@ -82,7 +89,7 @@ Ngồi vào.
 1. **Chatbot**
    - Gõ: *"Quy trình bàn giao con an toàn như thế nào?"*
    - Chatbot trả lời ngay, có link hướng dẫn.
-   - "Chatbot này dùng **Gemini 3.6 Flash** của Google — bản free. Nếu câu hỏi phức tạp, AI trả lời tự nhiên. Nếu AI timeout 10 giây, hệ thống rơi về rule cũ. Người dùng không bao giờ thấy báo lỗi."
+   - "Chatbot này dùng **Gemini 3.5 Flash** của Google — bản free. Nếu câu hỏi phức tạp, AI trả lời tự nhiên. Nếu AI timeout 10 giây, hệ thống rơi về rule cũ. Người dùng không bao giờ thấy báo lỗi."
 
 2. **Hỏi thử câu khó:** *"Tôi muốn làm tình nguyện viên"*
    - Chatbot hướng dẫn đăng ký, yêu cầu KYC.
@@ -118,11 +125,18 @@ Ngồi vào.
 4. **Xác nhận AI match**
    - "AI gợi ý cặp trẻ mất tích ↔ trẻ tìm thấy. Admin xem 2 ảnh, thấy 87% → xác nhận. Nếu AI sai → bác bỏ. Hệ thống ghi nhận để cải thiện."
 
-5. **Chat realtime**
+5. **Nhật ký kiểm toán (Audit Logs)** — *tính năng log, điểm nhấn bảo mật*
+   - Mở menu **Nhật ký kiểm toán** → bảng liệt kê mọi đổi trạng thái: **ai làm** (Quản trị viên / Hệ thống / Gia đình — badge màu), **lúc nào**, **đổi từ đâu sang đâu**.
+   - Filter "Vai trò = Gia đình" hoặc "Hệ thống" để lọc nhanh đống log.
+   - Bấm **"Xem chi tiết"** một dòng → modal hiện rõ **IP, User-Agent, lý do đổi trạng thái**.
+   - "Mọi duyệt / từ chối / đoàn tụ đều ghi lại *ai-làm-lúc-nào-từ-IP-nào*. Đây là bằng chứng trách nhiệm giải trình, giúp phát hiện báo cáo giả. Trên từng hồ sơ cũng có tab **Hoạt động** ghi log tương tự."
+   - "Giao diện modal này theo design system chung — badge có ngữ nghĩa, màu nhã, nhất quán với chuông thông báo và dashboard."
+
+6. **Chat realtime**
    - Mở chat, thấy tin nhắn người dùng đang chờ → trả lời.
    - "Phân công tự động: admin nào rảnh nhất nhận. Không bị ùn ứ."
 
-6. Đẩy ghế cho Khang.
+7. Đẩy ghế cho Khang.
 
 ---
 
@@ -138,15 +152,19 @@ Ngồi vào.
    - Danh sách công an, UBND, Tổng đài 111.
    - "Không để hai người lạ gặp ở chỗ vắng. Bắt buộc bàn giao tại điểm có người chứng kiến."
 
-3. **Thông báo**
-   - Mở dropdown chuông → xem thông báo vừa phát sinh.
-   - "Cùng một sự kiện AI match CONFIRMED, thông báo cho admin là 'cần xác nhận', cho gia đình là 'có kết quả khớp'. Khác nội dung, khác mức độ ưu tiên."
+3. **Thông báo — pipeline đa kênh, đa vai trò**
+   - Mở dropdown chuông → thông báo vừa sinh ra hiện ngay (realtime, **không reload** trang).
+   - "Cùng một sự kiện `AI_MATCH_CONFIRMED`: gia đình nhận 'có kết quả khớp', admin nhận 'cần xác nhận' — khác nội dung, khác mức độ ưu tiên."
+   - Chỉ vào email vừa đến (mở sẵn tab hộp thư demo): "Ngoài chuông (database), hệ thống gửi thêm **mail** và **push FCM** tuỳ loại. Quy tắc nằm trong config `notification-policies.php` — chuông luôn bật, mail/push theo từng event và vai trò, **không hard-code**."
+   - "Event khẩn cấp (đoàn tụ chưa xác nhận): hệ thống **tự động nhắc** gia đình → nếu vẫn không phản hồi → **leo thang admin** → **tự động đóng hồ sơ**. Toàn bộ luồng này có test riêng (`EscalationAutoResolveOnReunionTest`)."
 
-4. **Thống kê** (`/stats`)
+4. **Thống kê & giao diện** (`/stats`)
    - Tổng ca mất tích, đã tìm thấy, tỷ lệ đoàn tụ. Minh bạch.
-   - Mở `/sitemap.xml` → SEO đầy đủ. Resize xuống điện thoại → responsive.
+   - "Giao diện chuông thông báo, modal kiểm toán, dashboard đều theo **một design system chung** — màu nhã, badge có ngữ nghĩa, khoảng trắng nhất quán, chuẩn tối giản châu âu chứ không rườm rà."
+   - Mở `/sitemap.xml` để thấy cấu trúc SEO; resize xuống điện thoại → responsive.
+   - "Đã chạy **Lighthouse thực tế** (có `docs/LIGHTHOUSE_REPORT.md`): Accessibility **92**, SEO **92**, Performance mobile **71** — đạt Definition of Done. Không phải tự nhận."
 
-5. Kết thúc: "Chúng em đã chạy hết luồng thực tế — từ báo tin, đến AI hỗ trợ, admin xử lý, đến đoàn tụ và bàn giao an toàn."
+5. Kết thúc: "Chúng em đã chạy hết luồng thực tế — từ báo tin, định vị auto-fill, AI hỗ trợ, admin xử lý, đến đoàn tụ, bàn giao an toàn, kèm thông báo và nhật ký kiểm toán minh bạch."
 
 ---
 
@@ -184,7 +202,7 @@ Ngồi vào.
 ### 4. Chatbot dùng của bên nào?
 
 **Trả lời (Khang hoặc Thanh):**
-- "Dùng **Gemini 3.6 Flash** của Google — bản free tier."
+- "Dùng **Gemini 3.5 Flash** của Google — bản free tier."
 - "Nhưng không phụ thuộc 100%. Hệ thống có 2 lớp: (1) intent resolver local — xử lý câu hỏi thông thường bằng rule; (2) câu phức tạp mới chuyển sang Gemini."
 - "Nếu Gemini timeout 10 giây hoặc lỗi, tự động rơi về layer 1. Người dùng không bao giờ thấy báo lỗi."
 
@@ -232,6 +250,10 @@ Ngồi vào.
 - [ ] 3 tài khoản demo sẵn: Admin, User, Verifier
 - [ ] `storage/demo-assets/` có ảnh mẫu
 - [ ] Mở sẵn 2–3 tab: công khai, admin, user
+- [ ] Admin: mở sẵn menu **Nhật ký kiểm toán** (có dữ liệu seed để lọc theo vai trò)
+- [ ] Chuẩn bị sẵn 1 hộp thư demo (hoặc tab mail test) để khoe thông báo mail song song với chuông
+- [ ] Demo auto-fill: nếu trình duyệt chặn GPS → dùng chạm/kéo marker (đã có fallback, vẫn ghim được)
+- [ ] `TimTre_UseCase_Updated.svg` sẵn sàng chiếu khung luồng 7 bước
 - [ ] Tắt notification điện thoại
 - [ ] Remote + pin sạc đầy
 

@@ -15,6 +15,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -84,6 +85,13 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            // [Item 9] Badge số thông báo chưa đọc trên topbar admin (tĩnh, không JS).
+            // Xoá khối này để rollback. Dùng component riêng, không nhét chuông client
+            // (cần notifications.js chỉ có ở layout client).
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_END,
+                fn (): string => view('components.admin.notification-badge')->render(),
+            );
     }
 }

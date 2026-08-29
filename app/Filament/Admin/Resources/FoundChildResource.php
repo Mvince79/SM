@@ -31,6 +31,7 @@ use App\Filament\Admin\Resources\FoundChildResource\RelationManagers\MatchedMiss
 use App\Filament\Forms\Components\LocationPicker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use UnitEnum;
 
@@ -55,6 +56,22 @@ class FoundChildResource extends Resource
     public static function getNavigationLabel(): string
     {
         return 'Hồ Sơ Trẻ Đã Tìm Thấy';
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = Cache::remember('badge_found_pending', 300, function () {
+            return FoundChild::where('status', FoundChild::STATUS_PENDING)->count();
+        });
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        $count = (int) Cache::get('badge_found_pending', 0);
+
+        return $count > 10 ? 'danger' : 'warning';
     }
 
     public static function form(Schema $schema): Schema
@@ -305,8 +322,9 @@ class FoundChildResource extends Resource
                     ->requiresConfirmation()
                     ->visible(fn (FoundChild $record): bool => $record->status === 'PENDING')
                     ->action(function (FoundChild $record) {
-                        // Thông báo cho người báo tin do FoundChildObserver phát
-                        // (transition → APPROVED), nên mọi đường vào đều được phủ.
+                        // Duyệt → FoundChildObserver::updated() phát thông báo FOUND_APPROVED:
+                        // người báo tin luôn nhận; gia đình có hồ sơ khớp (FaceMatchResult
+                        // CONFIRMED) cũng nhận. Mọi đường vào đều được phủ.
                         $record->update([
                             'status' => FoundChild::STATUS_APPROVED,
                             'approved_at' => now(),
