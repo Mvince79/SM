@@ -6,8 +6,6 @@ use App\Filament\Admin\Resources\FoundChildResource\Pages;
 use App\Filament\Admin\Resources\FoundChildResource\RelationManagers\PhotosRelationManager;
 use App\Filament\Admin\Resources\FoundChildResource\Schemas\FoundChildInfolist;
 use App\Models\FoundChild;
-use App\Notifications\FoundChildApprovedNotification;
-use App\Notifications\FoundChildRejectedNotification;
 use App\Rules\SecureImage;
 use App\Support\SecureUploadFilename;
 use BackedEnum;
@@ -307,16 +305,13 @@ class FoundChildResource extends Resource
                     ->requiresConfirmation()
                     ->visible(fn (FoundChild $record): bool => $record->status === 'PENDING')
                     ->action(function (FoundChild $record) {
+                        // Thông báo cho người báo tin do FoundChildObserver phát
+                        // (transition → APPROVED), nên mọi đường vào đều được phủ.
                         $record->update([
-                            'status' => 'APPROVED',
+                            'status' => FoundChild::STATUS_APPROVED,
                             'approved_at' => now(),
                             'approved_by' => Auth::id(),
                         ]);
-
-                        // Báo người báo tin (chủ hồ sơ) để họ không thấy hệ thống "im lặng".
-                        if ($record->user) {
-                            $record->user->notify(new FoundChildApprovedNotification($record));
-                        }
                     }),
                 Action::make('reject')
                     ->label('Từ chối')
@@ -331,14 +326,12 @@ class FoundChildResource extends Resource
                             ->helperText('Lý do sẽ được gửi cho người báo tin.'),
                     ])
                     ->action(function (FoundChild $record, array $data) {
+                        // Lý do được lưu vào rejection_reason (cột vừa được bổ sung)
+                        // và FoundChildObserver gửi kèm cho người báo tin.
                         $record->update([
-                            'status' => 'REJECTED',
+                            'status' => FoundChild::STATUS_REJECTED,
                             'rejection_reason' => $data['rejection_reason'],
                         ]);
-
-                        if ($record->user) {
-                            $record->user->notify(new FoundChildRejectedNotification($record, $data['rejection_reason']));
-                        }
                     }),
                 EditAction::make(),
                 DeleteAction::make(),
@@ -365,6 +358,7 @@ class FoundChildResource extends Resource
     {
         return [
             'index' => Pages\ListFoundChildren::route('/'),
+            'view' => Pages\ViewFoundChild::route('/{record}'),
             'create' => Pages\CreateFoundChild::route('/create'),
             'edit' => Pages\EditFoundChild::route('/{record}/edit'),
         ];

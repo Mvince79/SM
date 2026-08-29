@@ -19,12 +19,29 @@ class ActivityResource extends Resource
     // Đổi sang icon danh sách nhật ký phù hợp hơn
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
-    protected static ?string $recordTitleAttribute = 'ActivityLog';
+    protected static ?string $recordTitleAttribute = 'description';
 
     // Đổi tên nhãn hiển thị trên Sidebar và tiêu đề sang Tiếng Việt
     protected static ?string $navigationLabel = 'Nhật Ký Hoạt Động';
     protected static ?string $modelLabel = 'Nhật ký hoạt động';
     protected static ?string $pluralModelLabel = 'Nhật ký hoạt động';
+
+    // D-04 — activity_log là bất biến: KHÔNG cho tạo/sửa/xóa qua UI
+    // (tránh admin can thiệp vào bằng chứng hành vi).
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return false;
+    }
 
     public static function form(Schema $schema): Schema
     {

@@ -6,7 +6,6 @@ use App\Filament\Admin\Resources\Users\Pages\CreateUser;
 use App\Filament\Admin\Resources\Users\Pages\EditUser;
 use App\Filament\Admin\Resources\Users\Pages\ListUsers;
 use App\Filament\Admin\Resources\Users\Pages\ViewUser;
-use App\Filament\Admin\Resources\Users\RelationManagers\FcmTokensRelationManager;
 use App\Filament\Admin\Resources\Users\RelationManagers\MissingChildrenRelationManager;
 use App\Filament\Admin\Resources\Users\Schemas\UserForm;
 use App\Filament\Admin\Resources\Users\Schemas\UserInfolist;
@@ -52,7 +51,6 @@ class UserResource extends Resource
     {
         return [
             MissingChildrenRelationManager::class,
-            FcmTokensRelationManager::class,
         ];
     }
 

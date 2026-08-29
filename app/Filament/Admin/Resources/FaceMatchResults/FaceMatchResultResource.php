@@ -2,12 +2,11 @@
 
 namespace App\Filament\Admin\Resources\FaceMatchResults;
 
-
 use App\Filament\Admin\Resources\FaceMatchResults\Pages\ListFaceMatchResults;
 use App\Filament\Admin\Resources\FaceMatchResults\Pages\ViewFaceMatchResult;
 use App\Filament\Admin\Resources\FaceMatchResults\Schemas\FaceMatchResultForm;
-use App\Filament\Admin\Resources\FaceMatchResults\Tables\FaceMatchResultsTable;
 use App\Filament\Admin\Resources\FaceMatchResults\Schemas\FaceMatchResultInfolist;
+use App\Filament\Admin\Resources\FaceMatchResults\Tables\FaceMatchResultsTable;
 use App\Models\FaceMatchResult;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -28,6 +27,7 @@ class FaceMatchResultResource extends Resource
     protected static ?string $modelLabel = 'kết quả đối chiếu khuôn mặt';
 
     protected static ?string $pluralModelLabel = 'kết quả đối chiếu khuôn mặt';
+
     protected static ?int $navigationSort = 10;
 
     public static function getNavigationGroup(): ?string
@@ -56,7 +56,8 @@ class FaceMatchResultResource extends Resource
         return parent::getEloquentQuery()
             ->with([
                 'missingChild:id,full_name,case_code',
-                'foundChild:id,province_id',
+                'foundChild:id,province_id,found_date,status',
+                'foundChild.province',
                 'missingPhoto:id,path_thumb,path_original',
                 'foundPhoto:id,path_thumb,path_original',
                 'confirmedBy:id,full_name',
@@ -89,6 +90,7 @@ class FaceMatchResultResource extends Resource
             'view' => ViewFaceMatchResult::route('/{record}'),
         ];
     }
+
     public static function infolist(Schema $schema): Schema
     {
         return FaceMatchResultInfolist::configure($schema);
