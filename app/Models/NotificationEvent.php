@@ -42,6 +42,9 @@ class NotificationEvent extends Model
     // ─── Vòng đời tin tìm thấy trẻ ──────────────────────────────────────────
     public const TYPE_FOUND_SUBMITTED = 'FOUND_SUBMITTED';
 
+    // ─── Lỗi vận hành hệ thống (AI / eKYC thất bại) ─────────────────────────
+    public const TYPE_AI_PROCESSING_FAILED = 'AI_PROCESSING_FAILED';
+
     public const TYPE_FOUND_APPROVED = 'FOUND_APPROVED';
 
     public const TYPE_FOUND_REJECTED = 'FOUND_REJECTED';
