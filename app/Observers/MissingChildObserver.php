@@ -3,22 +3,24 @@
 namespace App\Observers;
 
 use App\Jobs\DispatchProvinceCaseApprovedNotificationsJob;
+use App\Models\EscalationQueue;
+use App\Models\FaceMatchResult;
 use App\Models\MissingChild;
+use App\Models\NotificationEvent;
+use App\Models\User;
+use App\Services\Notification\Notifier;
+use App\Services\Notification\RecipientResolver;
 use App\Support\CacheVersion;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MissingChildObserver
 {
-    private function invalidateMapAndHomeCache(): void
-    {
-        try {
-            CacheVersion::bump(CacheVersion::MAP_DATA);
-            CacheVersion::bump(CacheVersion::HOME_HIGHLIGHTS);
-        } catch (\Throwable $e) {
-            Log::warning('MissingChildObserver: cache flush failed: ' . $e->getMessage());
-        }
-    }
+    public function __construct(
+        private readonly Notifier $notifier,
+        private readonly RecipientResolver $recipients,
+    ) {}
 
     /**
      * Handle the MissingChild "creating" event.
@@ -38,8 +40,6 @@ class MissingChildObserver
             $year = now()->year;
             $prefix = "MC-{$year}-";
 
-            // lockForUpdate giờ có tác dụng vì record chưa tồn tại trong DB,
-            // nên 2 request chạy song song sẽ lần lượt nhau, không đọc cùng maxCode.
             $maxCode = DB::table('missing_children')
                 ->where('case_code', 'like', "{$prefix}%")
                 ->lockForUpdate()
@@ -53,53 +53,271 @@ class MissingChildObserver
         });
     }
 
-    /**
-     * Handle the MissingChild "created" event.
-     * Chỉ còn log, không cần tạo case_code ở đây nữa.
-     *
-     * F-01 — Không gán review_level vào missing_children: cột review_level
-     * thuộc bảng kyc_verifications (được ghi bởi ProcessKycJob), không tồn tại
-     * trên missing_children. Việc gán trước đây ném ngoại lệ và bị nuốt bởi
-     * try/catch, nên đã được gỡ bỏ.
-     */
     public function created(MissingChild $missingChild): void
     {
-        Log::info("MissingChild Observer (created): Generated case_code {$missingChild->case_code} for child ID {$missingChild->id}");
-
-        // Tin mới (kể cả đang PENDING chờ duyệt) có thể đổi số liệu thống
-        // kê ở trang chủ, và nếu status ban đầu đã là APPROVED thì cũng
-        // cần xuất hiện ngay trên bản đồ — không đợi cache cũ hết TTL.
         $this->invalidateMapAndHomeCache();
 
-        // Generate QR code PNG pointing to public detail URL and save path to model
         try {
             $qrService = app(\App\Services\QrCodeService::class);
-            // Per spec: QR should point to /missing/{case_code}
             $detailUrl = url('/missing/' . $missingChild->case_code);
             $path = $qrService->generate($detailUrl, $missingChild->case_code);
 
-            // Save relative path into model without firing events
             $missingChild->qr_code_path = $path;
             $missingChild->saveQuietly();
-            Log::info("MissingChild Observer: QR code generated at {$path} for {$missingChild->case_code}");
         } catch (\Throwable $e) {
             Log::warning('QR generation failed: ' . $e->getMessage());
         }
+
+        // H-01 — Tiếp nhận tin: gia đình biết tin đã nhận, admin biết có tin cần duyệt.
+        if ($missingChild->status === MissingChild::STATUS_PENDING) {
+            $this->emitCaseSubmitted($missingChild);
+        }
     }
 
-    /**
-     * Handle the MissingChild "updated" event.
-     */
     public function updated(MissingChild $missingChild): void
     {
-        if ($missingChild->wasChanged('status') && $missingChild->status === 'APPROVED') {
+        if (! $missingChild->wasChanged('status')) {
+            if ($missingChild->wasChanged(['lat', 'lng'])) {
+                $this->invalidateMapAndHomeCache();
+            }
+            return;
+        }
+
+        $this->invalidateMapAndHomeCache();
+        $this->logActivity($missingChild);
+
+        $to = $missingChild->status;
+
+        if ($to === MissingChild::STATUS_APPROVED) {
+            // Giữ nguyên: cộng đồng cùng tỉnh nhận thông báo riêng (job).
             DispatchProvinceCaseApprovedNotificationsJob::dispatch($missingChild->getKey());
+            $this->emitCaseApproved($missingChild);
+        } elseif ($to === MissingChild::STATUS_REJECTED) {
+            $this->emitCaseRejected($missingChild);
+        } elseif ($to === MissingChild::STATUS_FOUND) {
+            $this->emitCaseMarkedFound($missingChild);
+        } elseif ($to === MissingChild::STATUS_HANDED_OVER) {
+            $this->emitHandoverReady($missingChild);
+        } elseif ($to === MissingChild::STATUS_REUNITED) {
+            $this->emitReunionConfirmed($missingChild);
+            $this->resolveEscalations($missingChild);
+        } elseif ($to === MissingChild::STATUS_UNREACHABLE_FAMILY) {
+            $this->emitUnreachableFamily($missingChild);
+            $this->resolveEscalations($missingChild);
+        }
+    }
+
+    public function deleted(MissingChild $missingChild): void
+    {
+        $this->invalidateMapAndHomeCache();
+    }
+
+    public function restored(MissingChild $missingChild): void
+    {
+        $this->invalidateMapAndHomeCache();
+    }
+
+    // ─── Phát thông báo từng transition ────────────────────────────────────────
+
+    private function emitCaseSubmitted(MissingChild $case): void
+    {
+        $family = $this->recipients->familyOf($case);
+
+        $this->notifier->send(
+            NotificationEvent::TYPE_CASE_SUBMITTED,
+            $case,
+            $this->recipients->unique($family, $this->recipients->admins()),
+            [
+                'case_code' => $case->case_code,
+                'full_name' => $case->full_name,
+                'source' => NotificationEvent::SOURCE_SYSTEM,
+            ],
+            $case->user_id,
+        );
+    }
+
+    private function emitCaseApproved(MissingChild $case): void
+    {
+        if ($family = $this->recipients->familyOf($case)) {
+            $this->notifier->send(
+                NotificationEvent::TYPE_CASE_APPROVED,
+                $case,
+                [$family],
+                [
+                    'case_code' => $case->case_code,
+                    'full_name' => $case->full_name,
+                    'source' => NotificationEvent::SOURCE_ADMIN,
+                ],
+                Auth::id(),
+            );
+        }
+    }
+
+    private function emitCaseRejected(MissingChild $case): void
+    {
+        if ($family = $this->recipients->familyOf($case)) {
+            $this->notifier->send(
+                NotificationEvent::TYPE_CASE_REJECTED,
+                $case,
+                [$family],
+                [
+                    'case_code' => $case->case_code,
+                    'full_name' => $case->full_name,
+                    'reason' => $case->rejection_reason ?? 'Không đủ thông tin xác minh.',
+                    'source' => NotificationEvent::SOURCE_ADMIN,
+                ],
+                Auth::id(),
+            );
+        }
+    }
+
+    private function emitCaseMarkedFound(MissingChild $case): void
+    {
+        if ($family = $this->recipients->familyOf($case)) {
+            $this->notifier->send(
+                NotificationEvent::TYPE_CASE_MARKED_FOUND,
+                $case,
+                [$family],
+                [
+                    'case_code' => $case->case_code,
+                    'full_name' => $case->full_name,
+                    'source' => NotificationEvent::SOURCE_ADMIN,
+                ],
+                Auth::id(),
+            );
+        }
+    }
+
+    private function emitHandoverReady(MissingChild $case): void
+    {
+        $family = $this->recipients->familyOf($case);
+        $finder = $this->finderOf($case);
+
+        if ($family) {
+            $this->notifier->send(
+                NotificationEvent::TYPE_HANDOVER_READY,
+                $case,
+                [$family],
+                [
+                    'case_code' => $case->case_code,
+                    'full_name' => $case->full_name,
+                    'source' => NotificationEvent::SOURCE_ADMIN,
+                ],
+                Auth::id(),
+            );
         }
 
-        if ($missingChild->wasChanged(['status', 'lat', 'lng'])) {
-            $this->invalidateMapAndHomeCache();
+        if ($finder) {
+            $this->notifier->send(
+                NotificationEvent::TYPE_FOUND_CASE_HANDED_OVER,
+                $case,
+                [$finder],
+                [
+                    'case_code' => $case->case_code,
+                    'full_name' => $case->full_name,
+                    'source' => NotificationEvent::SOURCE_ADMIN,
+                ],
+                Auth::id(),
+            );
         }
+    }
 
+    private function emitReunionConfirmed(MissingChild $case): void
+    {
+        $family = $this->recipients->familyOf($case);
+        $finder = $this->finderOf($case);
+        $actorId = $case->reunited_confirmed_by ?? Auth::id();
+
+        $this->notifier->send(
+            NotificationEvent::TYPE_REUNION_CONFIRMED,
+            $case,
+            $this->recipients->unique($family, $this->recipients->admins()),
+            [
+                'case_code' => $case->case_code,
+                'full_name' => $case->full_name,
+                'source' => $case->reunited_verification_method === MissingChild::REUNION_METHOD_FAMILY_SELF
+                    ? NotificationEvent::SOURCE_FAMILY
+                    : NotificationEvent::SOURCE_ADMIN,
+            ],
+            $actorId,
+        );
+
+        if ($finder) {
+            $this->notifier->send(
+                NotificationEvent::TYPE_FOUND_CASE_REUNITED,
+                $case,
+                [$finder],
+                [
+                    'case_code' => $case->case_code,
+                    'full_name' => $case->full_name,
+                    'source' => NotificationEvent::SOURCE_SYSTEM,
+                ],
+                $actorId,
+            );
+        }
+    }
+
+    private function emitUnreachableFamily(MissingChild $case): void
+    {
+        $family = $this->recipients->familyOf($case);
+
+        $this->notifier->send(
+            NotificationEvent::TYPE_CASE_UNREACHABLE_FAMILY,
+            $case,
+            $this->recipients->unique($family, $this->recipients->admins()),
+            [
+                'case_code' => $case->case_code,
+                'full_name' => $case->full_name,
+                'source' => NotificationEvent::SOURCE_SYSTEM,
+            ],
+        );
+    }
+
+    // ─── Hỗ trợ ───────────────────────────────────────────────────────────────
+
+    /**
+     * Người đăng tin tìm thấy đã khớp (qua kết quả AI CONFIRMED) — để báo khi
+     * hồ sơ chuyển HANDED_OVER / REUNITED.
+     */
+    private function finderOf(MissingChild $case): ?User
+    {
+        $match = FaceMatchResult::query()
+            ->where('missing_id', $case->getKey())
+            ->where('status', 'CONFIRMED')
+            ->first();
+
+        return $match ? $this->recipients->finderOf($match) : null;
+    }
+
+    private function resolveEscalations(MissingChild $case): void
+    {
+        EscalationQueue::query()
+            ->where('status', EscalationQueue::STATUS_PENDING)
+            ->whereHas('notificationRecipient', function ($q) use ($case) {
+                $q->whereHas('event', function ($e) use ($case) {
+                    $e->where('subject_type', $case->getMorphClass())
+                        ->where('subject_id', $case->getKey());
+                });
+            })
+            ->update([
+                'status' => EscalationQueue::STATUS_RESOLVED,
+                'resolved_at' => now(),
+                'resolved_by_admin_id' => Auth::id(),
+            ]);
+    }
+
+    private function invalidateMapAndHomeCache(): void
+    {
+        try {
+            CacheVersion::bump(CacheVersion::MAP_DATA);
+            CacheVersion::bump(CacheVersion::HOME_HIGHLIGHTS);
+        } catch (\Throwable $e) {
+            Log::warning('MissingChildObserver: cache flush failed: ' . $e->getMessage());
+        }
+    }
+
+    private function logActivity(MissingChild $missingChild): void
+    {
         try {
             activity()
                 ->performedOn($missingChild)
@@ -112,23 +330,5 @@ class MissingChildObserver
         } catch (\Throwable $e) {
             Log::warning('Activity log failed: ' . $e->getMessage());
         }
-
-        Log::info("MissingChild Observer (updated): Updated child ID {$missingChild->id} ({$missingChild->case_code})");
-    }
-
-    /**
-     * Handle the MissingChild "deleted" event (soft delete).
-     */
-    public function deleted(MissingChild $missingChild): void
-    {
-        $this->invalidateMapAndHomeCache();
-    }
-
-    /**
-     * Handle the MissingChild "restored" event.
-     */
-    public function restored(MissingChild $missingChild): void
-    {
-        $this->invalidateMapAndHomeCache();
     }
 }

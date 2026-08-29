@@ -39,7 +39,14 @@ class ProvinceCaseApprovedNotificationTest extends TestCase
         Queue::assertPushed(DispatchProvinceCaseApprovedNotificationsJob::class, 1);
     }
 
-    public function test_only_active_users_in_the_case_province_receive_all_channels(): void
+    /**
+     * Chính sách kênh cho thông báo cộng đồng: chuông + push, KHÔNG email.
+     *
+     * Trước đây mọi event đều gửi email; với event phát cho toàn bộ người dùng
+     * một tỉnh, việc đó là con đường ngắn nhất để bị đánh dấu spam. Push vẫn
+     * được giữ vì đúng mục đích tính năng "theo dõi khu vực".
+     */
+    public function test_only_active_users_in_the_case_province_receive_bell_and_push_but_no_email(): void
     {
         Mail::fake();
         Queue::fake([SendFcmNotificationJob::class]);
@@ -95,14 +102,14 @@ class ProvinceCaseApprovedNotificationTest extends TestCase
             $recipientUserIds,
         );
         Queue::assertPushed(SendFcmNotificationJob::class, 2);
-        Mail::assertQueued(DynamicNotificationMail::class, 2);
+        Mail::assertNothingQueued();
 
         $job->handle(app(NotificationDeliveryService::class));
 
         $this->assertSame(1, NotificationEvent::count());
         $this->assertSame(2, NotificationRecipient::count());
         Queue::assertPushed(SendFcmNotificationJob::class, 2);
-        Mail::assertQueued(DynamicNotificationMail::class, 2);
+        Mail::assertNothingQueued();
     }
 
     public function test_job_uses_notification_queue_and_retry_policy(): void
