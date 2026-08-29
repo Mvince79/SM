@@ -2,8 +2,6 @@
 
 namespace App\Filament\Admin\Resources\MissingChildren\Tables;
 
-use App\Mail\MissingChildApproved;
-use App\Mail\MissingChildRejected;
 use App\Models\HandoverPoint;
 use App\Models\MissingChild;
 use App\Models\Province;
@@ -268,14 +266,14 @@ class MissingChildrenTable
                     ->modalDescription(fn(MissingChild $record) => "Duyệt hồ sơ \"{$record->full_name}\" ({$record->case_code})?")
                     ->visible(fn(MissingChild $record) => $record->status === 'PENDING')
                     ->action(function (MissingChild $record) {
+                        // Chuông + email cho gia đình do MissingChildObserver phát
+                        // (transition → APPROVED). Trước đây email gửi riêng ở đây
+                        // nên nút Duyệt ở trang chi tiết lại không gửi gì.
                         $record->update([
-                            'status' => 'APPROVED',
+                            'status' => MissingChild::STATUS_APPROVED,
                             'approved_at' => now(),
                             'approved_by' => Auth::id(),
                         ]);
-                        if ($record->user?->email) {
-                            Mail::to($record->user->email)->queue(new MissingChildApproved($record));
-                        }
                         Cache::forget('badge_missing_pending');
                         Notification::make()->title('Đã duyệt hồ sơ')->success()->send();
                         PostStatusChanged::dispatch($record->refresh());
@@ -294,12 +292,9 @@ class MissingChildrenTable
                     ])
                     ->action(function (MissingChild $record, array $data) {
                         $record->update([
-                            'status' => 'REJECTED',
+                            'status' => MissingChild::STATUS_REJECTED,
                             'rejection_reason' => $data['rejection_reason'],
                         ]);
-                        if ($record->user?->email) {
-                            Mail::to($record->user->email)->queue(new MissingChildRejected($record));
-                        }
                         Cache::forget('badge_missing_pending');
                         Notification::make()->title('Đã từ chối hồ sơ')->danger()->send();
                         PostStatusChanged::dispatch($record->refresh());
@@ -374,16 +369,13 @@ class MissingChildrenTable
                         ->action(function (Collection $records) {
                             $count = 0;
                             $records->each(function (MissingChild $record) use (&$count) {
-                                if ($record->status !== 'PENDING')
+                                if ($record->status !== MissingChild::STATUS_PENDING)
                                     return;
                                 $record->update([
-                                    'status' => 'APPROVED',
+                                    'status' => MissingChild::STATUS_APPROVED,
                                     'approved_at' => now(),
                                     'approved_by' => Auth::id(),
                                 ]);
-                                if ($record->user?->email) {
-                                    Mail::to($record->user->email)->queue(new MissingChildApproved($record));
-                                }
                                 PostStatusChanged::dispatch($record->refresh());
                                 $count++;
                             });
@@ -407,15 +399,12 @@ class MissingChildrenTable
                         ->action(function (Collection $records, array $data) {
                             $count = 0;
                             $records->each(function (MissingChild $record) use ($data, &$count) {
-                                if ($record->status !== 'PENDING')
+                                if ($record->status !== MissingChild::STATUS_PENDING)
                                     return;
                                 $record->update([
-                                    'status' => 'REJECTED',
+                                    'status' => MissingChild::STATUS_REJECTED,
                                     'rejection_reason' => $data['rejection_reason'],
                                 ]);
-                                if ($record->user?->email) {
-                                    Mail::to($record->user->email)->queue(new MissingChildRejected($record));
-                                }
                                 PostStatusChanged::dispatch($record->refresh());
                                 $count++;
                             });

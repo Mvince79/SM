@@ -51,7 +51,7 @@ class KycVerificationsTable
                     ->label('Điểm khớp mặt')
                     ->formatStateUsing(
                         fn ($state) => $state !== null
-                            ? number_format((float) $state * 100, 2) . '%'
+                            ? number_format((float) $state * 100, 2).'%'
                             : 'Chưa có'
                     )
                     ->badge()
@@ -60,6 +60,12 @@ class KycVerificationsTable
                 TextColumn::make('status')
                     ->label('Trạng thái')
                     ->badge()
+                    ->icon(fn (string $state): string => match ($state) {
+                        'PENDING' => 'heroicon-o-clock',
+                        'VERIFIED' => 'heroicon-o-check-circle',
+                        'REJECTED' => 'heroicon-o-x-circle',
+                        default => 'heroicon-o-question-mark-circle',
+                    })
                     ->color(fn ($state) => match ($state) {
                         'PENDING' => 'warning',
                         'VERIFIED' => 'success',
@@ -92,7 +98,8 @@ class KycVerificationsTable
                         'PENDING' => 'Chờ duyệt',
                         'VERIFIED' => 'Đã xác thực',
                         'REJECTED' => 'Từ chối',
-                    ]),
+                    ])
+                    ->default('PENDING'),
 
                 SelectFilter::make('id_type')
                     ->label('Loại giấy tờ')

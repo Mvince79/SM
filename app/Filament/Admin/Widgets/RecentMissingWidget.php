@@ -2,8 +2,6 @@
 
 namespace App\Filament\Admin\Widgets;
 
-use App\Mail\MissingChildApproved;
-use App\Mail\MissingChildRejected;
 use App\Events\PostStatusChanged;
 use App\Models\MissingChild;
 use Filament\Actions\Action;
@@ -87,15 +85,12 @@ class RecentMissingWidget extends TableWidget
                     ->modalDescription(fn(MissingChild $record) => "Duyệt hồ sơ {$record->case_code} — {$record->full_name}?")
                     ->action(function (MissingChild $record): void {
                         $record->update([
-                            'status' => 'APPROVED',
+                            'status' => MissingChild::STATUS_APPROVED,
                             'approved_at' => now(),
                             'approved_by' => Auth::id(),
                         ]);
                         Cache::forget('dashboard_stats_overview');
                         Cache::forget('badge_missing_pending');
-                        if ($record->user?->email) {
-                            Mail::to($record->user->email)->send(new MissingChildApproved($record));
-                        }
                         PostStatusChanged::dispatch($record->refresh());
                     }),
 
@@ -114,14 +109,11 @@ class RecentMissingWidget extends TableWidget
                     ])
                     ->action(function (MissingChild $record, array $data): void {
                         $record->update([
-                            'status' => 'REJECTED',
+                            'status' => MissingChild::STATUS_REJECTED,
                             'rejection_reason' => $data['rejection_reason'],
                         ]);
                         Cache::forget('dashboard_stats_overview');
                         Cache::forget('badge_missing_pending');
-                        if ($record->user?->email) {
-                            Mail::to($record->user->email)->send(new MissingChildRejected($record));
-                        }
                         PostStatusChanged::dispatch($record->refresh());
                     }),
             ]);

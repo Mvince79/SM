@@ -83,7 +83,7 @@ namespace App\Filament\Admin\Resources\MissingChildren\Pages;
                     ->visible(fn() => $this->record->status === 'APPROVED')
                     ->requiresConfirmation()
                     ->modalHeading('Đánh dấu đã tìm thấy?')
-                    ->modalDescription('Hồ sơ sẽ chuyển sang trạng thái "Đã tìm thấy". Người đăng sẽ nhận thông báo.')
+                    ->modalDescription('Hồ sơ sẽ chuyển sang trạng thái "Đã tìm thấy". Gia đình sẽ nhận thông báo qua chuông và email.')
                     ->action(function () {
                         $this->record->update([
                             'status' => 'FOUND',

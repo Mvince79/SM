@@ -56,7 +56,7 @@ class FaceMatchResultsTable
                 Tables\Columns\TextColumn::make('score')
                     ->label('Độ khớp AI')
                     ->formatStateUsing(
-                        fn ($state): string => number_format((float) $state * 100, 2) . '%'
+                        fn ($state): string => number_format((float) $state * 100, 2).'%'
                     )
                     ->badge()
                     ->color(fn ($state): string => match (true) {
@@ -69,6 +69,11 @@ class FaceMatchResultsTable
                 Tables\Columns\TextColumn::make('confidence_level')
                     ->label('Độ tin cậy')
                     ->badge()
+                    ->icon(fn (?string $state): string => match ($state) {
+                        'HIGH' => 'heroicon-o-shield-check',
+                        'MEDIUM' => 'heroicon-o-exclamation-triangle',
+                        default => 'heroicon-o-question-mark-circle',
+                    })
                     ->formatStateUsing(fn (?string $state): string => match ($state) {
                         'HIGH' => 'Khớp mạnh',
                         'MEDIUM' => 'Cần kiểm tra',
@@ -100,6 +105,12 @@ class FaceMatchResultsTable
                 Tables\Columns\TextColumn::make('status')
                     ->label('Trạng thái')
                     ->badge()
+                    ->icon(fn (string $state): string => match ($state) {
+                        'PENDING' => 'heroicon-o-clock',
+                        'CONFIRMED' => 'heroicon-o-check-circle',
+                        'DISMISSED' => 'heroicon-o-x-circle',
+                        default => 'heroicon-o-question-mark-circle',
+                    })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'PENDING' => 'Chờ xử lý',
                         'CONFIRMED' => 'Đã xác nhận',
@@ -128,8 +139,7 @@ class FaceMatchResultsTable
                     ->label('Tạo lúc')
                     ->since()
                     ->tooltip(
-                        fn (FaceMatchResult $record): string =>
-                            $record->created_at?->format('d/m/Y H:i:s') ?? ''
+                        fn (FaceMatchResult $record): string => $record->created_at?->format('d/m/Y H:i:s') ?? ''
                     )
                     ->sortable(),
             ])
@@ -140,7 +150,8 @@ class FaceMatchResultsTable
                         'PENDING' => 'Chờ xử lý',
                         'CONFIRMED' => 'Đã xác nhận',
                         'DISMISSED' => 'Đã bác bỏ',
-                    ]),
+                    ])
+                    ->default('PENDING'),
 
                 SelectFilter::make('confidence_level')
                     ->label('Độ tin cậy')
