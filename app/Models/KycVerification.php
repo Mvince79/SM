@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Crypt;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class KycVerification extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     protected $table = 'kyc_verifications';
 
@@ -81,5 +84,23 @@ class KycVerification extends Model
     public function reviewedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'id_type',
+                'full_name_on_id',
+                'dob_on_id',
+                'ocr_provider',
+                'face_match_score',
+                'review_level',
+                'status',
+                'reviewed_by',
+                'rejected_reason',
+                'verified_at',
+            ])
+            ->logOnlyDirty();
     }
 }

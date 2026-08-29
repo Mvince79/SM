@@ -7,15 +7,14 @@ use App\Jobs\TriggerFaceMatchJob;
 use App\Models\FaceMatchResult;
 use App\Models\FoundChild;
 use App\Models\MissingChild;
+use App\Models\NotificationEvent;
 use App\Models\Photo;
 use App\Models\Province;
 use App\Models\User;
-use App\Notifications\FaceMatchNotification;
 use App\Services\FaceMatchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Notification;
 use Mockery;
 use Tests\TestCase;
 
@@ -59,7 +58,6 @@ class TriggerFaceMatchJobTest extends TestCase
 
     public function test_matched_face_result_notifies_admins(): void
     {
-        Notification::fake();
         config([
             'face_match.score_threshold' => 0.70,
             'face_match.high_confidence_threshold' => 0.85,
@@ -76,6 +74,8 @@ class TriggerFaceMatchJobTest extends TestCase
         ]);
 
         [$missingPhoto] = $this->createPhotoPair();
+        $missingChild = MissingChild::query()->find($missingPhoto->model_id);
+        $family = $missingChild->user;
 
         $service = Mockery::mock(FaceMatchService::class);
         $service->shouldReceive('isHealthy')->once()->andReturnTrue();
@@ -87,9 +87,19 @@ class TriggerFaceMatchJobTest extends TestCase
 
         (new TriggerFaceMatchJob($missingPhoto->id))->handle($service);
 
-        Notification::assertSentTo($admin, FaceMatchNotification::class);
-        Notification::assertSentTo($moderator, FaceMatchNotification::class);
-        Notification::assertNotSentTo($normalUser, FaceMatchNotification::class);
+        // FACE_MATCH_SUGGESTED ghi qua đường ống hợp nhất (chuông + email admin
+        // theo policy), thay vì FaceMatchNotification hệ cũ.
+        $this->assertDatabaseHas('notification_events', [
+            'event_type' => NotificationEvent::TYPE_FACE_MATCH_SUGGESTED,
+            'subject_type' => FaceMatchResult::class,
+            'subject_id' => FaceMatchResult::query()->first()->getKey(),
+        ]);
+
+        // Admin + moderator + gia đình (chủ hồ sơ) đều nhận; người dùng vô can thì không.
+        $this->assertDatabaseHas('notification_recipients', ['user_id' => $admin->id]);
+        $this->assertDatabaseHas('notification_recipients', ['user_id' => $moderator->id]);
+        $this->assertDatabaseHas('notification_recipients', ['user_id' => $family->id]);
+        $this->assertDatabaseMissing('notification_recipients', ['user_id' => $normalUser->id]);
     }
 
     public function test_medium_confidence_match_is_saved_for_admin_review(): void
@@ -210,9 +220,15 @@ class TriggerFaceMatchJobTest extends TestCase
 
         (new TriggerFaceMatchJob($photo->id))->failed(new \RuntimeException('AI unavailable'));
 
-        $this->assertDatabaseHas('notifications', [
-            'notifiable_id' => $admin->id,
-            'notifiable_type' => User::class,
+        // Lỗi AI báo cho admin qua đường ống hợp nhất (chuông + email theo policy),
+        // không còn ghi vào bảng `notifications` hệ cũ.
+        $this->assertDatabaseHas('notification_events', [
+            'event_type' => NotificationEvent::TYPE_AI_PROCESSING_FAILED,
+            'subject_type' => Photo::class,
+            'subject_id' => $photo->id,
+        ]);
+        $this->assertDatabaseHas('notification_recipients', [
+            'user_id' => $admin->id,
         ]);
 
         $this->assertSame('failed', $photo->refresh()->ai_status);

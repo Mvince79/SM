@@ -120,7 +120,10 @@ class ProcessPhotoJob implements ShouldQueue
             'message' => $exception->getMessage(),
         ]);
 
-        AIJobFailureNotifier::notifyAdmins($this->photoId, static::class, $exception);
+        $photo = Photo::query()->find($this->photoId);
+        if ($photo) {
+            AIJobFailureNotifier::notifyAdmins($photo, static::class, $exception->getMessage());
+        }
     }
 
     /**

@@ -39,15 +39,17 @@ class DispatchMatchConfirmedNotificationsJobTest extends TestCase
         $recipients = NotificationRecipient::query()->with('user')->get();
 
         $this->assertSame(NotificationEvent::TYPE_FACE_MATCH_CONFIRMED, $event->event_type);
-        $this->assertCount(3, $recipients);
+        // Cả hai admin active đều nhận (không lọc theo last_active_at 5 phút) cộng
+        // với gia đình và người đăng tin tìm thấy.
+        $this->assertCount(4, $recipients);
         $this->assertCount(2, $recipients->pluck('rendered_title')->unique());
         $this->assertEqualsCanonicalizing(
-            ['USER', 'USER', 'ADMIN'],
+            ['USER', 'USER', 'ADMIN', 'ADMIN'],
             $recipients->pluck('role_at_time')->all(),
         );
 
-        Queue::assertPushed(SendFcmNotificationJob::class, 3);
-        Mail::assertQueued(DynamicNotificationMail::class, 3);
+        Queue::assertPushed(SendFcmNotificationJob::class, 4);
+        Mail::assertQueued(DynamicNotificationMail::class, 4);
 
         $job->handle(
             app(ConfirmedMatchRecipientFinder::class),
@@ -55,9 +57,9 @@ class DispatchMatchConfirmedNotificationsJobTest extends TestCase
         );
 
         $this->assertSame(1, NotificationEvent::count());
-        $this->assertSame(3, NotificationRecipient::count());
-        Queue::assertPushed(SendFcmNotificationJob::class, 3);
-        Mail::assertQueued(DynamicNotificationMail::class, 3);
+        $this->assertSame(4, NotificationRecipient::count());
+        Queue::assertPushed(SendFcmNotificationJob::class, 4);
+        Mail::assertQueued(DynamicNotificationMail::class, 4);
     }
 
     public function test_job_uses_notification_queue_and_retry_policy(): void

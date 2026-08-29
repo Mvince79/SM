@@ -18,12 +18,16 @@ use Tests\TestCase;
 /**
  * H-04 — Nhắc gia đình xác nhận đoàn tụ / leo thang admin / xác nhận hộ.
  *
+ * Mô hình "theo mốc" (config notification.reminder_milestones = [1,3,5]):
+ *  - Mỗi mốc D+1/3/5 là 1 lần liên hệ, gửi đúng 1 thông báo (không lặp).
+ *  - Quá escalate_after_days (5) → leo thang admin (1 lần).
+ *  - Quá close_after_days (7) VÀ đã từng nhắc → UNREACHABLE_FAMILY.
+ *
  * Bao phủ 4 tiêu chí DoD:
- *  1. HANDED_OVER > 3 ngày → notification_events nhắc gia đình;
- *     > 7 ngày → escalation_queue cho admin.
+ *  1. HANDED_OVER quá mốc → notification_events nhắc; quá escalate → escalation_queue.
  *  2. Admin xác nhận hộ bắt buộc lý do >= 20 ký tự.
  *  3. Sau khi admin xác nhận → REUNITED + ADMIN_PHONE_CALL + audit_logs (ADMIN + lý do).
- *  4. 3 lần liên hệ trong 14 ngày không phản hồi → UNREACHABLE_FAMILY.
+ *  4. Đủ 3 mốc liên hệ + quá close_after_days không phản hồi → UNREACHABLE_FAMILY.
  */
 class ReunionReminderTest extends TestCase
 {
@@ -45,17 +49,14 @@ class ReunionReminderTest extends TestCase
 
     // ---------------------------------------------------------------- DoD 1
 
-    public function test_case_handed_over_more_than_three_days_gets_family_reminder_event(): void
+    public function test_case_handed_over_gets_milestone_reminders(): void
     {
         $case = $this->createHandedOverCase(daysAgo: 4);
 
         Artisan::call('reunion:remind-family');
 
-        $this->assertDatabaseHas('notification_events', [
-            'event_type' => NotificationEvent::TYPE_REUNION_FAMILY_REMINDER,
-            'subject_type' => $case->getMorphClass(),
-            'subject_id' => $case->getKey(),
-        ]);
+        // D+4 → các mốc D+1 và D+3 đã đến hạn (D+5 chưa) → 2 nhắc.
+        $this->assertSame(2, $this->reminderCount($case));
 
         $this->assertDatabaseHas('notification_recipients', [
             'user_id' => $case->user_id,
@@ -65,32 +66,30 @@ class ReunionReminderTest extends TestCase
         $this->assertSame(MissingChild::STATUS_HANDED_OVER, $case->fresh()->status);
     }
 
-    public function test_case_handed_over_less_than_three_days_is_not_reminded(): void
+    public function test_no_reminder_before_first_milestone(): void
     {
-        $case = $this->createHandedOverCase(daysAgo: 2);
+        $case = $this->createHandedOverCase(daysAgo: 0);
 
         Artisan::call('reunion:remind-family');
 
-        $this->assertDatabaseMissing('notification_events', [
-            'subject_type' => $case->getMorphClass(),
-            'subject_id' => $case->getKey(),
-        ]);
+        $this->assertSame(0, $this->reminderCount($case));
     }
 
-    public function test_reminder_is_not_duplicated_within_the_interval(): void
+    public function test_reminders_are_not_duplicated_across_runs(): void
     {
         $case = $this->createHandedOverCase(daysAgo: 4);
 
         Artisan::call('reunion:remind-family');
         Artisan::call('reunion:remind-family');
 
-        $this->assertSame(1, $this->reminderCount($case));
+        // D+1, D+3 gửi đúng 1 lần dù chạy 2 lần.
+        $this->assertSame(2, $this->reminderCount($case));
     }
 
-    public function test_case_handed_over_more_than_seven_days_is_pushed_to_admin_escalation_queue(): void
+    public function test_case_handed_over_past_escalate_after_days_is_pushed_to_admin_escalation_queue(): void
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
-        $case = $this->createHandedOverCase(daysAgo: 8);
+        $case = $this->createHandedOverCase(daysAgo: 6);
 
         Artisan::call('reunion:remind-family');
 
@@ -104,7 +103,7 @@ class ReunionReminderTest extends TestCase
             ->with('notificationRecipient')
             ->first();
 
-        $this->assertNotNull($escalation, 'Hồ sơ quá 7 ngày phải được đẩy vào escalation_queue.');
+        $this->assertNotNull($escalation, 'Hồ sơ quá escalate_after_days phải được đẩy vào escalation_queue.');
         $this->assertSame(EscalationQueue::STATUS_PENDING, $escalation->status);
         $this->assertSame($admin->getKey(), $escalation->notificationRecipient->user_id);
     }
@@ -112,7 +111,7 @@ class ReunionReminderTest extends TestCase
     public function test_escalation_is_dispatched_only_once_per_case(): void
     {
         User::factory()->create(['role' => 'ADMIN']);
-        $case = $this->createHandedOverCase(daysAgo: 8);
+        $case = $this->createHandedOverCase(daysAgo: 6);
 
         Artisan::call('reunion:remind-family');
         Artisan::call('reunion:remind-family');
@@ -124,31 +123,38 @@ class ReunionReminderTest extends TestCase
         $this->assertSame(1, EscalationQueue::query()->count());
     }
 
+    public function test_not_closed_before_close_after_days_even_if_reminded(): void
+    {
+        $case = $this->createHandedOverCase(daysAgo: 6);
+
+        Artisan::call('reunion:remind-family');
+
+        // D+6: đã nhắc đủ 3 mốc (D+1/3/5) + leo thang, NHƯNG chưa tới close_after_days
+        // (7) → vẫn HANDED_OVER, chưa đóng.
+        $this->assertSame(3, $this->reminderCount($case));
+        $this->assertSame(MissingChild::STATUS_HANDED_OVER, $case->fresh()->status);
+    }
+
     // ---------------------------------------------------------------- DoD 4
 
-    public function test_three_contact_attempts_within_fourteen_days_marks_family_unreachable(): void
+    public function test_three_milestones_then_close_after_close_after_days(): void
     {
         $case = $this->createHandedOverCase(daysAgo: 4);
 
-        // Nhắc mỗi 3 ngày: ngày 4, ngày 7, ngày 10 → đủ 3 lần liên hệ.
+        // D+4: nhắc D+1, D+3 (2 lần liên hệ).
         Artisan::call('reunion:remind-family');
-
-        Carbon::setTestNow(now()->addDays(3));
-        Artisan::call('reunion:remind-family');
-
-        Carbon::setTestNow(now()->addDays(3));
-        Artisan::call('reunion:remind-family');
-
-        $this->assertSame(
-            RemindFamilyReunionConfirmation::MAX_CONTACT_ATTEMPTS,
-            $this->reminderCount($case),
-        );
+        $this->assertSame(2, $this->reminderCount($case));
         $this->assertSame(MissingChild::STATUS_HANDED_OVER, $case->fresh()->status);
 
-        // Lần chạy kế tiếp: đã 3 lần liên hệ mà gia đình không phản hồi.
-        Carbon::setTestNow(now()->addDay());
+        // D+6: nhắc D+5 (đủ 3 lần liên hệ). Chưa tới close_after_days (7).
+        Carbon::setTestNow(now()->addDays(2));
         Artisan::call('reunion:remind-family');
+        $this->assertSame(3, $this->reminderCount($case));
+        $this->assertSame(MissingChild::STATUS_HANDED_OVER, $case->fresh()->status);
 
+        // D+8: đã quá close_after_days (7) và đã từng nhắc → UNREACHABLE_FAMILY.
+        Carbon::setTestNow(now()->addDays(2));
+        Artisan::call('reunion:remind-family');
         $this->assertSame(MissingChild::STATUS_UNREACHABLE_FAMILY, $case->fresh()->status);
     }
 

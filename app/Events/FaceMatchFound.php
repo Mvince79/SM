@@ -4,12 +4,19 @@ namespace App\Events;
 
 use App\Models\FaceMatchResult;
 use App\Models\User;
-use App\Notifications\FaceMatchNotification;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * H-01/H-02 — Sự kiện "AI gợi ý khớp".
+ *
+ * CHỈ đóng vai trò realtime broadcast (cho socket). Việc ghi thông báo vào
+ * DB/chuông/email do TriggerFaceMatchJob gọi Notifier (TYPE_FACE_MATCH_SUGGESTED)
+ * lo — không phát ở đây để tránh nhân đôi và để có nguồn phát sinh rõ ràng
+ * ("AI đối sánh tự động").
+ */
 class FaceMatchFound implements ShouldBroadcast
 {
     use Dispatchable, SerializesModels;
@@ -17,10 +24,6 @@ class FaceMatchFound implements ShouldBroadcast
     public function __construct(public FaceMatchResult $match)
     {
         $this->match->loadMissing(['missingChild.user', 'foundChild.user']);
-
-        foreach ($this->usersToNotify() as $user) {
-            $user->notify(new FaceMatchNotification($this->match));
-        }
     }
 
     public function broadcastAs(): string

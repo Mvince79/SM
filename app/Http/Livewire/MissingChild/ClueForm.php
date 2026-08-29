@@ -12,8 +12,6 @@ use App\Events\NewClueSubmitted;
 use App\Traits\HasIdempotency;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Notification;
-use App\Notifications\ClueSubmittedNotification;
 use App\Rules\SecureImage;
 
 class ClueForm extends Component
@@ -118,18 +116,15 @@ class ClueForm extends Component
             }
         );
 
-        // Notification::send() + NewClueSubmitted::dispatch() CHỈ chạy khi đây thực sự là
-        // Clue mới được tạo (was_duplicate === false) — tránh gửi thông báo trùng cho lần
-        // submit thứ 2 với cùng idempotency key (đúng DoD của E-01c).
+        // CLUE_SUBMITTED do ClueObserver phát khi clue được tạo (phủ mọi đường vào,
+        // không chỉ form này). NewClueSubmitted giữ nguyên để realtime cho socket.
+        // CHỈ chạy khi đây thực sự là Clue mới (was_duplicate === false) — tránh
+        // gửi thông báo trùng cho lần submit thứ 2 (đúng DoD của E-01c).
         if (!$result['was_duplicate']) {
             $clue = $result['resource'];
 
             try {
-                $missing = MissingChild::find($this->missingId);
-                if ($missing && $missing->user) {
-                    Notification::send($missing->user, new ClueSubmittedNotification($clue));
-                    NewClueSubmitted::dispatch($clue);
-                }
+                NewClueSubmitted::dispatch($clue);
             } catch (\Throwable $e) {
                 // ignore
             }

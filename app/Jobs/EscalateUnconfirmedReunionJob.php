@@ -7,17 +7,24 @@ use App\Models\MissingChild;
 use App\Models\NotificationEvent;
 use App\Models\NotificationRecipient;
 use App\Models\User;
+use App\Services\Notification\Notifier;
+use App\Services\Notification\RecipientResolver;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 
 /**
- * H-04 — Leo thang hồ sơ HANDED_OVER quá 7 ngày chưa được gia đình xác nhận.
+ * H-04 — Leo thang hồ sơ HANDED_OVER quá ngưỡng chưa được gia đình xác nhận.
  *
- * Tạo NotificationEvent + NotificationRecipient cho từng admin/moderator và
- * một EscalationQueue (status PENDING) để admin theo dõi và xác nhận hộ.
+ * Tạo NotificationEvent + NotificationRecipient cho từng admin/moderator ĐI QUA
+ * Notifier (chuông + email + push + realtime theo policy REUNION_ADMIN_ESCALATION),
+ * đồng thời tạo một EscalationQueue (status PENDING) để admin theo dõi và xác nhận hộ.
+ *
+ * Dùng RecipientResolver::admins() (role ADMIN/MODERATOR + đang active) thay vì tự
+ * lọc, giữ nhất quán với các luồng thông báo khác.
  */
 class EscalateUnconfirmedReunionJob implements ShouldQueue
 {
@@ -32,7 +39,7 @@ class EscalateUnconfirmedReunionJob implements ShouldQueue
         $this->onQueue('notifications');
     }
 
-    public function handle(): void
+    public function handle(Notifier $notifier, RecipientResolver $recipients): void
     {
         $case = MissingChild::query()->with('user')->find($this->missingChildId);
 
@@ -40,39 +47,52 @@ class EscalateUnconfirmedReunionJob implements ShouldQueue
             return;
         }
 
-        $event = NotificationEvent::create([
-            'event_type' => NotificationEvent::TYPE_REUNION_ADMIN_ESCALATION,
-            'subject_type' => $case->getMorphClass(),
-            'subject_id' => $case->getKey(),
-            'payload' => [
+        $admins = $recipients->admins();
+
+        if ($admins->isEmpty()) {
+            // Không có admin/moderator nào active → không tạo escalation (tránh
+            // command dispatch lại mỗi ngày vô ích). alreadyEscalated() dựa trên
+            // notification_events, nên các lần sau cũng không tạo thêm.
+            return;
+        }
+
+        $since = $case->handover_confirmed_at ?? $case->updated_at;
+        $daysSinceHandover = $since ? (int) Carbon::parse($since)->diffInDays(now()) : 0;
+        $reminderCount = NotificationEvent::query()
+            ->where('event_type', NotificationEvent::TYPE_REUNION_FAMILY_REMINDER)
+            ->where('subject_type', $case->getMorphClass())
+            ->where('subject_id', $case->getKey())
+            ->count();
+
+        $event = $notifier->send(
+            NotificationEvent::TYPE_REUNION_ADMIN_ESCALATION,
+            $case,
+            $admins,
+            [
                 'case_code' => $case->case_code,
                 'full_name' => $case->full_name,
                 'owner_id' => $case->user?->getKey(),
+                'days_since_handover' => $daysSinceHandover,
+                'reminder_count' => $reminderCount,
+                'source' => NotificationEvent::SOURCE_SYSTEM,
             ],
-            'triggered_by_user_id' => null,
-            'occurred_at' => now(),
-        ]);
+            null,
+        );
 
-        $admins = User::query()
-            ->whereIn('role', ['ADMIN', 'MODERATOR'])
-            ->where('status', '!=', 'BANNED')
+        if (! $event) {
+            return;
+        }
+
+        // Tạo EscalationQueue cho từng recipient để admin theo dõi / xác nhận hộ.
+        $sentRecipients = NotificationRecipient::query()
+            ->where('notification_event_id', $event->getKey())
             ->get();
 
-        foreach ($admins as $admin) {
-            $recipient = NotificationRecipient::create([
-                'notification_event_id' => $event->getKey(),
-                'user_id' => $admin->getKey(),
-                'role_at_time' => $admin->role,
-                'rendered_title' => 'Cần xác minh đoàn tụ hộ (gia đình không phản hồi)',
-                'rendered_body' => "Hồ sơ {$case->case_code} ({$case->full_name}) đã bàn giao quá 7 ngày nhưng gia đình chưa xác nhận. Vui lòng liên hệ xác minh.",
-                'action_url' => route('filament.admin.resources.missing-children.view', ['record' => $case->getKey()]),
-            ]);
-
-            EscalationQueue::create([
-                'notification_recipient_id' => $recipient->getKey(),
-                'due_at' => now()->addDays(7),
-                'status' => EscalationQueue::STATUS_PENDING,
-            ]);
+        foreach ($sentRecipients as $recipient) {
+            EscalationQueue::firstOrCreate(
+                ['notification_recipient_id' => $recipient->getKey()],
+                ['due_at' => now()->addDays(7), 'status' => EscalationQueue::STATUS_PENDING],
+            );
         }
     }
 }

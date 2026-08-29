@@ -7,8 +7,11 @@ use App\Exceptions\AIServiceUnavailableException;
 use App\Models\FaceMatchResult;
 use App\Models\FoundChild;
 use App\Models\MissingChild;
+use App\Models\NotificationEvent;
 use App\Models\Photo;
 use App\Services\FaceMatchService;
+use App\Services\Notification\Notifier;
+use App\Services\Notification\RecipientResolver;
 use App\Support\AIJobFailureNotifier;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -41,6 +44,11 @@ class TriggerFaceMatchJob implements ShouldQueue
 
     public function handle(FaceMatchService $faceMatchService): void
     {
+        // Giải qua container để giữ handle() gọi được trực tiếp trong test mà
+        // không cần truyền dependency; production (sync queue) vẫn tự resolve.
+        $notifier = app(Notifier::class);
+        $recipients = app(RecipientResolver::class);
+
         $photo = Photo::query()->find($this->photoId);
 
         if (! $photo || ! $photo->has_face || ! $photo->face_encoding) {
@@ -89,6 +97,31 @@ class TriggerFaceMatchJob implements ShouldQueue
             if (! $isReviewed && $match->status === 'PENDING' && $match->is_matched && ($match->wasRecentlyCreated || ! $match->notified_at)) {
                 FaceMatchFound::dispatch($match);
                 $match->forceFill(['notified_at' => now()])->save();
+
+                // H-01/H-02 — Ghi thông báo FACE_MATCH_SUGGESTED vào đường ống hợp
+                // nhất (chuông + email admin theo policy), thay vì tự notify() bên
+                // trong constructor của FaceMatchFound. FaceMatchFound giờ chỉ làm
+                // realtime broadcast (socket). Nguồn phát sinh gắn SOURCE_AI.
+                $missingChild = MissingChild::query()->find($missingPhoto->model_id);
+
+                if ($missingChild) {
+                    $notifier->send(
+                        NotificationEvent::TYPE_FACE_MATCH_SUGGESTED,
+                        $match,
+                        $recipients->unique(
+                            $recipients->familyOf($missingChild),
+                            $recipients->admins(),
+                        ),
+                        [
+                            'case_code' => $missingChild->case_code,
+                            'full_name' => $missingChild->full_name,
+                            'score_percent' => number_format($score * 100, 1),
+                            'confidence_label' => $confidenceLevel,
+                            'source' => NotificationEvent::SOURCE_AI,
+                        ],
+                        null,
+                    );
+                }
             }
         }
 
@@ -107,7 +140,10 @@ class TriggerFaceMatchJob implements ShouldQueue
             'message' => $exception->getMessage(),
         ]);
 
-        AIJobFailureNotifier::notifyAdmins($this->photoId, static::class, $exception);
+        $photo = Photo::query()->find($this->photoId);
+        if ($photo) {
+            AIJobFailureNotifier::notifyAdmins($photo, static::class, $exception->getMessage());
+        }
     }
 
     private function targetPhotos(Photo $photo)

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Listeners\BroadcastNotificationReceived;
 use App\Livewire\Volunteer\AssignmentBoard;
 use App\Services\Notification\Contracts\FcmPushSender;
 use App\Services\Notification\FcmHttpV1PushSender;
@@ -68,6 +69,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Observers\UserObserver::class
         );
 
+        \App\Models\Clue::observe(
+            \App\Observers\ClueObserver::class
+        );
+
         // D-01 — Audit log mọi thay đổi status của MissingChild / FoundChild.
         \App\Models\MissingChild::observe(
             \App\Observers\StatusChangeAuditObserver::class
@@ -81,5 +86,7 @@ class AppServiceProvider extends ServiceProvider
             'volunteer.assignment-board',
             AssignmentBoard::class
         );
+
+        Event::listen(NotificationSent::class, BroadcastNotificationReceived::class);
     }
 }

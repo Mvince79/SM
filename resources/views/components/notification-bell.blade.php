@@ -1,7 +1,7 @@
 @auth
     <div class="relative" data-notification-bell>
         <button type="button"
-            class="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-primary hover:bg-primary/5 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            class="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-primary hover:bg-primary/5 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             data-notification-toggle aria-label="Thông báo" aria-expanded="false">
             <x-heroicon-o-bell class="h-5 w-5" />
             <span
@@ -11,17 +11,25 @@
 
         <div class="hidden fixed left-3 right-3 top-16 z-50 max-h-[calc(100vh-5rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-3 sm:w-96"
             data-notification-menu>
-            <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+            <div class="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
                 <div>
                     <p class="text-base font-bold text-slate-900">Thông báo</p>
                     <p class="text-xs text-slate-500" data-notification-status>Đang tải thông báo...</p>
                 </div>
-                <span class="hidden rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600"
-                    data-notification-summary>
-                    Mới
-                </span>
+                <div class="flex items-center gap-2">
+                    <button type="button"
+                        class="hidden rounded-full px-2.5 py-1 text-xs font-semibold text-primary transition hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        data-notification-mark-all>
+                        Đánh dấu đã đọc
+                    </button>
+                    <span class="hidden rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600"
+                        data-notification-summary>
+                        Mới
+                    </span>
+                </div>
             </div>
-            <div class="max-h-[calc(100vh-12rem)] overflow-y-auto sm:max-h-[28rem]" data-notification-list>
+            <div class="max-h-[calc(100vh-12rem)] overflow-y-auto sm:max-h-[28rem]" data-notification-list
+                aria-live="polite" aria-relevant="additions">
                 <x-skeletons.notification-list
                     :rows="4"
                     compact
