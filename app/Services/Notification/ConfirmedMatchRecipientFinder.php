@@ -21,14 +21,17 @@ class ConfirmedMatchRecipientFinder
         ])->filter();
 
         // G-01 — role THIRD_PARTY_VERIFIER đã gỡ bỏ; không còn gửi cho bên thứ ba xác minh.
-        $onlineAdmins = User::query()
+        // Không lọc theo last_active_at: admin nhận thông báo khớp xác nhận dù đang
+        // không "online" 5 phút gần nhất (thông báo quan trọng cần tới được người xử lý,
+        // không phụ thuộc vào indicator online). Chỉ lọc active để tránh gửi cho tài
+        // khoản bị khoá. Việc cập nhật last_active_at định kỳ do middleware TouchLastActive.
+        $admins = User::query()
             ->admins()
             ->active()
-            ->where('last_active_at', '>=', now()->subMinutes(5))
             ->get();
 
         return $caseUsers
-            ->merge($onlineAdmins)
+            ->merge($admins)
             ->unique('id')
             ->values();
     }

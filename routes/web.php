@@ -178,6 +178,7 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
     Route::prefix('/notifications')->name('notifications.')->group(function () {
         Route::get('/', [NotificationController::class, 'center'])->name('center');
         Route::get('/dropdown', [NotificationController::class, 'dropdown'])->name('dropdown');
+        Route::patch('/read-all', [NotificationController::class, 'readAll'])->name('read-all');
         Route::get('/{notification}', [NotificationController::class, 'show'])->name('show');
         Route::patch('/{notification}/read', [NotificationController::class, 'read'])->name('read');
     });

@@ -10,7 +10,6 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use InvalidArgumentException;
 
 class DynamicNotificationMail extends Mailable implements ShouldQueue
 {
@@ -52,12 +51,11 @@ class DynamicNotificationMail extends Mailable implements ShouldQueue
             NotificationEvent::TYPE_FACE_MATCH_CONFIRMED => 'emails.notifications.face-match-confirmed',
             NotificationEvent::TYPE_CASE_APPROVED,
             NotificationEvent::TYPE_CASE_APPROVED_IN_PROVINCE => 'emails.notifications.case-approved',
+            NotificationEvent::TYPE_CASE_REJECTED => 'emails.notifications.case-rejected',
             NotificationEvent::TYPE_CLUE_VERIFIED => 'emails.notifications.clue-verified',
             NotificationEvent::TYPE_HANDOVER_READY => 'emails.notifications.handover-ready',
             NotificationEvent::TYPE_ROLE_CHANGED => 'emails.notifications.role-changed',
-            default => throw new InvalidArgumentException(
-                "Không có email template cho notification event [{$eventType}]."
-            ),
+            default => 'emails.notifications.generic',
         };
     }
 

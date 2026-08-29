@@ -17,6 +17,7 @@ class NotificationController extends Controller
     {
         $notifications = $request->user()
             ->notificationRecipients()
+            ->with('event')
             ->latest()
             ->limit(10)
             ->get();
@@ -29,6 +30,8 @@ class NotificationController extends Controller
             'notifications' => $notifications->map(
                 fn ($notification): array => [
                     'id' => $notification->getKey(),
+                    'event_type' => $notification->event?->event_type,
+                    'source_label' => $notification->event?->sourceLabel(),
                     'title' => $notification->rendered_title,
                     'message' => $notification->rendered_body,
                     'url' => $notification->action_url
@@ -52,29 +55,36 @@ class NotificationController extends Controller
 
     public function read(Request $request, string $notificationId): JsonResponse
     {
+        // Không còn nhánh fallback hệ cũ (bảng `notifications` qua Notifiable): mọi
+        // thông báo đều nằm ở notification_recipients. firstOrFail() đảm bảo thông
+        // báo của người khác / không tồn tại trả 404 (Model Not Found), đúng phân
+        // quyền; thông báo của chính user (kể cả đã đọc) vẫn được cập nhật bình thường.
         $notification = $request->user()
             ->notificationRecipients()
             ->whereKey($notificationId)
-            ->first();
+            ->firstOrFail();
 
-        if ($notification) {
-            $notification->update(['read_at' => now()]);
-            $unreadCount = $request->user()
-                ->notificationRecipients()
-                ->whereNull('read_at')
-                ->count();
-        } else {
-            $legacyNotification = $request->user()
-                ->notifications()
-                ->whereKey($notificationId)
-                ->firstOrFail();
-            $legacyNotification->markAsRead();
-            $unreadCount = $request->user()->unreadNotifications()->count();
-        }
+        $notification->update(['read_at' => now()]);
 
         return response()->json([
             'read' => true,
-            'unread_count' => $unreadCount,
+            'unread_count' => $request->user()
+                ->notificationRecipients()
+                ->whereNull('read_at')
+                ->count(),
+        ]);
+    }
+
+    public function readAll(Request $request): JsonResponse
+    {
+        $request->user()
+            ->notificationRecipients()
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return response()->json([
+            'read' => true,
+            'unread_count' => 0,
         ]);
     }
 }

@@ -14,8 +14,11 @@ class NotificationCountUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public int $userId, public int $unreadCount)
-    {
+    public function __construct(
+        public int $userId,
+        public int $unreadCount,
+        public array $notification = [],
+    ) {
     }
 
     public function broadcastOn(): array
@@ -32,6 +35,7 @@ class NotificationCountUpdated implements ShouldBroadcast
     {
         return [
             'unread_count' => $this->unreadCount,
+            'notification' => $this->notification,
         ];
     }
 }

@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class SupportTicket extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     protected $fillable = [
         'user_id',
@@ -44,5 +47,12 @@ class SupportTicket extends Model
     public function isOpen(): bool
     {
         return in_array($this->status, ['OPEN', 'IN_PROGRESS'], true);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['user_id', 'category', 'subject', 'priority', 'status', 'assigned_admin_id'])
+            ->logOnlyDirty();
     }
 }

@@ -6,12 +6,11 @@ use App\Events\NewClueSubmitted;
 use App\Http\Livewire\MissingChild\ClueForm;
 use App\Models\Clue;
 use App\Models\MissingChild;
+use App\Models\NotificationEvent;
 use App\Models\Province;
 use App\Models\User;
-use App\Notifications\ClueSubmittedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -38,7 +37,6 @@ class ClueFormIdempotencyTest extends TestCase
 
     public function test_double_submit_same_idempotency_key_creates_only_one_clue(): void
     {
-        Notification::fake();
         Event::fake([NewClueSubmitted::class]);
 
         $missing = $this->makeMissingChild();
@@ -63,14 +61,17 @@ class ClueFormIdempotencyTest extends TestCase
 
         $this->assertSame(1, Clue::count(), 'Không được tạo trùng Clue khi submit 2 lần cùng idempotency key');
 
-        // Notification + Event chỉ được bắn đúng 1 lần, không trùng
-        Notification::assertSentTimes(ClueSubmittedNotification::class, 1);
+        // CLUE_SUBMITTED ghi qua đường ống hợp nhất (ClueObserver) đúng 1 lần, không trùng.
+        $this->assertSame(
+            1,
+            NotificationEvent::query()->where('event_type', NotificationEvent::TYPE_CLUE_SUBMITTED)->count(),
+            'Không được tạo trùng NotificationEvent khi submit 2 lần cùng idempotency key'
+        );
         Event::assertDispatchedTimes(NewClueSubmitted::class, 1);
     }
 
     public function test_different_idempotency_key_creates_separate_clues(): void
     {
-        Notification::fake();
         Event::fake([NewClueSubmitted::class]);
 
         $missing = $this->makeMissingChild();
@@ -87,7 +88,10 @@ class ClueFormIdempotencyTest extends TestCase
             ->call('submit');
 
         $this->assertSame(2, Clue::count(), 'Idempotency key khác nhau -> phải tạo 2 Clue riêng biệt');
-        Notification::assertSentTimes(ClueSubmittedNotification::class, 2);
+        $this->assertSame(
+            2,
+            NotificationEvent::query()->where('event_type', NotificationEvent::TYPE_CLUE_SUBMITTED)->count(),
+        );
         Event::assertDispatchedTimes(NewClueSubmitted::class, 2);
     }
 

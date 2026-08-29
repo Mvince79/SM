@@ -33,12 +33,23 @@ class FoundChild extends Model
         'current_location',
         'handover_agency',
         'status',
+        'rejection_reason',
         'approved_at',
         'approved_by',
         'ai_processed_at',
         'handover_confirmed_at',
         'handover_confirmed_by',
     ];
+
+    public const STATUS_PENDING = 'PENDING';
+
+    public const STATUS_APPROVED = 'APPROVED';
+
+    public const STATUS_MATCHED = 'MATCHED';
+
+    public const STATUS_REJECTED = 'REJECTED';
+
+    public const STATUS_CLOSED = 'CLOSED';
 
     protected function casts(): array
     {

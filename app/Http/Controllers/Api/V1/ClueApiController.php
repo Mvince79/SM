@@ -95,20 +95,12 @@ class ClueApiController extends Controller
                     }
                 }
 
-                // Thông báo cho chủ hồ sơ trẻ mất tích.
+                // CLUE_SUBMITTED do ClueObserver phát khi clue được tạo (phủ mọi
+                // đường vào, kể cả API này). Giữ NewClueSubmitted để realtime socket.
                 try {
-                    $missing = MissingChild::find($data['missing_id']);
-
-                    if ($missing && $missing->user) {
-                        Notification::send(
-                            $missing->user,
-                            new ClueSubmittedNotification($clue)
-                        );
-
-                        NewClueSubmitted::dispatch($clue);
-                    }
+                    NewClueSubmitted::dispatch($clue);
                 } catch (\Throwable $e) {
-                    // Không làm hỏng request nếu gửi thông báo thất bại.
+                    // Không làm hỏng request nếu gửi sự kiện thất bại.
                 }
 
                 return $clue;

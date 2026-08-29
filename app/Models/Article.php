@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * L-01 — Bài viết SEO.
@@ -16,6 +18,7 @@ use Illuminate\Support\Str;
 class Article extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     protected $fillable = [
         'title',
@@ -27,6 +30,13 @@ class Article extends Model
         'author_id',
         'published_at',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['title', 'slug', 'content', 'cover_image_path', 'meta_title', 'meta_description', 'published_at'])
+            ->logOnlyDirty();
+    }
 
     protected function casts(): array
     {

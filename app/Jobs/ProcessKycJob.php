@@ -88,6 +88,9 @@ class ProcessKycJob implements ShouldQueue
             'message' => $exception->getMessage(),
         ]);
 
-        AIJobFailureNotifier::notifyAdmins($this->kycVerificationId, static::class, $exception);
+        $kyc = KycVerification::query()->find($this->kycVerificationId);
+        if ($kyc) {
+            AIJobFailureNotifier::notifyAdmins($kyc, static::class, $exception->getMessage());
+        }
     }
 }

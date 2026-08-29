@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Clue extends Model
 {
+    use LogsActivity;
+
     protected $table = 'clues';
 
     protected $fillable = [
@@ -87,5 +91,22 @@ class Clue extends Model
         }
 
         return $initials ?: 'AN';
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'clue_type',
+                'description',
+                'lat',
+                'lng',
+                'occurred_at',
+                'is_verified',
+                'verified_by',
+                'is_anonymous',
+                'is_hidden',
+            ])
+            ->logOnlyDirty();
     }
 }

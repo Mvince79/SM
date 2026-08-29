@@ -7,8 +7,8 @@ use App\Models\MissingChild;
 use App\Models\NotificationEvent;
 use App\Models\User;
 use App\Services\Notification\Contracts\NotificationStrategy;
-use App\Services\Notification\Exceptions\NotificationStrategyNotFoundException;
 use App\Services\Notification\NotificationPolicyResolver;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class NotificationPolicyResolverTest extends TestCase
@@ -56,14 +56,80 @@ class NotificationPolicyResolverTest extends TestCase
         ], $content);
     }
 
-    public function test_it_rejects_an_unregistered_event_and_role_pair(): void
+    /**
+     * Đổi hành vi có chủ ý: trước đây ném NotificationStrategyNotFoundException.
+     *
+     * Với hệ thống an toàn trẻ em, một role bị quên khai báo mà làm người nhận
+     * KHÔNG nhận được gì thì tệ hơn là nhận một thông báo tối thiểu kèm liên kết.
+     * Sai sót cấu hình vẫn lộ ra qua Log::warning (xem test kế tiếp).
+     */
+    public function test_it_falls_back_to_generic_content_for_an_unregistered_role(): void
     {
-        $this->expectException(NotificationStrategyNotFoundException::class);
+        $content = app(NotificationPolicyResolver::class)->resolve(
+            $this->faceMatchConfirmedEvent(),
+            new User(['role' => 'UNREGISTERED_ROLE'])
+        );
+
+        $this->assertSame(['title', 'body', 'action_url'], array_keys($content));
+        $this->assertNotSame('', $content['title']);
+        $this->assertNotSame('', $content['body']);
+    }
+
+    public function test_it_logs_a_warning_when_content_is_not_declared(): void
+    {
+        Log::shouldReceive('warning')
+            ->once()
+            ->with('Thiếu khai báo nội dung thông báo', [
+                'event_type' => NotificationEvent::TYPE_FACE_MATCH_CONFIRMED,
+                'role' => 'UNREGISTERED_ROLE',
+            ]);
 
         app(NotificationPolicyResolver::class)->resolve(
             $this->faceMatchConfirmedEvent(),
             new User(['role' => 'UNREGISTERED_ROLE'])
         );
+    }
+
+    public function test_it_renders_declared_content_from_config(): void
+    {
+        config()->set('notification-policies.content.DECLARED_EVENT.*', [
+            'title' => 'Hồ sơ :case_code',
+            'body' => 'Nội dung cho :full_name.',
+            'url' => null,
+        ]);
+
+        $event = new NotificationEvent([
+            'event_type' => 'DECLARED_EVENT',
+            'payload' => ['case_code' => 'MC-2026-00042', 'full_name' => 'Nguyễn Văn An'],
+        ]);
+
+        $content = app(NotificationPolicyResolver::class)
+            ->resolve($event, new User(['role' => 'USER']));
+
+        $this->assertSame('Hồ sơ MC-2026-00042', $content['title']);
+        $this->assertSame('Nội dung cho Nguyễn Văn An.', $content['body']);
+    }
+
+    public function test_it_drops_placeholders_that_have_no_data(): void
+    {
+        config()->set('notification-policies.content.DECLARED_EVENT.*', [
+            'title' => 'Lý do: :reason',
+            'body' => 'Hồ sơ :case_code bị từ chối vì :reason.',
+            'url' => null,
+        ]);
+
+        $event = new NotificationEvent([
+            'event_type' => 'DECLARED_EVENT',
+            'payload' => ['case_code' => 'MC-2026-00042'],
+        ]);
+
+        $content = app(NotificationPolicyResolver::class)
+            ->resolve($event, new User(['role' => 'USER']));
+
+        // Không được để lộ ":reason" ra mặt người dùng khi thiếu dữ liệu.
+        $this->assertStringNotContainsString(':reason', $content['title']);
+        $this->assertStringNotContainsString(':reason', $content['body']);
+        $this->assertStringContainsString('MC-2026-00042', $content['body']);
     }
 
     private function faceMatchConfirmedEvent(): NotificationEvent

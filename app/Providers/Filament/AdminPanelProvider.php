@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Admin\Pages\Dashboard;
+use App\Filament\Admin\Widgets\EscalationQueueWidget;
 use App\Filament\Admin\Widgets\KycPendingStatsWidget;
 use App\Filament\Admin\Widgets\MissingByProvinceChart;
 use App\Filament\Admin\Widgets\RecentMissingWidget;
@@ -22,7 +23,6 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use App\Filament\Admin\Widgets\EscalationQueueWidget;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -35,13 +35,16 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('TìmTrẻ.vn Admin')
             ->brandLogo(null)
             ->favicon(null)
+            // Palette đồng bộ với client frontend (resources/css/app.css):
+            // Carmine × Deep Navy × Forest — institutional, không neon.
             ->colors([
-                'primary' => Color::hex('#FF3B30'),
-                'danger' => Color::hex('#FF3B30'),
-                'success' => Color::hex('#12B76A'),
-                'info' => Color::hex('#0052FF'),
-                'warning' => Color::hex('#F59E0B'),
+                'primary' => Color::hex('#b9293f'), // Carmine trầm (duyệt / thương hiệu)
+                'danger' => Color::hex('#dc2626'),  // Red-600 (từ chối / cảnh báo) — tách biệt với primary
+                'success' => Color::hex('#2f6d52'), // Forest (đã xác thực / khớp)
+                'info' => Color::hex('#1c3a5e'),     // Deep Navy (thông tin / nguồn)
+                'warning' => Color::hex('#f59e0b'),  // Amber (chờ duyệt / cần kiểm tra)
             ])
+            ->font('Be Vietnam Pro')
             ->darkMode(false)
             ->discoverResources(
                 in: app_path('Filament/Admin/Resources'),
