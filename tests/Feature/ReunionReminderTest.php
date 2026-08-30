@@ -47,28 +47,76 @@ class ReunionReminderTest extends TestCase
         parent::tearDown();
     }
 
+    // ------------------------------------------------------------- helpers
+
+    private function unit(): string
+    {
+        return config('notification.reminder_time_unit', 'days');
+    }
+
+    private function subSince(int $ago): Carbon
+    {
+        return now()->{"sub{$this->unit()}"}($ago);
+    }
+
+    private function advance(int $n): void
+    {
+        Carbon::setTestNow(now()->{"add{$this->unit()}"}($n));
+    }
+
+    private function milestones(): array
+    {
+        return config('notification.reminder_milestones', [1, 3, 5]);
+    }
+
+    private function maxMilestone(): int
+    {
+        return (int) max($this->milestones());
+    }
+
+    private function escalateAfter(): int
+    {
+        return (int) config('notification.escalate_after_days', 5);
+    }
+
+    private function closeAfter(): int
+    {
+        return (int) config('notification.close_after_days', 7);
+    }
+
+    private function reachedCount(int $elapsed): int
+    {
+        return count(array_filter($this->milestones(), fn (int $m) => $m <= $elapsed));
+    }
+
+    private function expectedStatus(int $elapsed): string
+    {
+        return ($elapsed >= $this->closeAfter() && $this->reachedCount($elapsed) >= 1)
+            ? MissingChild::STATUS_UNREACHABLE_FAMILY
+            : MissingChild::STATUS_HANDED_OVER;
+    }
+
     // ---------------------------------------------------------------- DoD 1
 
     public function test_case_handed_over_gets_milestone_reminders(): void
     {
-        $case = $this->createHandedOverCase(daysAgo: 4);
+        $elapsed = $this->closeAfter() - 1; // chưa tới close → còn HANDED_OVER
+        $case = $this->createHandedOverCase($elapsed);
 
         Artisan::call('reunion:remind-family');
 
-        // D+4 → các mốc D+1 và D+3 đã đến hạn (D+5 chưa) → 2 nhắc.
-        $this->assertSame(2, $this->reminderCount($case));
+        $this->assertSame($this->reachedCount($elapsed), $this->reminderCount($case));
+        $this->assertDatabaseHas('notification_recipients', ['user_id' => $case->user_id]);
 
-        $this->assertDatabaseHas('notification_recipients', [
-            'user_id' => $case->user_id,
-        ]);
-
-        $this->assertNotNull($case->fresh()->reunion_reminder_sent_at);
-        $this->assertSame(MissingChild::STATUS_HANDED_OVER, $case->fresh()->status);
+        if ($this->reachedCount($elapsed) >= 1) {
+            $this->assertNotNull($case->fresh()->reunion_reminder_sent_at);
+        }
+        $this->assertSame($this->expectedStatus($elapsed), $case->fresh()->status);
     }
 
     public function test_no_reminder_before_first_milestone(): void
     {
-        $case = $this->createHandedOverCase(daysAgo: 0);
+        $case = $this->createHandedOverCase(0);
 
         Artisan::call('reunion:remind-family');
 
@@ -77,19 +125,20 @@ class ReunionReminderTest extends TestCase
 
     public function test_reminders_are_not_duplicated_across_runs(): void
     {
-        $case = $this->createHandedOverCase(daysAgo: 4);
+        $elapsed = $this->closeAfter() - 1;
+        $case = $this->createHandedOverCase($elapsed);
 
         Artisan::call('reunion:remind-family');
         Artisan::call('reunion:remind-family');
 
-        // D+1, D+3 gửi đúng 1 lần dù chạy 2 lần.
-        $this->assertSame(2, $this->reminderCount($case));
+        $this->assertSame($this->reachedCount($elapsed), $this->reminderCount($case));
     }
 
     public function test_case_handed_over_past_escalate_after_days_is_pushed_to_admin_escalation_queue(): void
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
-        $case = $this->createHandedOverCase(daysAgo: 6);
+        $elapsed = $this->escalateAfter() + 1; // >= escalate, < close → leo thang
+        $case = $this->createHandedOverCase($elapsed);
 
         Artisan::call('reunion:remind-family');
 
@@ -111,7 +160,8 @@ class ReunionReminderTest extends TestCase
     public function test_escalation_is_dispatched_only_once_per_case(): void
     {
         User::factory()->create(['role' => 'ADMIN']);
-        $case = $this->createHandedOverCase(daysAgo: 6);
+        $elapsed = $this->escalateAfter() + 1;
+        $case = $this->createHandedOverCase($elapsed);
 
         Artisan::call('reunion:remind-family');
         Artisan::call('reunion:remind-family');
@@ -125,42 +175,43 @@ class ReunionReminderTest extends TestCase
 
     public function test_not_closed_before_close_after_days_even_if_reminded(): void
     {
-        $case = $this->createHandedOverCase(daysAgo: 6);
+        $elapsed = $this->closeAfter() - 1;
+        $case = $this->createHandedOverCase($elapsed);
 
         Artisan::call('reunion:remind-family');
 
-        // D+6: đã nhắc đủ 3 mốc (D+1/3/5) + leo thang, NHƯNG chưa tới close_after_days
-        // (7) → vẫn HANDED_OVER, chưa đóng.
-        $this->assertSame(3, $this->reminderCount($case));
+        $this->assertSame($this->reachedCount($elapsed), $this->reminderCount($case));
         $this->assertSame(MissingChild::STATUS_HANDED_OVER, $case->fresh()->status);
     }
 
     // ---------------------------------------------------------------- DoD 4
 
-    public function test_three_milestones_then_close_after_close_after_days(): void
+    public function test_all_milestones_then_close_after_close_after_days(): void
     {
-        $case = $this->createHandedOverCase(daysAgo: 4);
+        $maxM = $this->maxMilestone();
+        $case = $this->createHandedOverCase($maxM);
 
-        // D+4: nhắc D+1, D+3 (2 lần liên hệ).
+        // elapsed = maxM: mọi mốc đến hạn, chưa tới close → HANDED_OVER.
         Artisan::call('reunion:remind-family');
-        $this->assertSame(2, $this->reminderCount($case));
+        $this->assertSame($this->reachedCount($maxM), $this->reminderCount($case));
+        $this->assertSame($this->expectedStatus($maxM), $case->fresh()->status);
+
+        // Tiến tới closeAfter - 1: vẫn HANDED_OVER, số nhắc không đổi (idempotent).
+        $this->advance($this->closeAfter() - 1 - $maxM);
+        Artisan::call('reunion:remind-family');
+        $this->assertSame($this->reachedCount($this->closeAfter() - 1), $this->reminderCount($case));
         $this->assertSame(MissingChild::STATUS_HANDED_OVER, $case->fresh()->status);
 
-        // D+6: nhắc D+5 (đủ 3 lần liên hệ). Chưa tới close_after_days (7).
-        Carbon::setTestNow(now()->addDays(2));
-        Artisan::call('reunion:remind-family');
-        $this->assertSame(3, $this->reminderCount($case));
-        $this->assertSame(MissingChild::STATUS_HANDED_OVER, $case->fresh()->status);
-
-        // D+8: đã quá close_after_days (7) và đã từng nhắc → UNREACHABLE_FAMILY.
-        Carbon::setTestNow(now()->addDays(2));
+        // Tiến qua closeAfter: đã nhắc + quá hạn → UNREACHABLE_FAMILY.
+        $this->advance(1);
         Artisan::call('reunion:remind-family');
         $this->assertSame(MissingChild::STATUS_UNREACHABLE_FAMILY, $case->fresh()->status);
     }
 
     public function test_unreachable_transition_is_logged_as_system_actor_without_reason(): void
     {
-        $case = $this->createHandedOverCase(daysAgo: 20);
+        $elapsed = $this->closeAfter() + 2;
+        $case = $this->createHandedOverCase($elapsed);
 
         Artisan::call('reunion:remind-family');
 
@@ -175,7 +226,7 @@ class ReunionReminderTest extends TestCase
 
     public function test_family_confirmation_stops_the_reminder_loop(): void
     {
-        $case = $this->createHandedOverCase(daysAgo: 4);
+        $case = $this->createHandedOverCase($this->closeAfter() - 1);
         $case->forceFill(['status' => MissingChild::STATUS_REUNITED])->saveQuietly();
 
         Artisan::call('reunion:remind-family');
@@ -266,7 +317,7 @@ class ReunionReminderTest extends TestCase
                 'contact_phone' => '0905123456',
                 'contact_relation' => 'PARENT',
                 'status' => MissingChild::STATUS_HANDED_OVER,
-                'handover_confirmed_at' => now()->subDays($daysAgo),
+                'handover_confirmed_at' => $this->subSince($daysAgo),
             ]);
         });
     }

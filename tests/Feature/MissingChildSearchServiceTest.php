@@ -346,5 +346,44 @@ class MissingChildSearchServiceTest extends TestCase
         $this->assertFalse($result->pluck('id')->contains($missingId));
     }
 
+    /**
+     * Test: Sort by near_me — assert thực tế khoảng cách + thứ tự (CHỈ chạy trên MySQL).
+     *
+     * SQLite trong môi trường build thiếu hàm toán học (sin/cos/atan2/...) nên SQL
+     * Haversine không chạy được. Test này skip rõ ràng trên SQLite, dành chạy thật
+     * trên MySQL production để xác nhận cột distance_km và thứ tự sắp xếp đúng.
+     * Công thức toán học đã được verify ở tests/Unit/HaversineTest.php (trên SQLite).
+     */
+    public function test_sort_near_me_haversine_real_distance_mysql_only()
+    {
+        if (DB::getDriverName() === 'sqlite') {
+            $this->markTestSkipped(
+                'SQL Haversine yêu cầu MySQL (SQLite thiếu hàm toán học). '
+                    . 'Chạy trên MySQL để xác nhận distance_km + thứ tự sắp xếp.'
+            );
+        }
+
+        $near = MissingChild::where('status', 'APPROVED')->first();
+        $far = MissingChild::where('status', 'APPROVED')->skip(1)->first();
+
+        $near->update(['lat' => 10.76, 'lng' => 106.66]);   // rất gần điểm tham chiếu
+        $far->update(['lat' => 21.02, 'lng' => 105.83]);     // Hà Nội, rất xa
+
+        $result = $this->service->search([
+            'lat' => 10.77,
+            'lng' => 106.66,
+            'radius_km' => 2000,
+            'sort' => 'near_me',
+        ]);
+
+        $first = $result->first();
+        $this->assertNotNull($first);
+        $this->assertNotNull($first->distance_km);
+        $this->assertLessThan(50.0, (float) $first->distance_km);
+
+        $ids = $result->pluck('id')->all();
+        $this->assertTrue(array_search($near->id, $ids) < array_search($far->id, $ids));
+    }
+
 
 }

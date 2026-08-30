@@ -8,6 +8,7 @@ use App\Models\MissingChild;
 use App\Models\Photo;
 use App\Services\FaceMatchService;
 use App\Support\AIJobFailureNotifier;
+use App\Support\AiCallRetry;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -49,11 +50,15 @@ class ProcessPhotoJob implements ShouldQueue
         $this->generateDerivatives($photo);
 
         try {
-            if (! $faceMatchService->isHealthy()) {
-                throw new AIServiceUnavailableException('AI service is unavailable.');
-            }
+            // isHealthy là tiền kiểm nhanh; retry vài lần để vượt AI giật tạm thời
+            // (Laravel Queue retry vô tác dụng vì job ép sync — xem AiCallRetry).
+            AiCallRetry::run(function () use ($faceMatchService) {
+                if (! $faceMatchService->isHealthy()) {
+                    throw new AIServiceUnavailableException('AI service is unavailable.');
+                }
+            });
 
-            $detection = $faceMatchService->detectFace($photo->path_original);
+            $detection = AiCallRetry::run(fn () => $faceMatchService->detectFace($photo->path_original));
 
             if (! $detection['has_face']) {
                 $photo->forceFill([
@@ -83,7 +88,7 @@ class ProcessPhotoJob implements ShouldQueue
             // từ face_crop_path, encoding lưu và encoding truy vấn sẽ lệch nguồn → cùng 1 ảnh
             // không khớp 100% (thực tế ~0.78). Ảnh crop vẫn sinh riêng để hiển thị UI.
             $encodingPath = $photo->path_original;
-            $result = $faceMatchService->encode($encodingPath);
+            $result = AiCallRetry::run(fn () => $faceMatchService->encode($encodingPath));
             $photo->has_face = $result['has_face'] ? 1 : 0;
 
             if ($result['encoding']) {
@@ -105,7 +110,41 @@ class ProcessPhotoJob implements ShouldQueue
         }
 
         if ($photo->has_face && $photo->face_encoding && in_array($photo->model_type, [MissingChild::class, FoundChild::class], true)) {
-            TriggerFaceMatchJob::dispatch($photo->id);
+            try {
+                // Chạy ĐỒNG BỘ (sync) trong luồng request upload. Nếu AI service chập
+                // chờn đúng lúc so khớp (AIServiceUnavailableException) hoặc bất kỳ lỗi
+                // nào khác, BẮT tại đây để KHÔNG ném lỗi làm hỏng request upload của
+                // người dùng — đúng theo thiết kế fail-safe gốc. Ảnh được đánh dấu
+                // 'pending' (AI gián đoạn, thử lại sau) hoặc 'failed' (lỗi khác) và admin
+                // nhận thông báo qua đường ống hợp nhất.
+                TriggerFaceMatchJob::dispatch($photo->id);
+            } catch (AIServiceUnavailableException $e) {
+                $photo->forceFill(['ai_status' => 'pending'])->save();
+                Log::warning('TriggerFaceMatchJob skipped (AI unavailable), left pending.', [
+                    'photo_id' => $photo->id,
+                    'message' => $e->getMessage(),
+                ]);
+                $this->notifyAdmin($photo, $e->getMessage());
+
+                return;
+            } catch (\Throwable $e) {
+                $photo->forceFill(['ai_status' => 'failed'])->save();
+                Log::error('TriggerFaceMatchJob failed during upload.', [
+                    'photo_id' => $photo->id,
+                    'message' => $e->getMessage(),
+                ]);
+                $this->notifyAdmin($photo, $e->getMessage());
+
+                return;
+            }
+        }
+
+        // Chỉ đánh dấu 'done' khi luồng so khớp KHÔNG tự đánh dấu ảnh để thử lại sau.
+        // (TriggerFaceMatchJob chạy đồng bộ; nếu gặp lỗi AI nó tự set 'pending'/'failed'
+        //  và không throw, nên tôn trọng trạng thái đó thay của ghi đè 'done'.)
+        $photo->refresh();
+        if ($photo->ai_status === 'processing') {
+            $photo->forceFill(['ai_status' => 'done'])->save();
         }
     }
 
@@ -122,8 +161,17 @@ class ProcessPhotoJob implements ShouldQueue
 
         $photo = Photo::query()->find($this->photoId);
         if ($photo) {
-            AIJobFailureNotifier::notifyAdmins($photo, static::class, $exception->getMessage());
+            $this->notifyAdmin($photo, $exception->getMessage());
         }
+    }
+
+    /**
+     * Báo lỗi xử lý AI cho admin/moderator qua đường ống hợp nhất (chuông + email
+     * theo policy), không làm chết luồng xử lý chính của job.
+     */
+    private function notifyAdmin(Photo $photo, string $message): void
+    {
+        AIJobFailureNotifier::notifyAdmins($photo, static::class, $message);
     }
 
     /**

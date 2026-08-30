@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\MissingChild;
+use App\Support\Haversine;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
@@ -108,9 +109,9 @@ class MissingChildSearchService
                 $query->selectRaw('missing_children.*');
             } else {
                 $selectParts = ['missing_children.*'];
-                $bindings = [];
-                $selectParts[] = "(6371 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat)))) AS distance_km";
-                $bindings = [$lat, $lng, $lat];
+                [$distanceSql, $distanceBindings] = Haversine::sqlExpression('lat', 'lng', $lat, $lng, 'distance_km');
+                $selectParts[] = $distanceSql;
+                $bindings = $distanceBindings;
 
                 if ($hasKeyword && DB::getDriverName() !== 'sqlite') {
                     $selectParts[] = "MATCH(full_name, clothes_desc, special_marks, circumstances) AGAINST(? IN BOOLEAN MODE) AS relevance";

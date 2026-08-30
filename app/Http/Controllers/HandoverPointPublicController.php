@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\HandoverPoint;
 use App\Models\Province;
+use App\Support\Haversine;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -45,10 +46,8 @@ class HandoverPointPublicController extends Controller
         if ($hasCoordinates) {
             $lat = (float) $validated['lat'];
             $lng = (float) $validated['lng'];
-            $query->selectRaw(
-                '*, (6371 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat)))) AS distance',
-                [$lat, $lng, $lat]
-            );
+            [$distanceSql, $bindings] = Haversine::sqlExpression('lat', 'lng', $lat, $lng, 'distance');
+            $query->selectRaw($distanceSql, $bindings);
         }
 
         $handoverPoints = $query

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Builder;
 use App\Models\FaceMatchResult;
 use App\Models\Clue;
 use Illuminate\Support\Str;
@@ -64,6 +65,19 @@ class MissingChild extends Model
     ];
 
     public const EXPIRABLE_STATUSES = ['PENDING', 'APPROVED'];
+
+    /**
+     * Các trạng thái còn "đang active" và được phép hiển thị công khai
+     * (trang chủ, bản đồ, heatmap, danh sách tìm kiếm). Đây là NGUỒN SỰ THẬT
+     * DUY NHẤT thay cho các chỗ hardcode whereIn(['APPROVED','FOUND']) rải rác.
+     * Khác với CLOSED_STATUSES (dùng cho AI pool): ở đây ta CHỈ lấy những trạng
+     * thái thực sự đang hiện trên bản đồ khẩn cấp (APPROVED = đang tìm kiếm,
+     * FOUND = đã tìm thấy), loại bỏ cả PENDING/MATCHED/HANDED_OVER/REUNITED/...
+     */
+    public const PUBLIC_LISTING_STATUSES = [
+        self::STATUS_APPROVED,
+        self::STATUS_FOUND,
+    ];
 
     public const EXPIRATION_WARNING_DAYS = 30;
 
@@ -382,6 +396,18 @@ class MissingChild extends Model
     public function scopeHandedOverNotYetReunited($query)
     {
         return $query->where('status', self::STATUS_HANDED_OVER);
+    }
+
+    /** Hồ sơ chưa kết thúc (vẫn có thể xuất hiện trong quét đối chiếu khuôn mặt). */
+    public function scopeNotResolved(Builder $query): Builder
+    {
+        return $query->whereNotIn('status', self::CLOSED_STATUSES);
+    }
+
+    /** Hồ sơ còn "đang active" được phép hiển thị công khai (bản đồ/heatmap/list). */
+    public function scopeActiveForPublic(Builder $query): Builder
+    {
+        return $query->whereIn('status', self::PUBLIC_LISTING_STATUSES);
     }
 
     // Helpers

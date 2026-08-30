@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\HandoverPoint;
+use App\Support\Haversine;
 use Illuminate\Support\Collection;
 
 class HandoverPointRepository
@@ -25,11 +26,10 @@ class HandoverPointRepository
      */
     public function nearestTo(float $lat, float $lng, int $limit = 3): Collection
     {
+        [$distanceSql, $bindings] = Haversine::sqlExpression('lat', 'lng', $lat, $lng, 'distance');
+
         return HandoverPoint::active()
-            ->selectRaw(
-                "*, (6371 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat)))) AS distance",
-                [$lat, $lng, $lat]
-            )
+            ->selectRaw($distanceSql, $bindings)
             ->orderBy('distance')
             ->orderBy('priority_order')
             ->limit($limit)

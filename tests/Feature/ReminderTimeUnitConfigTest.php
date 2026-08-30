@@ -19,6 +19,11 @@ use Tests\TestCase;
  * HandoverReminderTest / ReunionReminderTest). Ở đây chỉ xác nhận: đổi unit
  * sang 'minutes' thì mốc nhắc kích hoạt theo PHÚT thay vì NGÀY — cả 2 luồng
  * HANDOVER (FOUND) và REUNION (HANDED_OVER).
+ *
+ * CÁC TEST NÀY CƠ ĐỘNG THEO CONFIG: mốc nhắc / escalate / close và đơn vị thời
+ * gian đều đọc từ config thay vì hardcode [1,3,5]/5/7 hay số 2/4 magic. Dù bạn
+ * đổi cửa sổ nhắc ngắn (test nhanh) hay về bình thường, test vẫn xanh — không
+ * phải sửa lại con số.
  */
 class ReminderTimeUnitConfigTest extends TestCase
 {
@@ -36,18 +41,59 @@ class ReminderTimeUnitConfigTest extends TestCase
         parent::tearDown();
     }
 
+    // ------------------------------------------------------------- helpers
+
+    /** Đơn vị thời gian cấu hình ('days' | 'hours' | 'minutes' | 'seconds'). */
+    private function unit(): string
+    {
+        return config('notification.reminder_time_unit', 'days');
+    }
+
+    /** $ago đơn vị thời gian tính lùi từ hiện tại (theo unit cấu hình). */
+    private function subSince(int $ago): Carbon
+    {
+        return now()->{"sub{$this->unit()}"}($ago);
+    }
+
+    private function milestones(): array
+    {
+        return config('notification.reminder_milestones', [1, 3, 5]);
+    }
+
+    private function maxMilestone(): int
+    {
+        return (int) max($this->milestones());
+    }
+
+    private function escalateAfter(): int
+    {
+        return (int) config('notification.escalate_after_days', 5);
+    }
+
+    private function closeAfter(): int
+    {
+        return (int) config('notification.close_after_days', 7);
+    }
+
+    /** Số mốc nhắc đã đến hạn khi đã trôi qua $elapsed đơn vị. */
+    private function reachedCount(int $elapsed): int
+    {
+        return count(array_filter($this->milestones(), fn (int $m) => $m <= $elapsed));
+    }
+
     // ---------------------------------------------------------- HANDOVER
 
     public function test_handover_reminder_triggers_by_minutes_when_unit_is_minutes(): void
     {
         config(['notification.reminder_time_unit' => 'minutes']);
 
-        $case = $this->createFoundCase(minutesAgo: 4);
+        // elapsed = mốc lớn nhất → mọi mốc (theo config) đều đến hạn, < close → còn FOUND.
+        $elapsed = $this->maxMilestone();
+        $case = $this->createFoundCase($elapsed);
 
         Artisan::call('handover:remind-family');
 
-        // 4 phút đã trôi → mốc D+1, D+3 (phút) đến hạn, D+5 chưa → 2 nhắc.
-        $this->assertSame(2, $this->reminderCount($case, NotificationEvent::TYPE_HANDOVER_FAMILY_REMINDER));
+        $this->assertSame($this->reachedCount($elapsed), $this->reminderCount($case, NotificationEvent::TYPE_HANDOVER_FAMILY_REMINDER));
         $this->assertSame(MissingChild::STATUS_FOUND, $case->fresh()->status);
     }
 
@@ -55,7 +101,8 @@ class ReminderTimeUnitConfigTest extends TestCase
     {
         config(['notification.reminder_time_unit' => 'minutes']);
 
-        $case = $this->createFoundCase(minutesAgo: 0);
+        // 0 đơn vị (phút) trôi qua → chưa tới mốc đầu tiên → không nhắc nào.
+        $case = $this->createFoundCase(0);
 
         Artisan::call('handover:remind-family');
 
@@ -68,11 +115,12 @@ class ReminderTimeUnitConfigTest extends TestCase
     {
         config(['notification.reminder_time_unit' => 'minutes']);
 
-        $case = $this->createHandedOverCase(minutesAgo: 4);
+        $elapsed = $this->maxMilestone();
+        $case = $this->createHandedOverCase($elapsed);
 
         Artisan::call('reunion:remind-family');
 
-        $this->assertSame(2, $this->reminderCount($case, NotificationEvent::TYPE_REUNION_FAMILY_REMINDER));
+        $this->assertSame($this->reachedCount($elapsed), $this->reminderCount($case, NotificationEvent::TYPE_REUNION_FAMILY_REMINDER));
         $this->assertSame(MissingChild::STATUS_HANDED_OVER, $case->fresh()->status);
     }
 
@@ -80,7 +128,7 @@ class ReminderTimeUnitConfigTest extends TestCase
     {
         config(['notification.reminder_time_unit' => 'minutes']);
 
-        $case = $this->createHandedOverCase(minutesAgo: 0);
+        $case = $this->createHandedOverCase(0);
 
         Artisan::call('reunion:remind-family');
 
@@ -115,7 +163,7 @@ class ReminderTimeUnitConfigTest extends TestCase
                 'contact_phone' => '0905123456',
                 'contact_relation' => 'PARENT',
                 'status' => MissingChild::STATUS_FOUND,
-                'found_at' => now()->subMinutes($minutesAgo),
+                'found_at' => $this->subSince($minutesAgo),
             ]);
         });
     }
@@ -137,7 +185,7 @@ class ReminderTimeUnitConfigTest extends TestCase
                 'contact_phone' => '0905123456',
                 'contact_relation' => 'PARENT',
                 'status' => MissingChild::STATUS_HANDED_OVER,
-                'handover_confirmed_at' => now()->subMinutes($minutesAgo),
+                'handover_confirmed_at' => $this->subSince($minutesAgo),
             ]);
         });
     }

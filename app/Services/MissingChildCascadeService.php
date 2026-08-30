@@ -6,6 +6,7 @@ use App\Models\FaceMatchResult;
 use App\Models\FoundChild;
 use App\Models\MissingChild;
 use App\Support\CacheVersion;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -81,5 +82,27 @@ class MissingChildCascadeService
 
         CacheVersion::bump(CacheVersion::MAP_DATA);
         CacheVersion::bump(CacheVersion::HOME_HIGHLIGHTS);
+    }
+
+    /**
+     * Khi một MissingChild chuyển sang trạng thái ĐÃ KẾT THÚC (REUNITED / CLOSED /
+     * REJECTED / ARCHIVED / UNREACHABLE_FAMILY) MÀ KHÔNG xoá (đối lập với
+     * handleRemoval dành cho xoá/từ chối), các FaceMatchResult còn PENDING (chưa
+     * duyệt) liên quan trở nên vô nghĩa — admin không cần "so khớp" lại hồ sơ đã
+     * "xong việc". Chuyển chúng sang DISMISSED để hàng đợi "Đối chiếu khuôn mặt AI"
+     * không còn hiện gợi ý treo cho hồ sơ đã đoàn tụ/đóng.
+     *
+     * KHÔNG revert các CONFIRMED (khác handleRemoval): match đã xác nhận dẫn đến
+     * đoàn tụ là hợp lệ, giữ nguyên làm lịch sử. Hành vi idempotent: PENDING đã
+     * DISMISSED không đổi trạng thái.
+     */
+    public function dismissPendingMatches(MissingChild $missingChild): void
+    {
+        $missingChild->faceMatchResults()
+            ->where('status', 'PENDING')
+            ->update(['status' => 'DISMISSED']);
+
+        // Phản ánh ngay trên badge "Đối chiếu khuôn mặt AI" (không đợi TTL 5 phút).
+        Cache::forget('badge_face_match_pending');
     }
 }

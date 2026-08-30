@@ -109,12 +109,9 @@ class MapDataController
             ]);
 
         match ($type) {
-            'missing' => $missingQuery->where('status', 'APPROVED'),
-            'found' => $missingQuery->where('status', 'FOUND'),
-            default => $missingQuery->whereIn('status', [
-                'APPROVED',
-                'FOUND',
-            ]),
+            'missing' => $missingQuery->where('status', MissingChild::STATUS_APPROVED),
+            'found' => $missingQuery->where('status', MissingChild::STATUS_FOUND),
+            default => $missingQuery->activeForPublic(),
         };
 
         if (!empty($filters['province_id'])) {

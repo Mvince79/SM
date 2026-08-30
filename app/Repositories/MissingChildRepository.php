@@ -26,7 +26,7 @@ class MissingChildRepository
             ->when(
                 $status,
                 fn($q) => $q->where('status', $status),
-                fn($q) => $q->whereIn('status', ['APPROVED', 'FOUND'])
+                fn($q) => $q->activeForPublic()
             )
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($q2) use ($q) {

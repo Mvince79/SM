@@ -11,5 +11,14 @@ return [
     'timeout' => (int) env('FACE_MATCH_TIMEOUT', 30),
     'health_timeout' => (int) env('FACE_MATCH_HEALTH_TIMEOUT', 3),
     'queue' => env('FACE_MATCH_QUEUE', 'face-match'),
+    // Retry NGẮN chạy TRONG hàm xử lý khi job ép sync (onConnection('sync')).
+    // Laravel Queue retry ($tries/$backoff/$timeout ở class Job) KHÔNG có tác dụng
+    // với sync connection (sync thực thi tại chỗ, ném lỗi chứ không re-queue), nên
+    // đây là cơ chế retry THỰC TẾ: vài lần thử, backoff tính bằng ms để vượt qua AI
+    // service giật tạm thời mà KHÔNG block request upload quá lâu như backoff hàng
+    // phút của queue worker. Nếu cạn số lần thử, ném lại AIServiceUnavailableException
+    // để lớp gọi ngoài xử lý graceful (đánh dấu ảnh pending / failed theo Bước 1).
+    'sync_retry_attempts' => (int) env('FACE_MATCH_SYNC_RETRY_ATTEMPTS', 3),
+    'sync_retry_delay_ms' => (int) env('FACE_MATCH_SYNC_RETRY_DELAY_MS', 250),
     'model' => env('FACE_MATCH_MODEL', 'ArcFace'),
 ];

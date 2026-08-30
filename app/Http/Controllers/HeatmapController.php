@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MissingChild;
+use App\Support\CacheVersion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -20,7 +21,8 @@ class HeatmapController extends Controller
         $timeRange = $validated['time_range'] ?? 'all';
 
         $cacheKey = sprintf(
-            'map:heatmap:%s:%s',
+            'map:heatmap:v%s:%s:%s',
+            CacheVersion::current(CacheVersion::MAP_DATA),
             $provinceId ?? 'all',
             $timeRange
         );
@@ -53,6 +55,12 @@ class HeatmapController extends Controller
                             }
                         }
                     )
+                    // Chỉ vẽ điểm cho hồ sơ đang active (APPROVED/FOUND). Hồ sơ đã
+                    // đoàn tụ/đóng/từ chối (REUNITED/CLOSED/REJECTED/...) phải ẩn
+                    // khỏi heatmap. Cache key đã gắn CacheVersion::MAP_DATA nên khi
+                    // MissingChildObserver bump version lúc đổi status, heatmap tự
+                    // làm mới (hồ sơ vừa đoàn tụ biến mất ngay, không đợi hết TTL).
+                    ->activeForPublic()
                     ->whereNotNull('lat')
                     ->whereNotNull('lng')
                     ->select(['lat', 'lng'])

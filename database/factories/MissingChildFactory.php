@@ -144,4 +144,12 @@ class MissingChildFactory extends Factory
             'status' => 'REJECTED',
         ]);
     }
+
+    public function reunited(): static
+    {
+        return $this->state(fn() => [
+            'status' => 'REUNITED',
+            'reunited_confirmed_at' => now(),
+        ]);
+    }
 }

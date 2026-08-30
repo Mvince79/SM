@@ -61,6 +61,23 @@ class FoundChild extends Model
         return $query->whereIn('status', [self::STATUS_CLOSED, self::STATUS_REJECTED]);
     }
 
+    /**
+     * Hồ sơ "chưa giải quyết" với mục đích quét đối chiếu khuôn mặt:
+     *  - không ở trạng thái kết thúc (CLOSED/REJECTED), VÀ
+     *  - không có kết quả đối chiếu CONFIRMED trỏ đến một hồ sơ mất tích đã kết thúc
+     *    (đã khớp + phụ huynh xác nhận về nhà → ẩn khỏi pool quét để AI không so
+     *    khớp lặp vô nghĩa).
+     */
+    public function scopeNotResolved(Builder $query): Builder
+    {
+        return $query
+            ->whereNotIn('status', [self::STATUS_CLOSED, self::STATUS_REJECTED])
+            ->whereDoesntHave('faceMatchResults', function ($q) {
+                $q->where('status', 'CONFIRMED')
+                    ->whereHas('missingChild', fn ($q2) => $q2->whereIn('status', MissingChild::CLOSED_STATUSES));
+            });
+    }
+
     protected function casts(): array
     {
         return [

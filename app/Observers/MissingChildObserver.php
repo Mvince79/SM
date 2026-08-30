@@ -254,6 +254,20 @@ class MissingChildObserver
             }
         }
 
+        // Hồ sơ chuyển sang trạng thái ĐÃ KẾT THÚC (REUNITED / CLOSED / REJECTED /
+        // ARCHIVED / UNREACHABLE_FAMILY) → ẩn các gợi ý "so khớp AI" còn PENDING
+        // (không còn ý nghĩa với hồ sơ đã "xong việc"). Idempotent: PENDING đã
+        // DISMISSED không đổi. CONFIRMED giữ nguyên (lịch sử hợp lệ, đã dẫn đến
+        // đoàn tụ). Dùng app() để không đổi chữ ký constructor của observer.
+        if ($missingChild->wasChanged('status') && in_array($missingChild->status, MissingChild::CLOSED_STATUSES, true)) {
+            try {
+                app(\App\Services\MissingChildCascadeService::class)
+                    ->dismissPendingMatches($missingChild);
+            } catch (\Throwable $e) {
+                Log::warning('MissingChildObserver: dismiss pending matches failed: ' . $e->getMessage());
+            }
+        }
+
         if ($missingChild->wasChanged(['status', 'lat', 'lng'])) {
             $this->invalidateMapAndHomeCache();
         }

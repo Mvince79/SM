@@ -18,11 +18,11 @@ return [
     | Bảo vệ "cron sập": hồ sơ chưa từng được gửi nhắc nào (vd cron chết từ lúc
     | bàn giao, hoặc hồ sơ không có chủ sở hữu) KHÔNG được đóng oan ở close_after_days.
     */
-    'reminder_milestones' => [1, 3, 5],
+    'reminder_milestones' => [5, 10],
 
-    'escalate_after_days' => 5,
+    'escalate_after_days' => 15,
 
-    'close_after_days' => 7,
+    'close_after_days' => 20,
 
     /*
     |--------------------------------------------------------------------------
