@@ -9,12 +9,12 @@ use App\Models\NotificationRecipient;
 use App\Models\User;
 use App\Services\Notification\Notifier;
 use App\Services\Notification\RecipientResolver;
+use App\Support\TimeUnit;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 
 /**
  * H-05 — Leo thang hồ sơ FOUND quá ngưỡng chưa được gia đình xác nhận bàn giao.
@@ -63,7 +63,10 @@ class EscalateUnconfirmedHandoverJob implements ShouldQueue
 
         // Mốc tính từ lúc khớp được xác nhận (found_at) hoặc lúc cập nhật gần nhất.
         $since = $case->found_at ?? $case->updated_at;
-        $daysSinceFound = $since ? (int) Carbon::parse($since)->diffInDays(now()) : 0;
+        // Khoảng thời gian (theo đơn vị config notification.reminder_time_unit,
+        // mặc định 'days') đã trôi qua kể từ lúc khớp. Giá trị phản ánh đúng đơn
+        // vị đang cấu hình (vd 'minutes' → số phút).
+        $daysSinceFound = TimeUnit::elapsedSince($since);
         $reminderCount = NotificationEvent::query()
             ->where('event_type', NotificationEvent::TYPE_HANDOVER_FAMILY_REMINDER)
             ->where('subject_type', $case->getMorphClass())

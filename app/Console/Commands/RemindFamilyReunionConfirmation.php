@@ -6,8 +6,8 @@ use App\Jobs\EscalateUnconfirmedReunionJob;
 use App\Models\MissingChild;
 use App\Models\NotificationEvent;
 use App\Services\Notification\NotificationDeliveryService;
+use App\Support\TimeUnit;
 use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
 
 /**
  * H-04 — Nhắc tự động gia đình xác nhận đoàn tụ, theo mốc (milestone).
@@ -28,8 +28,10 @@ use Illuminate\Support\Carbon;
  *    có chủ sở hữu) KHÔNG bị đóng oan ở close_after_days — đúng yêu cầu "cron
  *    sập không giết oan hồ sơ".
  *
- * Lưu ý Carbon 3 (nesbot/carbon ^3): diffInDays() trả về float CÓ DẤU, nên
- * luôn tính $since->diffInDays($now) để ra số ngày đã trôi qua (dương).
+ * Lưu ý Carbon 3 (nesbot/carbon ^3): diffIn*() trả về float CÓ DẤU, nên luôn
+ * tính $since->diffIn*(now) để ra số đơn vị đã trôi qua (dương). Đơn vị (ngày/
+ * giờ/phút/giây) lấy từ config notification.reminder_time_unit (mặc định 'days'
+ * → hành vi cũ giữ nguyên), qua App\Support\TimeUnit.
  */
 class RemindFamilyReunionConfirmation extends Command
 {
@@ -61,12 +63,13 @@ class RemindFamilyReunionConfirmation extends Command
                 continue;
             }
 
-            // Chiều tính: từ mốc bàn giao ĐẾN hiện tại → số ngày đã trôi qua (dương).
-            $days = (int) Carbon::parse($since)->diffInDays($now);
+            // Chiều tính: từ mốc bàn giao ĐẾN hiện tại → số ĐƠN VỊ (ngày/giờ/phút,
+            // theo config notification.reminder_time_unit) đã trôi qua. Mặc định 'days'.
+            $elapsed = TimeUnit::elapsedSince($since, $now);
 
             // Gửi từng mốc đến hạn mà chưa gửi (mỗi mốc 1 lần, idempotent theo milestone).
             foreach ($milestones as $milestone) {
-                if ($days >= $milestone && ! $this->alreadyRemindedMilestone($case, $milestone)) {
+                if ($elapsed >= $milestone && ! $this->alreadyRemindedMilestone($case, $milestone)) {
                     if ($this->sendFamilyReminder($case, $milestone, $delivery)) {
                         $reminded++;
                     }
@@ -78,14 +81,14 @@ class RemindFamilyReunionConfirmation extends Command
 
             // Đóng hồ sơ chỉ khi đã quá close_after_days VÀ đã từng gửi ít nhất 1 lần
             // nhắc (tránh đóng oan khi cron sập / không liên hệ được lần nào).
-            if ($days >= $closeAfter && $attempts >= 1) {
+            if ($elapsed >= $closeAfter && $attempts >= 1) {
                 $case->forceFill(['status' => MissingChild::STATUS_UNREACHABLE_FAMILY])->save();
                 $unreachable++;
                 continue;
             }
 
             // Quá escalate_after_days → leo thang cho admin (1 lần).
-            if ($days >= $escalateAfter && ! $this->alreadyEscalated($case)) {
+            if ($elapsed >= $escalateAfter && ! $this->alreadyEscalated($case)) {
                 EscalateUnconfirmedReunionJob::dispatch($case->getKey());
                 $escalated++;
             }

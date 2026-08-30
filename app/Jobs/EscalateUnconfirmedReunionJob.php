@@ -9,12 +9,12 @@ use App\Models\NotificationRecipient;
 use App\Models\User;
 use App\Services\Notification\Notifier;
 use App\Services\Notification\RecipientResolver;
+use App\Support\TimeUnit;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 
 /**
  * H-04 — Leo thang hồ sơ HANDED_OVER quá ngưỡng chưa được gia đình xác nhận.
@@ -57,7 +57,10 @@ class EscalateUnconfirmedReunionJob implements ShouldQueue
         }
 
         $since = $case->handover_confirmed_at ?? $case->updated_at;
-        $daysSinceHandover = $since ? (int) Carbon::parse($since)->diffInDays(now()) : 0;
+        // Khoảng thời gian (theo đơn vị config notification.reminder_time_unit,
+        // mặc định 'days') đã trôi qua kể từ lúc bàn giao. Giá trị phản ánh đúng
+        // đơn vị đang cấu hình (vd 'minutes' → số phút).
+        $daysSinceHandover = TimeUnit::elapsedSince($since);
         $reminderCount = NotificationEvent::query()
             ->where('event_type', NotificationEvent::TYPE_REUNION_FAMILY_REMINDER)
             ->where('subject_type', $case->getMorphClass())

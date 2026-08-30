@@ -26,6 +26,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Đơn vị thời gian áp dụng cho nhịp nhắc/leo thang (H-04/H-05)
+    |--------------------------------------------------------------------------
+    | Đơn vị hiện tại là 'days' (mặc định) — HÀNH VI PRODUCTION KHÔNG ĐỔI so
+    | với diffInDays() cũ. Đổi NOTIFICATION_REMINDER_TIME_UNIT trong .env để
+    | test nhanh (ví dụ 'minutes' để nhắc sau vài phút thay vì vài ngày, hoặc
+    | 'hours' / 'seconds'). Các khóa reminder_milestones / escalate_after_days
+    | / close_after_days GIỮ NGUYÊN, chỉ đổi đơn vị áp dụng cho chúng.
+    |
+    | Giá trị hợp lệ: 'days' | 'hours' | 'minutes' | 'seconds'.
+    */
+    'reminder_time_unit' => env('NOTIFICATION_REMINDER_TIME_UNIT', 'days'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Event type khẩn cấp (đẩy vào escalation_queue khi quá hạn chưa đọc)
     |--------------------------------------------------------------------------
     */
