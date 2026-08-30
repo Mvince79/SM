@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
@@ -50,6 +51,15 @@ class FoundChild extends Model
     public const STATUS_REJECTED = 'REJECTED';
 
     public const STATUS_CLOSED = 'CLOSED';
+
+    /**
+     * GĐ4 — Lọc các hồ sơ "đã kết thúc" (trạng thái cuối): đóng hoặc bị từ chối.
+     * Dùng cho bộ lọc "Đã kết thúc" trên màn Hồ Sơ Trẻ Đã Tìm Thấy.
+     */
+    public function scopeEnded(Builder $query): Builder
+    {
+        return $query->whereIn('status', [self::STATUS_CLOSED, self::STATUS_REJECTED]);
+    }
 
     protected function casts(): array
     {

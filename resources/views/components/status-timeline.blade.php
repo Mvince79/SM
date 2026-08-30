@@ -114,5 +114,15 @@
                 Hệ thống đang so khớp khuôn mặt với các hồ sơ trẻ thất lạc…
             </p>
         @endif
+
+        {{-- H-05 — Ở bước FOUND: bước "Đã bàn giao" là bước TIẾP THEO (chưa hoàn tất).
+            Thêm dòng nhắc để gia đình hiểu rõ đây là trạng thái chờ xác nhận, không
+            phải đã bàn giao rồi. --}}
+        @if($status === 'FOUND' && $currentStep === 4)
+            <p class="mt-3 text-[11px] text-slate-500 font-medium flex items-center gap-1.5">
+                <span class="inline-block w-2 h-2 rounded-full bg-brand animate-pulse"></span>
+                Kết quả đã xác nhận khớp. Chờ gia đình xác nhận bé đã được bàn giao…
+            </p>
+        @endif
     </div>
 </div>

@@ -170,11 +170,6 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
         'destroy' => 'found-children.destroy',
     ]);
 
-    // H-03 — Xác nhận đoàn tụ (chỉ chủ tài khoản). Middleware auth+email.verified
-    // đã được áp dụng bởi group cha; policy confirmReunited kiểm tra chủ sở hữu.
-    Route::post('/missing/{missingChild}/confirm-reunited', [MissingController::class, 'confirmReunited'])
-        ->name('missing.confirm-reunited');
-
     Route::prefix('/notifications')->name('notifications.')->group(function () {
         Route::get('/', [NotificationController::class, 'center'])->name('center');
         Route::get('/dropdown', [NotificationController::class, 'dropdown'])->name('dropdown');
@@ -219,4 +214,15 @@ Route::middleware(['auth', 'email.verified'])->group(function () {
 
         return Storage::disk('private')->response($message->attachment_path);
     })->name('admin-chat.attachment');
+});
+
+// H-03/H-05 — Xác nhận đoàn tụ & xác nhận bàn giao (chỉ chủ tài khoản, đã KYC).
+// NẰM NGOÀI nhóm email.verified: gia đình đã KYC khi đăng tin nên KHÔNG cần
+// xác thực email. Chỉ yêu cầu đăng nhập (auth); cổng KYC do
+// Policy::confirmReunited / confirmHandover kiểm tra (kyc_status === VERIFIED).
+Route::middleware(['auth'])->group(function () {
+    Route::post('/missing/{missingChild}/confirm-reunited', [MissingController::class, 'confirmReunited'])
+        ->name('missing.confirm-reunited');
+    Route::post('/missing/{missingChild}/confirm-handover', [MissingController::class, 'confirmHandover'])
+        ->name('missing.confirm-handover');
 });

@@ -11,13 +11,15 @@ new class extends Component
     {
         $approved = MissingChild::where('status', 'APPROVED')->count();
         $found    = MissingChild::where('status', 'FOUND')->count();
-        $total    = MissingChild::whereIn('status', ['APPROVED', 'FOUND', 'CLOSED'])->count();
+        $reunited = MissingChild::where('status', MissingChild::STATUS_REUNITED)->count();
+
+        $base = $approved + $found + $reunited;
 
         $this->stats = [
             'found'        => $found,
             'searching'    => $approved,
-            'avg_time'     => '48h',
-            'reunite_rate' => $total > 0 ? round($found / $total * 100) . '%' : '0%',
+            'reunited'     => $reunited,
+            'reunite_rate' => $base > 0 ? round($reunited / $base * 100) . '%' : '0%',
         ];
     }
 };
@@ -27,18 +29,18 @@ new class extends Component
     <div class="stats-bar-inner">
         <div class="stat-item">
             <div class="stat-num text-primary">{{ number_format($stats['found']) }}</div>
-            <div class="stat-label">Con đã về nhà</div>
+            <div class="stat-label">Đã tìm thấy</div>
         </div>
         <div class="stat-item">
             <div class="stat-num text-slate-900">{{ number_format($stats['searching']) }}</div>
             <div class="stat-label">Đang tích cực tìm</div>
         </div>
         <div class="stat-item">
-            <div class="stat-num text-brand">{{ $stats['avg_time'] }}</div>
-            <div class="stat-label">Thời gian trung bình</div>
+            <div class="stat-num text-success">{{ number_format($stats['reunited']) }}</div>
+            <div class="stat-label">Con đã về nhà</div>
         </div>
         <div class="stat-item">
-            <div class="stat-num text-success">{{ $stats['reunite_rate'] }}</div>
+            <div class="stat-num text-brand">{{ $stats['reunite_rate'] }}</div>
             <div class="stat-label">Tỷ lệ đoàn tụ</div>
         </div>
     </div>

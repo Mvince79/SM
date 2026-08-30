@@ -247,6 +247,38 @@ class MissingChild extends Model
         ])->save();
     }
 
+    /**
+     * H-01/H-04 — Admin đánh dấu "đã bàn giao" (Đánh dấu đã bàn giao) hộ gia đình.
+     *
+     * Đối xứng với confirmReunionByAdmin(): lý do được kiểm tra TẠI ĐÂY, trước khi
+     * save(), nên mọi caller (Filament action, lệnh CLI, job, test) đều bị chặn thật
+     * sự nếu thiếu lý do (< ADMIN_REASON_MIN_LENGTH). StatusChangeAuditObserver chỉ
+     * chạy ở event `updated` (sau khi ghi DB) nên không thể rollback —验证逻辑
+     * phải nằm trước save().
+     *
+     * @throws \Illuminate\Validation\ValidationException nếu lý do < 20 ký tự
+     */
+    public function confirmHandoverByAdmin(string $reason, ?int $actorId = null, ?int $handoverPointId = null): void
+    {
+        $reason = trim($reason);
+
+        if (mb_strlen($reason) < self::ADMIN_REASON_MIN_LENGTH) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'reason' => 'Lý do xác nhận bàn giao hộ phải có ít nhất '
+                    . self::ADMIN_REASON_MIN_LENGTH . ' ký tự.',
+            ]);
+        }
+
+        $this->audit_reason = $reason;
+
+        $this->forceFill([
+            'status' => self::STATUS_HANDED_OVER,
+            'handover_point_id' => $handoverPointId,
+            'handover_confirmed_at' => now(),
+            'handover_confirmed_by' => $actorId ?? Auth::id(),
+        ])->save();
+    }
+
     protected static function generateUniqueSlug(MissingChild $missingChild): string
     {
         $baseSlug = Str::slug($missingChild->full_name) ?: 'missing-child';

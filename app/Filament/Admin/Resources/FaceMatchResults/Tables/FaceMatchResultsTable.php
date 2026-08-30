@@ -293,6 +293,12 @@ class FaceMatchResultsTable
                             // faithful (quyết định #1) khi FoundChild bị từ chối/xoá.
                             $prevMissingStatus = $record->missingChild?->status;
 
+                            // Lưu trạng thái FoundChild TRƯỚC khi confirm (đối xứng với
+                            // missing_child_prev_status) để MissingChildCascadeService revert
+                            // FoundChild về đúng trạng thái trước MATCHED khi missing child
+                            // bị từ chối/xoá — không hardcode APPROVED.
+                            $prevFoundStatus = $record->foundChild?->status;
+
                             $record->update([
                                 'status' => 'CONFIRMED',
                                 'confirmed_by' => Auth::id(),
@@ -309,6 +315,7 @@ class FaceMatchResultsTable
                             ]);
 
                             $record->missing_child_prev_status = $prevMissingStatus;
+                            $record->found_child_prev_status = $prevFoundStatus;
                             $record->saveQuietly();
 
                             FaceMatchResult::where('missing_id', $record->missing_id)

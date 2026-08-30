@@ -202,6 +202,27 @@ return [
             ],
         ],
 
+        // H-05 — Nhắc gia đình xác nhận "bé đã được bàn giao" (bước trước đoàn tụ).
+        NotificationEvent::TYPE_HANDOVER_FAMILY_REMINDER => [
+            '*' => [
+                'title' => 'Vui lòng xác nhận bé đã được bàn giao',
+                'body' => 'Kết quả so khớp của hồ sơ :case_code (:full_name) đã được xác nhận. Nếu cơ quan chức '
+                    . 'năng đã liên hệ và bàn giao bé cho bạn, vui lòng bấm "Xác nhận bé đã được bàn giao" để '
+                    . 'chúng tôi cập nhật. Nếu bạn cần hỗ trợ, hãy phản hồi ngay.',
+                'url' => 'case',
+            ],
+        ],
+
+        // H-05 — Leo thang admin khi FOUND quá hạn chưa gia đình xác nhận bàn giao.
+        NotificationEvent::TYPE_HANDOVER_ADMIN_ESCALATION => [
+            '*' => [
+                'title' => 'Cần xác minh bàn giao hộ (gia đình chưa phản hồi)',
+                'body' => 'Hồ sơ :case_code (:full_name) đã xác nhận khớp :days_since_handover ngày nhưng gia '
+                    . 'đình chưa xác nhận bàn giao sau :reminder_count lần nhắc. Vui lòng gọi điện xác minh.',
+                'url' => 'admin_case',
+            ],
+        ],
+
         NotificationEvent::TYPE_CASE_UNREACHABLE_FAMILY => [
             'USER' => [
                 'title' => 'Chúng tôi chưa liên hệ được với bạn',
@@ -248,6 +269,43 @@ return [
                 'body' => 'Lý do: :reason. Nếu bạn có thêm thông tin hoặc ảnh rõ hơn, '
                     . 'hãy bổ sung và gửi lại giúp chúng tôi.',
                 'url' => 'found',
+            ],
+        ],
+
+        // ─── Xoá hồ sơ (sự kiện riêng với Từ chối; không có :reason) ───────────
+        NotificationEvent::TYPE_FOUND_DELETED => [
+            '*' => [
+                'title' => 'Tin báo tìm thấy trẻ đã bị xoá',
+                'body' => 'Tin bạn báo tìm thấy trẻ đã bị quản trị viên xoá khỏi hệ thống. '
+                    . 'Nếu bạn cho rằng đây là nhầm lẫn, hãy liên hệ Trung tâm hỗ trợ để được hỗ trợ.',
+                'url' => 'found',
+            ],
+        ],
+
+        NotificationEvent::TYPE_CASE_DELETED => [
+            '*' => [
+                'title' => 'Hồ sơ :case_code đã bị xoá',
+                'body' => 'Hồ sơ tìm :full_name (:case_code) của bạn đã bị quản trị viên xoá khỏi hệ thống. '
+                    . 'Nếu bạn cho rằng đây là nhầm lẫn, hãy liên hệ Trung tâm hỗ trợ để được hỗ trợ.',
+                'url' => 'case',
+            ],
+        ],
+
+        // ─── Khôi phục hồ sơ (từ thùng rác) ────────────────────────────────────
+        NotificationEvent::TYPE_FOUND_RESTORED => [
+            '*' => [
+                'title' => 'Tin báo tìm thấy trẻ đã được khôi phục',
+                'body' => 'Tin bạn báo tìm thấy trẻ đã được quản trị viên khôi phục và hiển thị lại trên hệ thống.',
+                'url' => 'found',
+            ],
+        ],
+
+        NotificationEvent::TYPE_CASE_RESTORED => [
+            '*' => [
+                'title' => 'Hồ sơ :case_code đã được khôi phục',
+                'body' => 'Hồ sơ tìm :full_name (:case_code) của bạn đã được quản trị viên khôi phục '
+                    . 'và hiển thị lại trên hệ thống.',
+                'url' => 'case',
             ],
         ],
 
@@ -340,6 +398,13 @@ return [
             '*' => ['mail', 'push'],
         ],
         NotificationEvent::TYPE_REUNION_ADMIN_ESCALATION => [
+            '*' => ['mail', 'push'],
+        ],
+        // H-05 — Nhắc/leo thang bước bàn giao (mirror đoàn tụ).
+        NotificationEvent::TYPE_HANDOVER_FAMILY_REMINDER => [
+            '*' => ['mail', 'push'],
+        ],
+        NotificationEvent::TYPE_HANDOVER_ADMIN_ESCALATION => [
             '*' => ['mail', 'push'],
         ],
         NotificationEvent::TYPE_CASE_UNREACHABLE_FAMILY => [

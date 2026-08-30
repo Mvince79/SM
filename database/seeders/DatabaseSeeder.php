@@ -8,7 +8,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Seed default Admin Account
+        // Seed default Admin Account (DUY NHẤT 1 tài khoản quản trị để đăng nhập)
         \App\Models\User::firstOrCreate(
             ['email' => 'admin@timkiemtreem.vn'],
             [
@@ -21,18 +21,30 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Chỉ seed dữ liệu tối thiểu, sạch sẽ để chuẩn bị thi:
+        //  - ProvincesSeeder     : dữ liệu tham chiếu tỉnh/thành (bản đồ, địa chỉ, ranh giới)
+        //  - HandoverPointsSeeder: điểm bàn giao (tham chiếu, phục vụ định vị)
+        //  - DemoArticlesSeeder  : bài viết/SEO
+        // ĐÃ LOẠI BỎ toàn bộ seeder demo giao dịch (Users, MissingChildren, Photos,
+        // Clues, DemoMissingChildren, DemoFoundChildren): chúng sinh photo chờ xử lý
+        // AI, thông báo, escalation... gây treo/kẹt/tắc nghẽn luồng. Giữ lại sẽ khiến
+        // worker AI / thông báo cố xử lý dữ liệu ảo. DemoEscalationSeeder không nằm
+        // trong danh sách gọi nên mặc định không sinh dữ liệu escalation.
         $this->call([
             ProvincesSeeder::class,
-            UsersSeeder::class,
-            MissingChildrenSeeder::class,
-            PhotosSeeder::class,
-            CluesSeeder::class,
             HandoverPointsSeeder::class,
-            // DemoVerifierSeeder::class,
             DemoArticlesSeeder::class,
-            DemoMissingChildrenSeeder::class, // S6-A01
-            DemoFoundChildrenSeeder::class,   // S6-A01
-
         ]);
+
+        // Xoá toàn bộ cache (config/route/view/event/cache) để sau
+        // `php artisan migrate:fresh --seed` mọi thứ thực sự sạch, tránh cache cũ
+        // gây treo/kẹt luồng. bọc try/catch để không làm gãy quá trình seeding
+        // nếu môi trường không cho xoá cache.
+        try {
+            \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+            $this->command?->info('Đã xoá cache (optimize:clear).');
+        } catch (\Throwable $e) {
+            // bỏ qua — không chặn seeding
+        }
     }
 }

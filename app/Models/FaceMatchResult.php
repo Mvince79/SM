@@ -53,6 +53,53 @@ class FaceMatchResult extends Model
         };
     }
 
+    /**
+     * Kết quả bị bác bỏ do cascade (xoá/từ chối hồ sơ đối diện) sẽ lưu trạng thái
+     * trước khi revert vào found_child_prev_status / missing_child_prev_status.
+     * Có mặt ít nhất một giá trị → đây là "hoàn tác" (revert), KHÔNG phải bác bỏ
+     * thủ công (vốn không lưu prev status).
+     */
+    public function isRevertedViaCascade(): bool
+    {
+        return $this->status === 'DISMISSED'
+            && ($this->found_child_prev_status !== null || $this->missing_child_prev_status !== null);
+    }
+
+    /**
+     * Chuỗi tóm tắt các hồ sơ được revert về trạng thái nào khi cascade bác bỏ
+     * kết quả này. Dùng làm mô tả (tooltip) cho badge "Đã hoàn tác".
+     */
+    public function getRevertSummaryAttribute(): ?string
+    {
+        if (! $this->isRevertedViaCascade()) {
+            return null;
+        }
+
+        $label = fn (?string $status): string => match ($status) {
+            'PENDING' => 'Chờ',
+            'APPROVED' => 'Đã duyệt',
+            'MATCHED' => 'Đã khớp',
+            'REJECTED' => 'Từ chối',
+            'CLOSED' => 'Đã đóng',
+            'FOUND' => 'Đã tìm thấy',
+            'HANDED_OVER' => 'Đã bàn giao',
+            'REUNITED' => 'Đã đoàn tụ',
+            default => (string) $status,
+        };
+
+        $parts = [];
+
+        if ($this->found_child_prev_status !== null) {
+            $parts[] = 'Trẻ tìm thấy ← ' . $label($this->found_child_prev_status);
+        }
+
+        if ($this->missing_child_prev_status !== null) {
+            $parts[] = 'Trẻ mất tích ← ' . $label($this->missing_child_prev_status);
+        }
+
+        return implode(' · ', $parts);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

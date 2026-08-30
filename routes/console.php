@@ -27,3 +27,9 @@ Schedule::command('reunion:remind-family')
     ->dailyAt('02:00')
     ->withoutOverlapping()
     ->onOneServer();
+
+// H-05 — Nhắc gia đình xác nhận "bé đã được bàn giao" và leo thang cho admin nếu quá hạn.
+Schedule::command('handover:remind-family')
+    ->dailyAt('02:30')
+    ->withoutOverlapping()
+    ->onOneServer();

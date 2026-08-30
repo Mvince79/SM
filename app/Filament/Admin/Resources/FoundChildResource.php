@@ -11,6 +11,7 @@ use App\Support\SecureUploadFilename;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
@@ -25,6 +26,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use App\Filament\Admin\Resources\FoundChildResource\RelationManagers\MatchedMissingChildrenRelationManager;
@@ -290,8 +292,15 @@ class FoundChildResource extends Resource
                         'PENDING' => 'Chờ duyệt',
                         'APPROVED' => 'Đã duyệt',
                         'MATCHED' => 'Đã khớp',
+                        'REJECTED' => 'Bị từ chối',
                         'CLOSED' => 'Đã đóng',
                     ]),
+                // GĐ4 — "Đã kết thúc": gom nhanh các hồ sơ có trạng thái cuối
+                // (đóng / từ chối) để xem toàn bộ hồ sơ đã xử lý xong.
+                Filter::make('ended')
+                    ->label('Đã kết thúc (đóng / từ chối)')
+                    ->toggle()
+                    ->query(fn (Builder $query): Builder => $query->ended()),
                 SelectFilter::make('province_id')
                     ->label('Tỉnh/Thành')
                     ->relationship('province', 'name')
@@ -316,6 +325,9 @@ class FoundChildResource extends Resource
                 Filter::make('ai_processed')
                     ->label('Đã AI xử lý')
                     ->query(fn (Builder $query): Builder => $query->whereNotNull('ai_processed_at')),
+                TrashedFilter::make()
+                    ->native(false)
+                    ->columnSpan('full'),
             ])
             ->actions([
                 Action::make('approve')
@@ -362,6 +374,7 @@ class FoundChildResource extends Resource
                         });
                     }),
                 EditAction::make(),
+                RestoreAction::make(),
                 DeleteAction::make()
                     ->action(function (FoundChild $record) {
                         // Cascade revert (quyết định #1) + khử FaceMatchResult PENDING

@@ -12,6 +12,19 @@
             </div>
         @endif
 
+        {{-- H-05 — Hướng dẫn người tìm thấy khi kết quả đã khớp: đem bé ra công an --}}
+        @if($item->status === 'MATCHED' && auth()->check() && auth()->id() === $item->user_id)
+            <div class="mb-4 p-4 bg-brand/5 border border-brand/20 rounded-2xl flex items-start gap-3">
+                <x-heroicon-o-check-badge class="w-6 h-6 text-brand shrink-0 mt-0.5" />
+                <div class="text-sm text-slate-700">
+                    <p class="font-bold text-brand">Kết quả đã xác nhận khớp — cảm ơn bạn!</p>
+                    <p class="mt-1">Hãy đem bé đến công an phường/xã hoặc điểm tiếp nhận gần nhất để bàn giao.
+                    Cơ quan chức năng sẽ trực tiếp liên hệ gia đình đăng tin. Hệ thống sẽ tự động thông báo
+                    cho gia đình khi bé được bàn giao.</p>
+                </div>
+            </div>
+        @endif
+
         {{-- U-02 — Gợi ý 3 điểm tiếp nhận gần nhất theo vị trí trẻ được tìm thấy --}}
         <x-nearest-handover-points :lat="$item->lat" :lng="$item->lng" />
 

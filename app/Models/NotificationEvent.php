@@ -28,6 +28,12 @@ class NotificationEvent extends Model
     // H-04 — Leo thang cho admin khi HANDED_OVER quá 7 ngày chưa xác nhận.
     public const TYPE_REUNION_ADMIN_ESCALATION = 'REUNION_ADMIN_ESCALATION';
 
+    // H-05 — Nhắc gia đình xác nhận "bé đã được bàn giao" (hồ sơ FOUND quá hạn).
+    public const TYPE_HANDOVER_FAMILY_REMINDER = 'HANDOVER_FAMILY_REMINDER';
+
+    // H-05 — Leo thang cho admin khi FOUND quá hạn chưa gia đình xác nhận bàn giao.
+    public const TYPE_HANDOVER_ADMIN_ESCALATION = 'HANDOVER_ADMIN_ESCALATION';
+
     // ─── Vòng đời hồ sơ mất tích ────────────────────────────────────────────
     public const TYPE_CASE_SUBMITTED = 'CASE_SUBMITTED';
 
@@ -48,6 +54,16 @@ class NotificationEvent extends Model
     public const TYPE_FOUND_APPROVED = 'FOUND_APPROVED';
 
     public const TYPE_FOUND_REJECTED = 'FOUND_REJECTED';
+
+    // ─── Xoá hồ sơ (khác Từ chối — không có :reason vì UI xoá không nhập lý do) ─
+    public const TYPE_FOUND_DELETED = 'FOUND_DELETED';
+
+    public const TYPE_CASE_DELETED = 'CASE_DELETED';
+
+    // ─── Khôi phục hồ sơ (từ thùng rác; không tự khôi phục kết quả đối chiếu) ─
+    public const TYPE_FOUND_RESTORED = 'FOUND_RESTORED';
+
+    public const TYPE_CASE_RESTORED = 'CASE_RESTORED';
 
     /**
      * Event dành riêng cho NGƯỜI ĐĂNG TIN TÌM THẤY TRẺ.

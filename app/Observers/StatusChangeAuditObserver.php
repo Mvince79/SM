@@ -5,10 +5,13 @@ namespace App\Observers;
 use App\Models\AuditLog;
 use App\Models\FoundChild;
 use App\Models\MissingChild;
+use App\Models\NotificationEvent;
 use App\Models\User;
+use App\Services\Notification\Notifier;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 /**
  * D-01 — Ghi audit_logs mỗi khi status của MissingChild / FoundChild thay đổi.
@@ -25,12 +28,19 @@ use Illuminate\Support\Facades\Auth;
  */
 class StatusChangeAuditObserver
 {
+    public function __construct(
+        private readonly Notifier $notifier,
+    ) {
+    }
+
     /** Các trạng thái được coi là "override thủ công" cần lý do từ admin. */
     private const ADMIN_OVERRIDE_STATUSES = [
         MissingChild::STATUS_REUNITED,
         MissingChild::STATUS_UNREACHABLE_FAMILY,
+        MissingChild::STATUS_HANDED_OVER,
         'REUNITED',
         'UNREACHABLE_FAMILY',
+        'HANDED_OVER',
     ];
 
     public function updated(MissingChild|FoundChild $model): void
@@ -104,6 +114,69 @@ class StatusChangeAuditObserver
         $this->writeDeletionAudit($model);
     }
 
+    /**
+     * D-01 bổ sung — Ghi audit_logs + báo chủ hồ sơ khi một hồ sơ bị KHÔI PHỤC
+     * (từ thùng rác, sự kiện `restored` của SoftDeletes).
+     *
+     * Nhật Ký Hoạt Động (spatie activity_log) đã tự ghi 'restored' nhờ trait
+     * LogsActivity + SoftDeletes (xem vendor spatie), nên ở đây chỉ xử lý Nhật
+     * Ký Kiểm Toán và thông báo. old_value.status = 'DELETED' (Labels dịch
+     * "Đã xoá"), new_value.status = trạng thái thực của hồ sơ (soft-delete
+     * không đổi status nên đây chính là trạng thái trước khi xoá).
+     *
+     * QUAN TRỌNG: KHÔNG gọi cascade revert — FaceMatchResult đã bị DISMISSED lúc
+     * xoá vẫn giữ nguyên, admin phải tự xem xét và xác nhận lại match nếu cần.
+     */
+    public function restored(MissingChild|FoundChild $model): void
+    {
+        $actor = Auth::user();
+        $actorRole = $this->resolveActorRole($actor);
+        $request = $this->resolveRequest();
+
+        AuditLog::create([
+            'actor_id' => $actor?->getAuthIdentifier(),
+            'actor_role' => $actorRole,
+            'action' => $model->getTable() . '.status_restored',
+            'target_type' => $model->getTable(),
+            'target_id' => $model->getKey(),
+            'old_value' => ['status' => 'DELETED'],
+            'new_value' => ['status' => $model->status],
+            'reason' => null,
+            'ip_address' => $request?->ip(),
+            'user_agent' => $request?->userAgent(),
+        ]);
+
+        // Báo chủ hồ sơ biết hồ sơ đã được khôi phục (sự kiện riêng với Xoá/Từ chối).
+        // Tái dùng pattern guard `$owner->role === null` y hệt các nhánh trước.
+        $owner = $model->user;
+
+        if ($owner && $owner->role === null) {
+            $owner = User::find($owner->getKey());
+        }
+
+        if ($owner) {
+            $eventType = $model instanceof MissingChild
+                ? NotificationEvent::TYPE_CASE_RESTORED
+                : NotificationEvent::TYPE_FOUND_RESTORED;
+
+            $payload = $model instanceof MissingChild
+                ? ['case_code' => $model->case_code, 'full_name' => $model->full_name]
+                : [];
+
+            try {
+                $this->notifier->send(
+                    $eventType,
+                    $model,
+                    [$owner],
+                    $payload,
+                    $actor?->getAuthIdentifier(),
+                );
+            } catch (\Throwable $e) {
+                Log::warning('StatusChangeAuditObserver: gửi thông báo khôi phục hồ sơ thất bại: ' . $e->getMessage());
+            }
+        }
+    }
+
     private function writeDeletionAudit(MissingChild|FoundChild $model): void
     {
         $actor = Auth::user();
@@ -123,6 +196,42 @@ class StatusChangeAuditObserver
             'ip_address' => $request?->ip(),
             'user_agent' => $request?->userAgent(),
         ]);
+
+        // Báo chủ hồ sơ biết hồ sơ của họ bị xoá (sự kiện riêng với Từ chối —
+        // không có :reason vì UI xoá không có ô nhập lý do). Tái dùng pattern
+        // guard `$owner->role === null` y hệt FoundChildObserver/MissingChildObserver
+        // ở nhánh REJECTED: getEloquentQuery() resource có thể eager-load user
+        // chỉ vài cột khiến role = null → deliver() insert NULL vào role_at_time
+        // (cột NOT NULL) → recipient không tạo được. Nạp lại user đầy đủ trước
+        // khi gửi. Bọc try/catch để lỗi thông báo KHÔNG rollback luồng xoá
+        // (delete đang nằm trong DB::transaction ở Filament action).
+        $owner = $model->user;
+
+        if ($owner && $owner->role === null) {
+            $owner = User::find($owner->getKey());
+        }
+
+        if ($owner) {
+            $eventType = $model instanceof MissingChild
+                ? NotificationEvent::TYPE_CASE_DELETED
+                : NotificationEvent::TYPE_FOUND_DELETED;
+
+            $payload = $model instanceof MissingChild
+                ? ['case_code' => $model->case_code, 'full_name' => $model->full_name]
+                : [];
+
+            try {
+                $this->notifier->send(
+                    $eventType,
+                    $model,
+                    [$owner],
+                    $payload,
+                    $actor?->getAuthIdentifier(),
+                );
+            } catch (\Throwable $e) {
+                Log::warning('StatusChangeAuditObserver: gửi thông báo xoá hồ sơ thất bại: ' . $e->getMessage());
+            }
+        }
     }
 
     private function resolveActorRole(?Authenticatable $actor): ?string

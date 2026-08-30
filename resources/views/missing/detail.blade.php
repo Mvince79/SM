@@ -389,9 +389,15 @@
 
                 @livewire('missing.handover-suggestion-card', ['caseId' => $case->id])
 
-                {{-- H-02 — Chỉ chủ hồ sơ mới thấy khối "Việc cần làm" khi status = HANDED_OVER --}}
-                @if (in_array($case->status, ['APPROVED', 'FOUND', 'HANDED_OVER'], true) && auth()->check() && auth()->id() === $case->user_id)
-                    <x-next-steps-card :case="$case" />
+                {{-- H-05 — Chủ hồ sơ: thẻ theo trạng thái --}}
+                @if (auth()->check() && auth()->id() === $case->user_id)
+                    {{-- FOUND: kết quả khớp đã duyệt, chờ gia đình xác nhận bàn giao --}}
+                    @if ($case->status === 'FOUND')
+                        <x-family-handover-card :case="$case" />
+                    {{-- HANDED_OVER: bé đã bàn giao, gia đình đến nhận & xác nhận đoàn tụ --}}
+                    @elseif ($case->status === 'HANDED_OVER')
+                        <x-next-steps-card :case="$case" />
+                    @endif
                 @endif
 
                 {{-- START: KHỐI ĐIỂM BÀN GIAO / TIẾP NHẬN --}}

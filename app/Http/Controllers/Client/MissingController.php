@@ -136,6 +136,37 @@ class MissingController extends Controller
             ->route('missing.detail', ['id' => $missingChild->id])
             ->with('success', 'Chúc mừng! Hồ sơ đã được xác nhận đoàn tụ thành công.');
     }
+
+    /**
+     * H-05 — Gia đình xác nhận "bé đã được bàn giao" (HANDED_OVER).
+     *
+     * - Middleware auth (khai báo ở routes/web.php); cổng KYC do Policy::confirmHandover
+     *   thay cho email.verified (gia đình đã KYC khi đăng tin nên không cần verify email).
+     * - Policy confirmHandover: chỉ owner_id === auth()->id() và đã KYC.
+     * - Idempotent: đã HANDED_OVER/REUNITED → 409.
+     * - Ghi status=HANDED_OVER, handover_confirmed_at/by. StatusChangeAuditObserver tự
+     *   ghi audit_logs (actor = FAMILY). Observer MissingChildObserver gửi thông báo cho
+     *   người tìm thấy (TYPE_FOUND_CASE_HANDED_OVER).
+     * - Tự động biến mất khỏi trang chủ/map vì các query lấy danh sách khẩn cấp lọc status.
+     */
+    public function confirmHandover(Request $request, MissingChild $missingChild)
+    {
+        $this->authorize('confirmHandover', $missingChild);
+
+        if ($missingChild->isHandedOver() || $missingChild->isReunited()) {
+            abort(409, 'Hồ sơ này đã được xác nhận bàn giao hoặc đoàn tụ trước đó.');
+        }
+
+        $missingChild->forceFill([
+            'status' => MissingChild::STATUS_HANDED_OVER,
+            'handover_confirmed_at' => now(),
+            'handover_confirmed_by' => $request->user()->id,
+        ])->save();
+
+        return redirect()
+            ->route('missing.detail', ['id' => $missingChild->id])
+            ->with('success', 'Cảm ơn bạn! Hệ thống đã ghi nhận bé đã được bàn giao. Gia đình sẽ sớm đón bé về.');
+    }
     /**
      * Hàm phụ trợ lấy HandoverPoint hoạt động theo Tỉnh/Thành
      */

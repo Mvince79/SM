@@ -35,13 +35,40 @@ class MissingChildPolicy
     }
 
     /**
+     * Determine whether the user can confirm "bé đã được bàn giao" (HANDED_OVER).
+     * Chỉ chủ sở hữu hồ sơ (đã KYC) mới được xác nhận — KHÔNG yêu cầu xác thực email
+     * (vì đã KYC khi đăng tin). Cổng KYC thay cho email.verified ở route.
+     */
+    public function confirmHandover(User $user, MissingChild $missingChild): Response
+    {
+        if ($user->isBanned()) {
+            return Response::deny('Tài khoản của bạn đã bị khóa.');
+        }
+
+        if ($user->kyc_status !== 'VERIFIED') {
+            return Response::deny('Cần xác thực CCCD (KYC) trước khi cập nhật trạng thái hồ sơ.');
+        }
+
+        if ($missingChild->user_id !== $user->id) {
+            return Response::deny('Chỉ chủ sở hữu hồ sơ mới được xác nhận bàn giao.');
+        }
+
+        return Response::allow();
+    }
+
+    /**
      * Determine whether the user can confirm family reunion (H-03).
-     * Chỉ chủ sở hữu hồ sơ mới được xác nhận đoàn tụ.
+     * Chỉ chủ sở hữu hồ sơ (đã KYC) mới được xác nhận đoàn tụ.
+     * Cổng KYC thay cho email.verified (đã KYC khi đăng tin nên không cần verify email).
      */
     public function confirmReunited(User $user, MissingChild $missingChild): Response
     {
         if ($user->isBanned()) {
             return Response::deny('Tài khoản của bạn đã bị khóa.');
+        }
+
+        if ($user->kyc_status !== 'VERIFIED') {
+            return Response::deny('Cần xác thực CCCD (KYC) trước khi xác nhận đoàn tụ.');
         }
 
         if ($missingChild->user_id !== $user->id) {

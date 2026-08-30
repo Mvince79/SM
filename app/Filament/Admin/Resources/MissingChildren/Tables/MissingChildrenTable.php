@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\MissingChildren\Tables;
 use App\Models\HandoverPoint;
 use App\Models\MissingChild;
 use App\Models\Province;
+use App\Services\MissingChildCascadeService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -234,6 +235,7 @@ class MissingChildrenTable
                     }),
 
                 TrashedFilter::make()
+                    ->label('Đã xoá')
                     ->native(false)
                     ->columnSpan('full'),
             ])
@@ -255,7 +257,17 @@ class MissingChildrenTable
                 ViewAction::make(),
                 EditAction::make(),
                 RestoreAction::make(),
-                ForceDeleteAction::make(),
+                ForceDeleteAction::make()
+                    ->action(function (MissingChild $record) {
+                        // Khi xoá vĩnh việt hồ sơ đã nằm trong thùng rác, kết quả đối chiếu
+                        // CONFIRMED/PENDING thường đã bị cascade bác bỏ lúc soft-delete — chạy
+                        // lại ở đây là no-op an toàn, nhưng vẫn giữ để không sót match "treo"
+                        // trong trường hợp hồ sơ bị force-delete từ trạng thái khác.
+                        DB::transaction(function () use ($record) {
+                            app(MissingChildCascadeService::class)->handleRemoval($record, includePending: true);
+                            $record->forceDelete();
+                        });
+                    }),
 
                 Action::make('approve')
                     ->label('Duyệt')
@@ -291,10 +303,17 @@ class MissingChildrenTable
                             ->rows(3),
                     ])
                     ->action(function (MissingChild $record, array $data) {
-                        $record->update([
-                            'status' => MissingChild::STATUS_REJECTED,
-                            'rejection_reason' => $data['rejection_reason'],
-                        ]);
+                        // Cascade revert (quyết định #1) chung 1 transaction: trả FoundChild
+                        // liên quan về trạng thái trước và bác bỏ kết quả đối chiếu CONFIRMED,
+                        // tránh "Đã tìm thấy" giả. Không đụng thông báo Từ chối (riêng).
+                        DB::transaction(function () use ($record, $data) {
+                            $record->update([
+                                'status' => MissingChild::STATUS_REJECTED,
+                                'rejection_reason' => $data['rejection_reason'],
+                            ]);
+
+                            app(MissingChildCascadeService::class)->handleRemoval($record, includePending: false);
+                        });
                         Cache::forget('badge_missing_pending');
                         Notification::make()->title('Đã từ chối hồ sơ')->danger()->send();
                         PostStatusChanged::dispatch($record->refresh());
@@ -314,17 +333,25 @@ class MissingChildrenTable
                             ->searchable()
                             ->nullable()
                             ->helperText('Nơi trẻ đang được giữ (nếu biết). Gia đình sẽ thấy địa chỉ & hotline này.'),
+                        Textarea::make('reason')
+                            ->label('Lý do xác nhận bàn giao (bắt buộc, tối thiểu 20 ký tự)')
+                            ->required()
+                            ->minLength(20)
+                            ->rows(3)
+                            ->helperText('Ví dụ: "Đã gọi điện xác minh qua gia đình, công an phường X xác nhận đã bàn giao bé vào ngày...".'),
                     ])
                     ->modalHeading('Đánh dấu đã bàn giao?')
                     ->modalDescription('Chuyển sang trạng thái "Đã bàn giao". Gia đình sẽ nhận hướng dẫn nhận lại con. Hệ thống chỉ ghi nhận thông tin, không thay thế cơ quan chức năng.')
                     ->modalSubmitActionLabel('Đánh dấu bàn giao')
                     ->action(function (MissingChild $record, array $data) {
-                        $record->update([
-                            'status' => MissingChild::STATUS_HANDED_OVER,
-                            'handover_point_id' => $data['handover_point_id'] ?: null,
-                            'handover_confirmed_at' => now(),
-                            'handover_confirmed_by' => Auth::id(),
-                        ]);
+                        // Dùng confirmHandoverByAdmin: validate lý do >= 20 ký tự TẠI ĐÂY
+                        // (trước save) thay vì update() thô — StatusChangeAuditObserver chỉ
+                        // chạy ở event `updated` (sau ghi DB) nên không rollback được.
+                        $record->confirmHandoverByAdmin(
+                            $data['reason'],
+                            Auth::id(),
+                            $data['handover_point_id'] ?? null
+                        );
                         Cache::forget('dashboard_stats_overview');
                         Notification::make()->title('Đã đánh dấu bàn giao')->success()->send();
                     }),
@@ -401,10 +428,17 @@ class MissingChildrenTable
                             $records->each(function (MissingChild $record) use ($data, &$count) {
                                 if ($record->status !== MissingChild::STATUS_PENDING)
                                     return;
-                                $record->update([
-                                    'status' => MissingChild::STATUS_REJECTED,
-                                    'rejection_reason' => $data['rejection_reason'],
-                                ]);
+                                // Cascade revert (quyết định #1) chung 1 transaction: trả
+                                // FoundChild liên quan về trạng thái trước và bác bỏ kết quả
+                                // đối chiếu CONFIRMED, tránh "Đã tìm thấy" giả.
+                                DB::transaction(function () use ($record, $data) {
+                                    $record->update([
+                                        'status' => MissingChild::STATUS_REJECTED,
+                                        'rejection_reason' => $data['rejection_reason'],
+                                    ]);
+
+                                    app(MissingChildCascadeService::class)->handleRemoval($record, includePending: false);
+                                });
                                 PostStatusChanged::dispatch($record->refresh());
                                 $count++;
                             });
@@ -413,7 +447,18 @@ class MissingChildrenTable
                         })
                         ->deselectRecordsAfterCompletion(),
 
-                    DeleteBulkAction::make()->label('Xóa'),
+                    DeleteBulkAction::make()
+                        ->label('Xóa')
+                        ->action(function (Collection $records) {
+                            // Cascade revert (quyết định #1) + khử FaceMatchResult PENDING treo
+                            // (quyết định #2) trước khi soft-delete, chung 1 transaction.
+                            foreach ($records as $record) {
+                                DB::transaction(function () use ($record) {
+                                    app(MissingChildCascadeService::class)->handleRemoval($record, includePending: true);
+                                    $record->delete();
+                                });
+                            }
+                        }),
                 ]),
             ])
             ->defaultSort('created_at', 'desc');

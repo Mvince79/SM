@@ -27,7 +27,7 @@
         {{-- Badge trạng thái --}}
         @if($isFound)
             <span class="absolute top-3 left-3 bg-success text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl flex items-center gap-1">
-                ✓ Bé đã về nhà
+                ✓ Đã tìm thấy
             </span>
         @else
             <span class="absolute top-3 left-3 bg-primary text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl shadow-glow-sos flex items-center gap-1">
@@ -75,7 +75,7 @@
                     Chi tiết <span class="text-[10px]">→</span>
                 </a>
             @else
-                <span class="text-[10px] text-slate-400 font-bold">Cảm ơn cộng đồng!</span>
+                <span class="text-[10px] text-slate-400 font-bold">Bé đã được tìm thấy!</span>
             @endif
         </div>
     </div>

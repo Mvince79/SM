@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\Notification\Notifier;
 use App\Services\Notification\RecipientResolver;
 use App\Support\CacheVersion;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -127,17 +128,40 @@ class MissingChildObserver
             DispatchProvinceCaseApprovedNotificationsJob::dispatch($missingChild->getKey());
         }
 
-        // Đánh dấu "Đã bàn giao" → thông báo cho gia đình/chủ hồ sơ đến nhận lại con.
-        // Pattern tương tự nhánh APPROVED ở trên: observer phát hiện đổi status,
-        // không gọi từ nút bấm. Tái dùng RecipientResolver::familyOf() lấy chủ hồ sơ.
+        // Đánh dấu "Đã bàn giao" → thông báo cho gia đình/chủ hồ sơ đến nhận lại con
+        // VÀ cho người tìm thấy bé (cảm ơn vì đã bàn giao).
+        // Pattern tương tự nhánh APPROVED ở trên: observer phát hiện đổi status.
+        // - TYPE_HANDOVER_READY gửi gia đình CHỈ KHI actor là ADMIN (admin báo gia
+        //   đình đến nhận). Nếu gia đình tự xác nhận (actor=FAMILY) thì không tự gửi
+        //   thông báo cho chính họ.
+        // - TYPE_FOUND_CASE_HANDED_OVER luôn gửi cho người tìm thấy (dù ai xác nhận).
         if ($missingChild->wasChanged('status') && $missingChild->status === MissingChild::STATUS_HANDED_OVER) {
-            $family = $this->recipients->familyOf($missingChild);
+            $isAdminActor = Auth::user()?->isAdmin() ?? false;
 
-            if ($family) {
+            if ($isAdminActor) {
+                $family = $this->recipients->familyOf($missingChild);
+
+                if ($family) {
+                    $this->notifier->send(
+                        NotificationEvent::TYPE_HANDOVER_READY,
+                        $missingChild,
+                        [$family],
+                        [
+                            'case_code' => $missingChild->case_code,
+                            'full_name' => $missingChild->full_name,
+                        ],
+                        $missingChild->handover_confirmed_by,
+                    );
+                }
+            }
+
+            // Người tìm thấy nhận thông báo "trẻ bạn báo đã được bàn giao".
+            $foundPosters = $this->foundPosterUsers($missingChild);
+            if ($foundPosters->isNotEmpty()) {
                 $this->notifier->send(
-                    NotificationEvent::TYPE_HANDOVER_READY,
+                    NotificationEvent::TYPE_FOUND_CASE_HANDED_OVER,
                     $missingChild,
-                    [$family],
+                    $foundPosters,
                     [
                         'case_code' => $missingChild->case_code,
                         'full_name' => $missingChild->full_name,
@@ -159,6 +183,21 @@ class MissingChildObserver
                     NotificationEvent::TYPE_REUNION_CONFIRMED,
                     $missingChild,
                     $admins,
+                    [
+                        'case_code' => $missingChild->case_code,
+                        'full_name' => $missingChild->full_name,
+                    ],
+                    null,
+                );
+            }
+
+            // Người tìm thấy nhận thông báo "trẻ đã về với gia đình — cảm ơn bạn".
+            $foundPosters = $this->foundPosterUsers($missingChild);
+            if ($foundPosters->isNotEmpty()) {
+                $this->notifier->send(
+                    NotificationEvent::TYPE_FOUND_CASE_REUNITED,
+                    $missingChild,
+                    $foundPosters,
                     [
                         'case_code' => $missingChild->case_code,
                         'full_name' => $missingChild->full_name,
@@ -249,5 +288,24 @@ class MissingChildObserver
     public function restored(MissingChild $missingChild): void
     {
         $this->invalidateMapAndHomeCache();
+    }
+
+    /**
+     * H-05 — Lấy danh sách user đăng tin TÌM THẤY liên quan đến hồ sơ mất tích này
+     * qua các FaceMatchResult đã CONFIRMED (khớp được xác nhận). Dùng để gửi thông
+     * báo cho người tìm thấy khi hồ sơ chuyển HANDED_OVER / REUNITED.
+     *
+     * @return \Illuminate\Support\Collection<int, User>
+     */
+    private function foundPosterUsers(MissingChild $missingChild): \Illuminate\Support\Collection
+    {
+        return $missingChild->faceMatchResults()
+            ->where('status', 'CONFIRMED')
+            ->with('foundChild.user')
+            ->get()
+            ->map(fn ($match) => $match->foundChild?->user)
+            ->filter()
+            ->unique('id')
+            ->values();
     }
 }

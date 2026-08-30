@@ -84,6 +84,20 @@ class MatchedMissingChildrenRelationManager extends RelationManager
                         default => 'gray',
                     }),
 
+                // GĐ4 — "Hoàn tác": badge chỉ ra kết quả bị bác bỏ do cascade (xoá/từ
+                // chối hồ sơ đối diện) đã tự động revert hồ sơ liên quan về trạng thái
+                // trước. Dựa vào found_child_prev_status / missing_child_prev_status
+                // (chỉ có khi revert qua cascade, khác với bác bỏ thủ công).
+                TextColumn::make('revert')
+                    ->label('Hoàn tác')
+                    ->badge()
+                    ->color(fn ($state, $record): string =>
+                        $record->isRevertedViaCascade() ? 'warning' : 'gray')
+                    ->formatStateUsing(fn ($state, $record): string =>
+                        $record->isRevertedViaCascade() ? 'Đã hoàn tác' : '')
+                    ->description(fn ($record): string =>
+                        (string) ($record->revert_summary ?? '')),
+
                 TextColumn::make('created_at')
                     ->label('Tạo lúc')
                     ->since()
