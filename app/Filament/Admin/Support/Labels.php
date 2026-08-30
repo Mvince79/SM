@@ -23,6 +23,7 @@ class Labels
         'HANDED_OVER' => 'Đã bàn giao',
         'REUNITED' => 'Đã đoàn tụ',
         'UNREACHABLE_FAMILY' => 'Không liên lạc được với gia đình',
+        'DELETED' => 'Đã xoá',
         'OPEN' => 'Đang mở',
         'IN_PROGRESS' => 'Đang xử lý',
         'RESOLVED' => 'Đã giải quyết',
