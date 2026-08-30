@@ -387,7 +387,13 @@ class FoundChildResource extends Resource
         return parent::getEloquentQuery()
             ->with([
                 'province:id,name',
-                'user:id,full_name',
+                // Giữ nguyên id,full_name (dùng hiển thị bảng) và bổ sung role,email:
+                // observer thông báo (FOUND_APPROVED/FOUND_REJECTED) dùng
+                // $foundChild->user->role làm role_at_time (cột NOT NULL) và email
+                // để gửi mail. Nếu eager-load thiếu role, deliver() insert NULL vào
+                // role_at_time → vi phạm NOT NULL → recipient không tạo → chuông admin
+                // không báo (lỗi đã điều tra: FOUND_REJECTED #28).
+                'user:id,full_name,role,email',
                 'approvedBy:id,full_name',
             ]);
     }

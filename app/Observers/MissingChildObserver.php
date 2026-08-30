@@ -6,6 +6,7 @@ use App\Jobs\DispatchProvinceCaseApprovedNotificationsJob;
 use App\Models\EscalationQueue;
 use App\Models\MissingChild;
 use App\Models\NotificationEvent;
+use App\Models\User;
 use App\Services\Notification\Notifier;
 use App\Services\Notification\RecipientResolver;
 use App\Support\CacheVersion;
@@ -95,6 +96,26 @@ class MissingChildObserver
         } catch (\Throwable $e) {
             Log::warning('QR generation failed: ' . $e->getMessage());
         }
+
+        // D-05 bổ sung: báo admin có tin tìm trẻ mới chờ duyệt.
+        // Độc lập với QR/cache/log — nằm trong try riêng để không ảnh hưởng hành vi cũ.
+        try {
+            $admins = $this->recipients->admins();
+            if ($admins->isNotEmpty()) {
+                $this->notifier->send(
+                    NotificationEvent::TYPE_CASE_SUBMITTED,
+                    $missingChild,
+                    $admins,
+                    [
+                        'case_code' => $missingChild->case_code,
+                        'full_name' => $missingChild->full_name,
+                    ],
+                    null,
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::warning('CASE_SUBMITTED notification failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -163,6 +184,35 @@ class MissingChildObserver
                     'status' => EscalationQueue::STATUS_RESOLVED,
                     'resolved_at' => now(),
                 ]);
+        }
+
+        // Từ chối hồ sơ → báo người đăng (kèm lý do). D-05 bổ sung.
+        // Bao phủ cả nút "Từ chối" đơn, trang chi tiết và "Từ chối hàng loạt".
+        if ($missingChild->wasChanged('status') && $missingChild->status === MissingChild::STATUS_REJECTED) {
+            $owner = $missingChild->user;
+
+            // Phòng vệ: getEloquentQuery() của resource có thể eager-load user chỉ
+            // với vài cột (id,full_name), khiến $owner->role = null. deliver() lấy
+            // $user->role đắp vào role_at_time (cột NOT NULL) → nếu null sẽ ném lỗi
+            // và recipient không bao giờ được tạo (chuông admin không báo). Nạp lại
+            // user đầy đủ để đảm bảo role có mặt trước khi gửi.
+            if ($owner && $owner->role === null) {
+                $owner = User::find($owner->getKey());
+            }
+
+            if ($owner) {
+                $this->notifier->send(
+                    NotificationEvent::TYPE_CASE_REJECTED,
+                    $missingChild,
+                    [$owner],
+                    [
+                        'reason' => $missingChild->rejection_reason,
+                        'case_code' => $missingChild->case_code,
+                        'full_name' => $missingChild->full_name,
+                    ],
+                    null,
+                );
+            }
         }
 
         if ($missingChild->wasChanged(['status', 'lat', 'lng'])) {

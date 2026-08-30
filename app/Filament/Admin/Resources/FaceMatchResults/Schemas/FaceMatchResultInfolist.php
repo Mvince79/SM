@@ -66,7 +66,7 @@ class FaceMatchResultInfolist
                                 ->icon('heroicon-o-arrow-top-right-on-square')
                                 ->url(
                                     fn ($state, FaceMatchResult $r) => $r->foundChild
-                                        ? FoundChildResource::getUrl('edit', ['record' => $r->foundChild])
+                                        ? FoundChildResource::getUrl('view', ['record' => $r->foundChild])
                                         : null
                                 )
                                 ->openUrlInNewTab()

@@ -98,7 +98,13 @@ class MissingChildResource extends Resource
             ->withoutGlobalScopes([SoftDeletingScope::class])
             ->with([
                 'province:id,name',
-                'user:id,full_name',
+                // Giữ nguyên id,full_name (dùng hiển thị bảng) và bổ sung role,email:
+                // observer thông báo (CASE_REJECTED/CASE_APPROVED/...) dùng
+                // $missingChild->user->role làm role_at_time (cột NOT NULL) và email
+                // để gửi mail. Nếu eager-load thiếu role, deliver() insert NULL vào
+                // role_at_time → vi phạm NOT NULL → recipient không tạo → chuông admin
+                // không báo (cùng nguyên nhân với FOUND_REJECTED).
+                'user:id,full_name,role,email',
                 'approvedBy:id,full_name',
                 'primaryPhoto',
             ])
