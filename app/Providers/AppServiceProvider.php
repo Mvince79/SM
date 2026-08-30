@@ -73,6 +73,14 @@ class AppServiceProvider extends ServiceProvider
             \App\Observers\ClueObserver::class
         );
 
+        \App\Models\SupportTicketReply::observe(
+            \App\Observers\SupportTicketReplyObserver::class
+        );
+
+        \App\Models\SupportTicket::observe(
+            \App\Observers\SupportTicketObserver::class
+        );
+
         // D-01 — Audit log mọi thay đổi status của MissingChild / FoundChild.
         \App\Models\MissingChild::observe(
             \App\Observers\StatusChangeAuditObserver::class

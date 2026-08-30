@@ -12,6 +12,7 @@ use App\Filament\Admin\Resources\SupportTickets\Schemas\SupportTicketInfolist;
 use App\Filament\Admin\Resources\SupportTickets\Tables\SupportTicketsTable;
 use App\Models\SupportTicket;
 use BackedEnum;
+use Illuminate\Support\Facades\Cache;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -47,6 +48,26 @@ class SupportTicketResource extends Resource
         return [
             RepliesRelationManager::class,
         ];
+    }
+
+    /**
+     * Badge đếm ticket đang mở (OPEN/IN_PROGRESS) trên sidebar admin — P0.
+     * Copy pattern Item 10 (FoundChildResource::getNavigationBadge).
+     */
+    public static function getNavigationBadge(): ?string
+    {
+        $count = Cache::remember('badge_support_tickets_open', 300, function () {
+            return SupportTicket::open()->count();
+        });
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        $count = (int) Cache::get('badge_support_tickets_open', 0);
+
+        return $count > 10 ? 'danger' : 'warning';
     }
 
     public static function getPages(): array

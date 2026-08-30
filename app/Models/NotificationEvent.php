@@ -61,6 +61,15 @@ class NotificationEvent extends Model
 
     public const TYPE_FOUND_CASE_REUNITED = 'FOUND_CASE_REUNITED';
 
+    // ─── Yêu cầu hỗ trợ (Support Ticket) ─────────────────────────────────────
+    public const TYPE_TICKET_CREATED = 'TICKET_CREATED';
+
+    public const TYPE_TICKET_REPLIED = 'TICKET_REPLIED';
+
+    public const TYPE_TICKET_RESOLVED = 'TICKET_RESOLVED';
+
+    public const TYPE_TICKET_CLOSED = 'TICKET_CLOSED';
+
     // ─── Manh mối & đối sánh ────────────────────────────────────────────────
     public const TYPE_CLUE_SUBMITTED = 'CLUE_SUBMITTED';
 

@@ -139,6 +139,51 @@ return [
             ],
         ],
 
+        // ─── Yêu cầu hỗ trợ (Support Ticket) ──────────────────────────────────
+        NotificationEvent::TYPE_TICKET_CREATED => [
+            'ADMIN' => [
+                'title' => 'Yêu cầu hỗ trợ mới #:id',
+                'body' => 'Có yêu cầu hỗ trợ mới từ :full_name — ":subject". '
+                    . 'Vui lòng vào xem và xử lý sớm.',
+                'url' => null,
+            ],
+            'MODERATOR' => [
+                'title' => 'Yêu cầu hỗ trợ mới #:id',
+                'body' => 'Có yêu cầu hỗ trợ mới từ :full_name — ":subject". '
+                    . 'Vui lòng vào xem và xử lý sớm.',
+                'url' => null,
+            ],
+        ],
+
+        // ─── Yêu cầu hỗ trợ: phản hồi (chỉ public reply) ───────────────────────
+        NotificationEvent::TYPE_TICKET_REPLIED => [
+            'USER' => [
+                'title' => 'Yêu cầu hỗ trợ #:id có phản hồi mới',
+                'body' => 'Đội ngũ hỗ trợ vừa phản hồi yêu cầu ":subject" của bạn. '
+                    . 'Vui lòng xem chi tiết để cập nhật thông tin.',
+                'url' => 'support',
+            ],
+        ],
+
+        // ─── Yêu cầu hỗ trợ: thay đổi trạng thái ───────────────────────────────
+        NotificationEvent::TYPE_TICKET_RESOLVED => [
+            'USER' => [
+                'title' => 'Yêu cầu hỗ trợ #:id đã được xử lý',
+                'body' => 'Yêu cầu ":subject" của bạn đã được đánh dấu xử lý xong. '
+                    . 'Cảm ơn bạn đã liên hệ với chúng tôi.',
+                'url' => 'support',
+            ],
+        ],
+
+        NotificationEvent::TYPE_TICKET_CLOSED => [
+            'USER' => [
+                'title' => 'Yêu cầu hỗ trợ #:id đã đóng',
+                'body' => 'Yêu cầu ":subject" của bạn đã được đóng. '
+                    . 'Nếu bạn cần hỗ trợ thêm, hãy gửi yêu cầu mới bất cứ lúc nào.',
+                'url' => 'support',
+            ],
+        ],
+
         NotificationEvent::TYPE_REUNION_FAMILY_REMINDER => [
             '*' => [
                 'title' => 'Vui lòng xác nhận đã nhận lại con',
@@ -344,6 +389,25 @@ return [
         ],
         NotificationEvent::TYPE_FOUND_CASE_HANDED_OVER => [
             '*' => ['mail'],
+        ],
+
+        // Ticket mới: admin/moderator nhận cả chuông lẫn email (cần hành động).
+        NotificationEvent::TYPE_TICKET_CREATED => [
+            'ADMIN' => ['mail'],
+            'MODERATOR' => ['mail'],
+        ],
+
+        // Phản hồi ticket (public): người gửi nhận chuông + email để quay lại xem.
+        NotificationEvent::TYPE_TICKET_REPLIED => [
+            'USER' => ['mail'],
+        ],
+
+        // Đánh dấu xử lý / đóng ticket: người gửi nhận chuông + email.
+        NotificationEvent::TYPE_TICKET_RESOLVED => [
+            'USER' => ['mail'],
+        ],
+        NotificationEvent::TYPE_TICKET_CLOSED => [
+            'USER' => ['mail'],
         ],
     ],
 ];

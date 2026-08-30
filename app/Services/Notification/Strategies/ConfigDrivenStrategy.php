@@ -127,6 +127,7 @@ class ConfigDrivenStrategy implements NotificationStrategy
             'case' => $missingId ? route('missing.detail', ['id' => $missingId]) : null,
             'found' => $this->foundUrl($subject),
             'admin_case' => $this->adminCaseUrl($missingId),
+            'support' => RouteFacade::has('support.index') ? route('support.index') : null,
             default => null,
         };
     }
