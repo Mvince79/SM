@@ -29,9 +29,12 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use App\Filament\Admin\Resources\FoundChildResource\RelationManagers\MatchedMissingChildrenRelationManager;
 use App\Filament\Forms\Components\LocationPicker;
+use App\Services\FoundChildCascadeService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use UnitEnum;
 
@@ -344,18 +347,41 @@ class FoundChildResource extends Resource
                             ->helperText('Lý do sẽ được gửi cho người báo tin.'),
                     ])
                     ->action(function (FoundChild $record, array $data) {
-                        // Lý do được lưu vào rejection_reason (cột vừa được bổ sung)
-                        // và FoundChildObserver gửi kèm cho người báo tin.
-                        $record->update([
-                            'status' => FoundChild::STATUS_REJECTED,
-                            'rejection_reason' => $data['rejection_reason'],
-                        ]);
+                        // Lý do được lưu vào rejection_reason và FoundChildObserver
+                        // gửi kèm cho người báo tin. Cascade revert (quyết định #1)
+                        // chạy chung 1 transaction để không lưu trạng thái nửa vời.
+                        DB::transaction(function () use ($record, $data) {
+                            $record->update([
+                                'status' => FoundChild::STATUS_REJECTED,
+                                'rejection_reason' => $data['rejection_reason'],
+                            ]);
+
+                            // Found child PENDING chưa có kết quả CONFIRMED nên đây
+                            // thực tế là no-op, gọi để phòng thủ theo quyết định #1.
+                            app(FoundChildCascadeService::class)->handleRemoval($record, includePending: false);
+                        });
                     }),
                 EditAction::make(),
-                DeleteAction::make(),
+                DeleteAction::make()
+                    ->action(function (FoundChild $record) {
+                        // Cascade revert (quyết định #1) + khử FaceMatchResult PENDING
+                        // treo (quyết định #2) trước khi soft-delete, chung 1 transaction.
+                        DB::transaction(function () use ($record) {
+                            app(FoundChildCascadeService::class)->handleRemoval($record, includePending: true);
+                            $record->delete();
+                        });
+                    }),
             ])
             ->bulkActions([
-                \Filament\Actions\DeleteBulkAction::make(),
+                \Filament\Actions\DeleteBulkAction::make()
+                    ->action(function (Collection $records) {
+                        foreach ($records as $record) {
+                            DB::transaction(function () use ($record) {
+                                app(FoundChildCascadeService::class)->handleRemoval($record, includePending: true);
+                                $record->delete();
+                            });
+                        }
+                    }),
             ]);
     }
 

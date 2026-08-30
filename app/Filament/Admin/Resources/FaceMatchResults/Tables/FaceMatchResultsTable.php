@@ -289,6 +289,10 @@ class FaceMatchResultsTable
                     ->modalSubmitActionLabel('Xác nhận')
                     ->action(function (FaceMatchResult $record): void {
                         DB::transaction(function () use ($record) {
+                            // Lưu trạng thái MissingChild TRƯỚC khi confirm, để revert
+                            // faithful (quyết định #1) khi FoundChild bị từ chối/xoá.
+                            $prevMissingStatus = $record->missingChild?->status;
+
                             $record->update([
                                 'status' => 'CONFIRMED',
                                 'confirmed_by' => Auth::id(),
@@ -303,6 +307,9 @@ class FaceMatchResultsTable
                             $record->foundChild?->update([
                                 'status' => 'MATCHED',
                             ]);
+
+                            $record->missing_child_prev_status = $prevMissingStatus;
+                            $record->saveQuietly();
 
                             FaceMatchResult::where('missing_id', $record->missing_id)
                                 ->where('id', '!=', $record->id)

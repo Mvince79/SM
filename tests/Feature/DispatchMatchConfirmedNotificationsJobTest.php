@@ -35,8 +35,15 @@ class DispatchMatchConfirmedNotificationsJobTest extends TestCase
             app(NotificationDeliveryService::class),
         );
 
-        $event = NotificationEvent::query()->sole();
-        $recipients = NotificationRecipient::query()->with('user')->get();
+        // Chỉ lấy đúng 1 loại event job này cần (FACE_MATCH_CONFIRMED), không
+        // vỡ khi subject có thêm event khác (vd FOUND_SUBMITTED) cùng tồn tại.
+        $event = NotificationEvent::query()
+            ->where('event_type', NotificationEvent::TYPE_FACE_MATCH_CONFIRMED)
+            ->sole();
+        $recipients = NotificationRecipient::query()
+            ->whereHas('event', fn ($q) => $q->where('event_type', NotificationEvent::TYPE_FACE_MATCH_CONFIRMED))
+            ->with('user')
+            ->get();
 
         $this->assertSame(NotificationEvent::TYPE_FACE_MATCH_CONFIRMED, $event->event_type);
         // Cả hai admin active đều nhận (không lọc theo last_active_at 5 phút) cộng
@@ -56,8 +63,8 @@ class DispatchMatchConfirmedNotificationsJobTest extends TestCase
             app(NotificationDeliveryService::class),
         );
 
-        $this->assertSame(1, NotificationEvent::count());
-        $this->assertSame(4, NotificationRecipient::count());
+        $this->assertSame(1, NotificationEvent::where('event_type', NotificationEvent::TYPE_FACE_MATCH_CONFIRMED)->count());
+        $this->assertSame(4, NotificationRecipient::query()->whereHas('event', fn ($q) => $q->where('event_type', NotificationEvent::TYPE_FACE_MATCH_CONFIRMED))->count());
         Queue::assertPushed(SendFcmNotificationJob::class, 4);
         Mail::assertQueued(DynamicNotificationMail::class, 4);
     }
@@ -101,12 +108,15 @@ class DispatchMatchConfirmedNotificationsJobTest extends TestCase
             'contact_phone' => '0905123456',
             'status' => 'FOUND',
         ]));
-        $found = FoundChild::query()->create([
+        // withoutEvents để test này cô lập luồng "match confirmed" khỏi observer
+        // (vd FoundChildObserver gửi FOUND_SUBMITTED) — tránh event/recipient/FCM
+        // ngoài dự kiến làm sai lệch assertion. MissingChild ở trên cũng làm vậy.
+        $found = FoundChild::withoutEvents(fn () => FoundChild::query()->create([
             'user_id' => $reporter->id,
             'province_id' => $province->id,
             'found_date' => now()->toDateString(),
             'status' => 'MATCHED',
-        ]);
+        ]));
 
         return FaceMatchResult::query()->create([
             'missing_id' => $missing->id,
