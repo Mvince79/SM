@@ -61,6 +61,7 @@ class ActivitiesTable
 
                 TextColumn::make('description')
                     ->label('Mô tả')
+                    ->formatStateUsing(fn ($state) => Labels::event($state))
                     ->limit(60)
                     ->tooltip(fn($record) => $record->description)
                     ->searchable(),

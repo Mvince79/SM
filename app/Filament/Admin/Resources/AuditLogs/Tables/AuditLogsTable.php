@@ -153,7 +153,8 @@ class AuditLogsTable
         $newStatus = Labels::status(data_get($r->new_value, 'status'));
         $reason = $r->reason ?: '—';
         $ip = $r->ip_address ?: '—';
-        $ua = $r->user_agent ?: '—';
+        $uaShort = Labels::userAgent($r->user_agent);
+        $uaFull = $r->user_agent ? htmlspecialchars((string) $r->user_agent, ENT_QUOTES) : '—';
 
         return new HtmlString("
         <div style='font-family:inherit;'>
@@ -206,7 +207,7 @@ class AuditLogsTable
                 <div>
                     <div style='font-size:11px;font-weight:500;color:var(--color-text-tertiary);"
                     . "text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;'>User-Agent</div>
-                    <div style='font-size:13px;color:var(--color-text-secondary);word-break:break-all;'>{$ua}</div>
+                    <div style='font-size:13px;color:var(--color-text-secondary);word-break:break-all;' title='{$uaFull}'>{$uaShort}</div>
                 </div>
             </div>
 

@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Support;
 
 use Illuminate\Support\HtmlString;
 use App\Filament\Admin\Support\Labels;
+use App\Models\User;
 
 /**
  * D-03 — Build nội dung modal/slide-over hiển thị chi tiết một dòng activity_log.
@@ -86,10 +87,10 @@ class ActivityDiffBuilder
             $rows = '';
             foreach ($keys as $i => $key) {
                 $oldVal = array_key_exists($key, $old)
-                    ? self::formatValue($key === 'status' ? Labels::status((string) $old[$key]) : $old[$key])
+                    ? self::formatValue(self::resolveValue($key, $old[$key]))
                     : null;
                 $newVal = array_key_exists($key, $new)
-                    ? self::formatValue($key === 'status' ? Labels::status((string) $new[$key]) : $new[$key])
+                    ? self::formatValue(self::resolveValue($key, $new[$key]))
                     : null;
                 $rowBg = $i % 2 === 1 ? 'background:var(--color-background-secondary);' : '';
 
@@ -194,6 +195,30 @@ class ActivityDiffBuilder
         }
 
         return trim((string) $value);
+    }
+
+    /**
+     * Dịch giá trị hiển thị trong diff theo loại trường:
+     *  - status        → Labels::status (đã có)
+     *  - category/priority → Labels::attributeValue (enum tiếng Việt)
+     *  - user_id       → tên người dùng (lookup 1 bản ghi, chỉ chạy khi mở modal)
+     *  - còn lại       → giữ nguyên (bao gồm subject là nội dung tự do của user)
+     */
+    private static function resolveValue(string $key, mixed $raw): mixed
+    {
+        if ($key === 'status') {
+            return Labels::status((string) $raw);
+        }
+
+        if ($key === 'user_id' && is_numeric($raw)) {
+            return User::find((int) $raw)?->full_name ?? $raw;
+        }
+
+        if (in_array($key, ['category', 'priority'], true)) {
+            return Labels::attributeValue($key, (string) $raw);
+        }
+
+        return $raw;
     }
 
     private static function formatValue(mixed $value): string
