@@ -31,8 +31,11 @@ class ChangeRoleAction
                     ->label('Vai trò mới')
                     ->options([
                         'USER' => 'Người dùng',
-                        'VOLUNTEER' => 'Tình nguyện viên',
-                        'MODERATOR' => 'Kiểm duyệt viên',
+                        // 'VOLUNTEER' (Tình nguyện viên) và 'MODERATOR' (Kiểm duyệt
+                        // viên) bị ẩn khỏi UI theo yêu cầu: admin không set 2 vai
+                        // trò này từ giao diện. Khi cần, bỏ comment 2 dòng dưới.
+                        // 'VOLUNTEER' => 'Tình nguyện viên',
+                        // 'MODERATOR' => 'Kiểm duyệt viên',
                         'ADMIN' => 'Quản trị viên',
                     ])
                     ->required()

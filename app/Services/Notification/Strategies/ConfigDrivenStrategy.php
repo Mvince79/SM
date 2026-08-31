@@ -5,6 +5,7 @@ namespace App\Services\Notification\Strategies;
 use App\Models\Clue;
 use App\Models\FaceMatchResult;
 use App\Models\FoundChild;
+use App\Models\KycVerification;
 use App\Models\MissingChild;
 use App\Models\NotificationEvent;
 use App\Models\User;
@@ -128,6 +129,9 @@ class ConfigDrivenStrategy implements NotificationStrategy
             'found' => $this->foundUrl($subject),
             'admin_case' => $this->adminCaseUrl($missingId),
             'support' => RouteFacade::has('support.index') ? route('support.index') : null,
+            'kyc' => $subject instanceof KycVerification
+                ? route('filament.admin.resources.kyc-verifications.view', ['record' => $subject->getKey()])
+                : null,
             default => null,
         };
     }

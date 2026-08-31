@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Province;
 use Livewire\Component;
 
 new class extends Component
@@ -14,9 +15,22 @@ new class extends Component
      */
     public string $status = 'all';
 
+    /**
+     * ID tỉnh được chọn (null = tất cả). Gửi lên backend MapDataController (province_id).
+     */
+    public ?string $provinceId = null;
+
     public bool $hasNewClue = false;
 
     public bool $otherFiltersOpen = false;
+
+    /**
+     * Danh sách tỉnh để chọn lọc — lấy từ DB, sắp xếp theo tên.
+     */
+    public function getProvincesProperty()
+    {
+        return Province::query()->orderBy('name')->get(['id', 'name']);
+    }
 
     public function updatedTimeRange(): void
     {
@@ -24,6 +38,11 @@ new class extends Component
     }
 
     public function updatedStatus(): void
+    {
+        $this->emitFilters();
+    }
+
+    public function updatedProvinceId(): void
     {
         $this->emitFilters();
     }
@@ -39,6 +58,12 @@ new class extends Component
         $this->emitFilters();
     }
 
+    public function setStatus(string $value): void
+    {
+        $this->status = $value;
+        $this->emitFilters();
+    }
+
     public function toggleOtherFilters(): void
     {
         $this->otherFiltersOpen = ! $this->otherFiltersOpen;
@@ -48,108 +73,115 @@ new class extends Component
     {
         $this->timeRange = 'all';
         $this->status = 'all';
+        $this->provinceId = null;
         $this->hasNewClue = false;
         $this->emitFilters();
     }
 
     /**
-     * Bắn browser event ra ngoài để JS thuần (Leaflet) lắng nghe và
-     * gọi lại /api/v1/map-data với query params tương ứng.
+     * Bắn browser event để JS Leaflet lắng nghe và gọi /api/v1/map-data.
      */
     protected function emitFilters(): void
     {
         $this->dispatch('map-filters-changed', filters: [
             'time_range' => $this->timeRange,
             'type' => $this->status,
+            'province_id' => $this->provinceId ? (int) $this->provinceId : null,
             'has_new_clue' => $this->hasNewClue ? 1 : 0,
         ]);
     }
 };
 ?>
 
-<div class="space-y-2" wire:ignore.self>
+<div class="space-y-3" wire:ignore.self>
 
-    {{-- Pill lớn: Thời gian mất tích — dễ bấm nhất trên mobile.
-                 < 640px: grid 4 cột đều nhau (grid-cols-4) để 4 nút luôn cùng
-                 kích thước dù nhãn dài ngắn khác nhau ("Tất cả" ngắn hơn hẳn
-                 "24h qua" nếu để tự co theo nội dung sẽ lệch, nhìn lộn xộn).
-                 Từ 640px (sm) trở lên quay lại hàng ngang cuộn ngang như cũ,
-                 vì lúc đó đã đủ chỗ để không cần ép bằng nhau. --}}
-    <div class="grid grid-cols-2 min-[360px]:grid-cols-4 gap-1.5 sm:flex sm:gap-2 sm:overflow-x-auto no-scrollbar pb-1">
-        @foreach ([
-            'all' => 'Tất cả',
-            '24h' => '24h qua',
-            '7d' => '7 ngày',
-            '30d' => '30 ngày',
-        ] as $value => $label)
-            <button
-                type="button"
-                wire:click="setTimeRange('{{ $value }}')"
-                class="min-h-10 sm:shrink-0 px-2 sm:px-4 py-2 rounded-full text-xs font-black whitespace-nowrap transition-colors text-center
-                    {{ $timeRange === $value
-                        ? 'bg-primary text-white shadow'
-                        : 'bg-white/70 text-slate-600 border border-slate-200/70 hover:bg-white' }}"
-            >
-                {{ $label }}
-            </button>
-        @endforeach
+    {{-- Thời gian mất tích — pill dễ bấm, responsive --}}
+    <div>
+        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Thời gian mất tích</div>
+        <div class="grid grid-cols-2 min-[360px]:grid-cols-4 gap-1.5 sm:flex sm:gap-2 sm:overflow-x-auto no-scrollbar pb-1">
+            @foreach ([
+                'all' => 'Tất cả',
+                '24h' => '24h qua',
+                '7d' => '7 ngày',
+                '30d' => '30 ngày',
+            ] as $value => $label)
+                <button
+                    type="button"
+                    wire:click="setTimeRange('{{ $value }}')"
+                    class="min-h-10 sm:shrink-0 px-2 sm:px-4 py-2 rounded-full text-xs font-black whitespace-nowrap transition-colors text-center
+                        {{ $timeRange === $value
+                            ? 'bg-primary text-white shadow'
+                            : 'bg-white/70 text-slate-600 border border-slate-200/70 hover:bg-white' }}"
+                >
+                    {{ $label }}
+                </button>
+            @endforeach
+        </div>
     </div>
 
-    {{-- Nút mở dropdown Bộ lọc khác — tách hàng riêng bên dưới trên mobile
-                 (thay vì chen vào cùng hàng grid-cols-4, sẽ làm 5 phần tử lệch cột) --}}
-    <button
-        type="button"
-        wire:click="toggleOtherFilters"
-        class="min-h-10 w-full sm:w-auto flex items-center justify-center sm:justify-start gap-1 px-3 py-2 rounded-full text-xs font-black whitespace-nowrap border border-dashed border-slate-300 text-slate-500 hover:bg-white/60 transition-colors"
-    >
-        <x-heroicon-o-adjustments-horizontal class="w-3.5 h-3.5" />
-        Bộ lọc khác
-        @if ($status !== 'all' || $hasNewClue)
-            <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-        @endif
-    </button>
-
-    {{-- Dropdown: Trạng thái + Có manh mối GPS mới nhất --}}
-    @if ($otherFiltersOpen)
-        <div class="glass-premium p-3 rounded-2xl border border-slate-200/50 space-y-3 text-xs">
-
-            <div class="space-y-1.5">
-                <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Trạng thái</div>
-
-                @foreach ([
-                    'all' => ['label' => 'Tất cả', 'icon' => 'heroicon-o-squares-2x2'],
-                    'missing' => ['label' => 'Đang tìm', 'icon' => 'heroicon-o-magnifying-glass'],
-                    'found' => ['label' => 'Đã tìm thấy', 'icon' => 'heroicon-o-check-circle'],
-                ] as $value => $opt)
-                    <label class="flex items-center gap-2 cursor-pointer p-1.5 hover:bg-white/40 rounded-lg transition-colors">
-                        <input
-                            type="radio"
-                            wire:model.live="status"
-                            value="{{ $value }}"
-                            class="accent-primary"
-                        />
-                        <x-dynamic-component :component="$opt['icon']" class="w-3.5 h-3.5 text-slate-500" />
-                        <span class="font-bold text-slate-700">{{ $opt['label'] }}</span>
-                    </label>
+    {{-- Tỉnh thành — select thực sự lọc được (gửi province_id) --}}
+    <div>
+        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tỉnh thành</label>
+        <div class="relative mt-1">
+            <x-heroicon-o-map-pin class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+            <select
+                wire:model.live="provinceId"
+                class="w-full pl-8 pr-3 py-2 border border-slate-200/70 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent bg-white/70 appearance-none"
+            >
+                <option value="">Tất cả tỉnh thành</option>
+                @foreach ($this->provinces as $province)
+                    <option value="{{ $province->id }}">{{ $province->name }}</option>
                 @endforeach
-            </div>
+            </select>
+        </div>
+    </div>
 
-            <div class="border-t border-slate-200/40 pt-2">
-                <label class="flex items-center gap-2 cursor-pointer p-1.5 hover:bg-white/40 rounded-lg transition-colors">
-                    <input
-                        type="checkbox"
-                        wire:model.live="hasNewClue"
-                        class="accent-primary"
-                    />
-                    <x-heroicon-o-map-pin class="w-3.5 h-3.5 text-slate-500" />
-                    <span class="font-bold text-slate-700">Có manh mối GPS mới nhất</span>
-                </label>
-            </div>
+    {{-- Trạng thái — segmented control --}}
+    <div>
+        <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Trạng thái</div>
+        <div class="grid grid-cols-3 gap-1.5">
+            @foreach ([
+                'all' => ['label' => 'Tất cả', 'icon' => 'heroicon-o-squares-2x2'],
+                'missing' => ['label' => 'Đang tìm', 'icon' => 'heroicon-o-magnifying-glass'],
+                'found' => ['label' => 'Tìm thấy', 'icon' => 'heroicon-o-check-circle'],
+            ] as $value => $opt)
+                <button
+                    type="button"
+                    wire:click="setStatus('{{ $value }}')"
+                    class="flex items-center justify-center gap-1 min-h-10 px-2 py-2 rounded-xl text-xs font-black transition-colors border
+                        {{ $status === $value
+                            ? 'bg-primary text-white border-primary shadow-sm'
+                            : 'bg-white/70 text-slate-600 border-slate-200/70 hover:bg-white' }}"
+                >
+                    <x-dynamic-component :component="$opt['icon']" class="w-3.5 h-3.5" />
+                    {{ $opt['label'] }}
+                </button>
+            @endforeach
+        </div>
+    </div>
 
+    {{-- Có manh mối GPS mới nhất --}}
+    <label class="flex items-center gap-2 cursor-pointer p-1.5 hover:bg-white/40 rounded-lg transition-colors">
+        <input
+            type="checkbox"
+            wire:model.live="hasNewClue"
+            class="accent-primary w-4 h-4"
+        />
+        <x-heroicon-o-map-pin class="w-3.5 h-3.5 text-slate-500" />
+        <span class="font-bold text-slate-700 text-xs">Có manh mối GPS mới nhất</span>
+    </label>
+
+    {{-- Tóm tắt bộ lọc đang bật + nút xóa --}}
+    @if ($status !== 'all' || $provinceId || $hasNewClue || $timeRange !== 'all')
+        <div class="flex items-center justify-between pt-1 border-t border-slate-200/40">
+            <span class="flex items-center gap-1.5 text-[11px] font-bold text-primary">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                Đang lọc
+            </span>
             <button
                 type="button"
                 wire:click="resetFilters"
-                class="w-full text-center text-[11px] font-black text-slate-400 hover:text-slate-600 pt-1"
+                class="text-[11px] font-black text-slate-400 hover:text-slate-600"
             >
                 Xóa bộ lọc
             </button>

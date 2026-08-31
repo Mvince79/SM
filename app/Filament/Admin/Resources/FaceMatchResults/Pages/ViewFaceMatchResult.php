@@ -40,10 +40,11 @@ class ViewFaceMatchResult extends ViewRecord
                             'confirmed_at' => now(),
                         ]);
 
-                        $record->missingChild?->update([
+                        // missingChild bị guard status → forceFill (update() sẽ bỏ qua)
+                        $record->missingChild?->forceFill([
                             'status' => 'FOUND',
                             'found_at' => now(),
-                        ]);
+                        ])->save();
 
                         $record->foundChild?->update([
                             'status' => 'MATCHED',

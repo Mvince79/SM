@@ -109,8 +109,10 @@ Route::post('/geo/lookup', [GeoLookupController::class, 'lookup'])
     ->name('api.geo.lookup');
 
 // ────────────────────────────────────────────────────────────────────────────────
-// S-02 — AI photo search (public, 5 requests/hour/IP)
+// S-02 — AI photo search (public). Giới hạn tốc độ lấy từ Cài đặt hệ thống
+// (photo_search.rate_limit lần / rate_window phút), mặc định 5 lần/giờ/IP.
+// Xem AppServiceProvider: RateLimiter::for('photo-search', ...).
 // ────────────────────────────────────────────────────────────────────────────────
 Route::post('/photo-search', [PhotoSearchController::class, 'search'])
-    ->middleware('throttle:5,60')
+    ->middleware('throttle:photo-search')
     ->name('api.photo-search');

@@ -357,6 +357,37 @@ return [
                 'url' => 'admin_case',
             ],
         ],
+
+        // ─── eKYC cần admin duyệt thủ công ──────────────────────────────────────
+        NotificationEvent::TYPE_KYC_REVIEW_REQUIRED => [
+            'ADMIN' => [
+                'title' => 'Có hồ sơ eKYC cần duyệt',
+                'body' => 'Hồ sơ xác thực của :full_name (mức :review_level) đã xử lý nhưng chưa tự xác thực '
+                    . '— cần admin xem xét và duyệt thủ công.',
+                'url' => 'kyc',
+            ],
+            'MODERATOR' => [
+                'title' => 'Có hồ sơ eKYC cần duyệt',
+                'body' => 'Hồ sơ xác thực của :full_name (mức :review_level) đã xử lý nhưng chưa tự xác thực '
+                    . '— cần admin xem xét và duyệt thủ công.',
+                'url' => 'kyc',
+            ],
+        ],
+
+        // A-?? — Lỗi xử lý AI/eKYC (ProcessPhotoJob, TriggerFaceMatchJob, ProcessKycJob).
+        // Bắn từ AIJobFailureNotifier; payload có :job và :message.
+        NotificationEvent::TYPE_AI_PROCESSING_FAILED => [
+            'ADMIN' => [
+                'title' => 'Xử lý AI/eKYC thất bại',
+                'body' => 'Tác vụ :job gặp lỗi: :message. Vui lòng kiểm tra dịch vụ AI và thử lại.',
+                'url' => null,
+            ],
+            'MODERATOR' => [
+                'title' => 'Xử lý AI/eKYC thất bại',
+                'body' => 'Tác vụ :job gặp lỗi: :message. Vui lòng kiểm tra dịch vụ AI và thử lại.',
+                'url' => null,
+            ],
+        ],
     ],
 
     /*
@@ -372,6 +403,11 @@ return [
     */
     'channels' => [
         'default' => ['mail'],
+
+        NotificationEvent::TYPE_KYC_REVIEW_REQUIRED => [
+            'ADMIN' => ['mail'],
+            'MODERATOR' => ['mail'],
+        ],
 
         NotificationEvent::TYPE_CASE_SUBMITTED => [
             'USER' => ['mail'],

@@ -6,6 +6,7 @@ use App\Models\FoundChild;
 use App\Models\Province;
 use App\Models\User;
 use App\Models\UserConsent;
+use App\Services\GeoBoundaryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -13,6 +14,18 @@ use Tests\TestCase;
 class CreateFoundFormConsentTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // V-02 — GeoBoundaryService phụ thuộc file GeoJSON tĩnh (có thể không có
+        // trong môi trường test). Mock trả UNVERIFIED để test luồng form không
+        // lệ thuộc dữ liệu ranh giới, không thay đổi logic production.
+        $this->mock(GeoBoundaryService::class)
+            ->shouldReceive('lookup')
+            ->andReturn(['status' => 'UNVERIFIED', 'province' => null, 'ward' => null]);
+    }
 
     private function baseFormData(): array
     {
@@ -24,6 +37,8 @@ class CreateFoundFormConsentTest extends TestCase
             'agreed' => true,
             'agreedDataPolicy' => true,
             'dataUseConsent' => true,
+            'lat' => '21.0285',
+            'lng' => '105.8542',
         ];
     }
 

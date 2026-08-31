@@ -2,13 +2,11 @@
 
 namespace App\Providers;
 
-use App\Listeners\BroadcastNotificationReceived;
 use App\Livewire\Volunteer\AssignmentBoard;
 use App\Services\Notification\Contracts\FcmPushSender;
 use App\Services\Notification\FcmHttpV1PushSender;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -40,6 +38,18 @@ class AppServiceProvider extends ServiceProvider
             return $request->user('sanctum')
                 ? Limit::perHour(50)->by('chatbot:user:'.$request->user('sanctum')->id)
                 : Limit::perHour(20)->by('chatbot:ip:'.$request->ip());
+        });
+
+        // Tìm kiếm bằng hình ảnh (S-02): giới hạn tốc độ lấy từ Cài đặt hệ thống
+        // (photo_search.rate_limit lần / photo_search.rate_window phút), mặc định
+        // 5 lần/giờ/IP. Admin chỉnh được trên giao diện mà không sửa code.
+        RateLimiter::for('photo-search', function (Request $request) {
+            $settings = app(\App\Settings\SettingService::class);
+            $maxAttempts = (int) $settings->get('photo_search_rate_limit');
+            $windowMinutes = (int) $settings->get('photo_search_rate_window');
+
+            return Limit::perMinutes($windowMinutes, $maxAttempts)
+                ->by('photo-search:'.$request->ip());
         });
 
         // Register Policy
@@ -94,7 +104,5 @@ class AppServiceProvider extends ServiceProvider
             'volunteer.assignment-board',
             AssignmentBoard::class
         );
-
-        Event::listen(NotificationSent::class, BroadcastNotificationReceived::class);
     }
 }

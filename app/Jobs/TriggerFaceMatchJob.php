@@ -39,9 +39,10 @@ class TriggerFaceMatchJob implements ShouldQueue
     public function __construct(public int $photoId, ?string $trackingId = null)
     {
         $this->trackingId = $trackingId ?? (string) Str::uuid();
-        // Chạy ĐỒNG BỘ (sync) cùng với ProcessPhotoJob để so khớp diễn ra ngay
-        // khi ảnh được encode, không cần queue worker.
-        $this->onConnection('sync');
+        // Chạy BẤT ĐỒNG BỘ (queue 'face-match') — khớp với supervisor-face-match
+        // trong config/horizon.php. So khớp chạy nền, không block request upload.
+        // Cần worker (php artisan queue:work / horizon) đang chạy.
+        $this->onQueue('face-match');
     }
 
     public function handle(FaceMatchService $faceMatchService): void
@@ -157,7 +158,16 @@ class TriggerFaceMatchJob implements ShouldQueue
             }
 
             if (! $isReviewed && $match->status === 'PENDING' && $match->is_matched && ($match->wasRecentlyCreated || ! $match->notified_at)) {
-                FaceMatchFound::dispatch($match);
+                try {
+                    FaceMatchFound::dispatch($match);
+                } catch (\Throwable $e) {
+                    // Realtime broadcast (WebSocket) thất bại KHÔNG được làm hỏng
+                    // luồng chính — thông báo DB (TYPE_FACE_MATCH_SUGGESTED) đã ghi ở dưới.
+                    Log::warning('FaceMatchFound broadcast failed (realtime only).', [
+                        'match_id' => $match->id,
+                        'message' => $e->getMessage(),
+                    ]);
+                }
                 $match->forceFill(['notified_at' => now()])->save();
 
                 // H-01/H-02 — Ghi thông báo FACE_MATCH_SUGGESTED vào đường ống hợp

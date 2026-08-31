@@ -3,7 +3,10 @@
 namespace App\Jobs;
 
 use App\Models\KycVerification;
+use App\Models\NotificationEvent;
+use App\Models\User;
 use App\Services\EkycService;
+use App\Services\Notification\Notifier;
 use App\Support\AIJobFailureNotifier;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -25,6 +28,7 @@ class ProcessKycJob implements ShouldQueue
 
     public function __construct(public int $kycVerificationId)
     {
+        $this->onConnection(config('queue.default', 'redis'));
         $this->onQueue(config('services.ekyc.queue', 'kyc'));
     }
 
@@ -68,6 +72,12 @@ class ProcessKycJob implements ShouldQueue
 
         $kyc->save();
 
+        // A-08: nếu không tự xác thực được (giữ PENDING) → cần admin duyệt thủ công.
+        // Gửi thông báo cho admin/moderator (kèm realtime badge qua broadcastArrival).
+        if ($kyc->status === 'PENDING') {
+            $this->notifyAdminsForReview($kyc);
+        }
+
         if ($kyc->status === 'VERIFIED' && $kyc->user) {
             $kyc->user->forceFill(['kyc_status' => 'VERIFIED'])->save();
         }
@@ -91,6 +101,36 @@ class ProcessKycJob implements ShouldQueue
         $kyc = KycVerification::query()->find($this->kycVerificationId);
         if ($kyc) {
             AIJobFailureNotifier::notifyAdmins($kyc, static::class, $exception->getMessage());
+        }
+    }
+
+    /**
+     * Gửi thông báo cho admin/moderator khi một hồ sơ eKYC cần duyệt thủ công.
+     *
+     * Dùng Notifier::send (idempotent theo event_type + subject) nên chạy lại
+     * nhiều lần (retry job) không tạo bản ghi recipient trùng.
+     */
+    protected function notifyAdminsForReview(KycVerification $kyc): void
+    {
+        $admins = User::query()->whereIn('role', ['ADMIN', 'MODERATOR'])->get();
+
+        if ($admins->isEmpty()) {
+            return;
+        }
+
+        $event = app(Notifier::class)->send(
+            NotificationEvent::TYPE_KYC_REVIEW_REQUIRED,
+            $kyc,
+            $admins,
+            [
+                'full_name' => $kyc->full_name_on_id ?? $kyc->user?->full_name ?? 'không rõ',
+                'review_level' => $kyc->review_level,
+                'source' => NotificationEvent::SOURCE_SYSTEM,
+            ],
+        );
+
+        if ($event) {
+            Log::info('Đã gửi thông báo duyệt eKYC cho admin.', ['kyc_id' => $kyc->id]);
         }
     }
 }

@@ -94,7 +94,11 @@ class UserForm
                                 ->label('Vai trò')
                                 ->options([
                                     'ADMIN' => 'Quản trị viên',
-                                    'MODERATOR' => 'Kiểm duyệt viên',
+                                    // 'MODERATOR' (Kiểm duyệt viên) và 'VOLUNTEER'
+                                    // (Tình nguyện viên) bị ẩn khỏi UI theo yêu cầu:
+                                    // admin không được set 2 vai trò này từ giao diện.
+                                    // Khi cần dùng lại, bỏ comment dòng dưới.
+                                    // 'MODERATOR' => 'Kiểm duyệt viên',
                                     'USER' => 'Người dùng',
                                 ])
                                 ->default('USER')

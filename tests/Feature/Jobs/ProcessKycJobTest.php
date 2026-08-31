@@ -4,6 +4,7 @@ namespace Tests\Feature\Jobs;
 
 use App\Jobs\ProcessKycJob;
 use App\Models\KycVerification;
+use App\Models\NotificationEvent;
 use App\Models\User;
 use App\Services\EkycService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -104,5 +105,42 @@ class ProcessKycJobTest extends TestCase
 
         $this->assertSame(3, $job->tries);
         $this->assertSame([60, 180, 600], $job->backoff);
+    }
+
+    public function test_notifies_admins_when_kyc_needs_review(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN']);
+        $user = User::factory()->create(['kyc_status' => 'PENDING']);
+        $kyc = KycVerification::factory()->create(['user_id' => $user->id, 'status' => 'PENDING']);
+
+        $mock = Mockery::mock(EkycService::class);
+        $mock->shouldReceive('verify')->once()->andReturn([
+            'ocr_provider' => 'tesseract',
+            'ocr_raw_response' => ['full_name' => 'Nguyen Van A'],
+            'id_type' => null,
+            'face_match_score' => 0.42,
+            'name_matches' => false,
+            'id_number_matches' => false,
+            'auto_verifiable' => false,
+        ]);
+        $this->app->instance(EkycService::class, $mock);
+
+        (new ProcessKycJob($kyc->id))->handle($mock);
+
+        $kyc->refresh();
+        $this->assertSame('PENDING', $kyc->status);
+
+        $this->assertDatabaseHas('notification_events', [
+            'event_type' => NotificationEvent::TYPE_KYC_REVIEW_REQUIRED,
+            'subject_type' => KycVerification::class,
+            'subject_id' => $kyc->id,
+        ]);
+
+        $event = NotificationEvent::query()
+            ->where('event_type', NotificationEvent::TYPE_KYC_REVIEW_REQUIRED)
+            ->where('subject_id', $kyc->id)
+            ->firstOrFail();
+
+        $this->assertTrue($event->recipients()->where('user_id', $admin->id)->exists());
     }
 }

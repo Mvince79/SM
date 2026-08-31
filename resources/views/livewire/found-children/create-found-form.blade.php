@@ -161,8 +161,8 @@ new class extends Component {
             // Chuyển thành không bắt buộc, mặc định hôm nay (mount + submit fallback).
             'found_date' => ['nullable', 'date', 'before_or_equal:today'],
             'handover_agency' => ['nullable', 'string', 'max:150'],
-            'lat' => ['nullable', 'numeric', 'between:-90,90'],
-            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
             // V-02 — chặn server-side khi điểm ghim nằm ngoài lãnh thổ Việt Nam.
             'geoStatus' => ['not_in:NOT_FOUND'],
         ];
@@ -174,6 +174,8 @@ new class extends Component {
             'geoStatus.not_in' => 'Vị trí đã ghim nằm ngoài lãnh thổ Việt Nam. Vui lòng ghim lại một điểm trong lãnh thổ Việt Nam.',
             'province_id.required' => 'Vui lòng chọn tỉnh/thành phố.',
             'found_date.before_or_equal' => 'Ngày phát hiện không thể ở tương lai.',
+            'lat.required' => 'Vui lòng ghim vị trí phát hiện trên bản đồ.',
+            'lng.required' => 'Vui lòng ghim vị trí phát hiện trên bản đồ.',
         ];
     }
 
@@ -380,6 +382,19 @@ new class extends Component {
             $this->validate(
                 ['geoStatus' => ['not_in:NOT_FOUND']],
                 ['geoStatus.not_in' => 'Vị trí đã ghim nằm ngoài lãnh thổ Việt Nam. Vui lòng ghim lại một điểm trong lãnh thổ Việt Nam.'],
+            );
+
+            // V-02 — Bắt buộc ghim vị trí: thiếu lat/lng thì hồ sơ sẽ không bao giờ
+            // xuất hiện trên bản đồ công khai (MapDataController loại bỏ record null toạ độ).
+            $this->validate(
+                [
+                    'lat' => ['required', 'numeric', 'between:-90,90'],
+                    'lng' => ['required', 'numeric', 'between:-180,180'],
+                ],
+                [
+                    'lat.required' => 'Vui lòng ghim vị trí phát hiện trên bản đồ.',
+                    'lng.required' => 'Vui lòng ghim vị trí phát hiện trên bản đồ.',
+                ],
             );
 
             $this->validate($this->rulesStep3(), $this->messagesStep3());

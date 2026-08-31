@@ -7,7 +7,5 @@ import './toast';
 import './kyc-image-capture';
 
 import { createCaseHeatmap } from './map-heatmap';
-import { createMapRadiusFilter } from './map-radius-filter';
 
 window.createCaseHeatmap = createCaseHeatmap;
-window.createMapRadiusFilter = createMapRadiusFilter;

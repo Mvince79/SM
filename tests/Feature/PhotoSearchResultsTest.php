@@ -226,6 +226,8 @@ class PhotoSearchResultsTest extends TestCase
                 'agreed' => true,
                 'agreedDataPolicy' => true,
                 'dataUseConsent' => true,
+                'lat' => '21.0285',
+                'lng' => '105.8542',
             ])
             ->call('submit')
             ->assertHasNoErrors();
@@ -258,6 +260,8 @@ class PhotoSearchResultsTest extends TestCase
                 'agreed' => true,
                 'agreedDataPolicy' => true,
                 'dataUseConsent' => true,
+                'lat' => '21.0285',
+                'lng' => '105.8542',
             ])
             ->call('submit')
             ->assertHasNoErrors();

@@ -84,11 +84,12 @@ class RecentMissingWidget extends TableWidget
                     ->modalHeading('Xác nhận duyệt hồ sơ')
                     ->modalDescription(fn(MissingChild $record) => "Duyệt hồ sơ {$record->case_code} — {$record->full_name}?")
                     ->action(function (MissingChild $record): void {
-                        $record->update([
+                        // status/approved_at/approved_by bị guard → forceFill thay update()
+                        $record->forceFill([
                             'status' => MissingChild::STATUS_APPROVED,
                             'approved_at' => now(),
                             'approved_by' => Auth::id(),
-                        ]);
+                        ])->save();
                         Cache::forget('dashboard_stats_overview');
                         Cache::forget('badge_missing_pending');
                         PostStatusChanged::dispatch($record->refresh());
@@ -108,10 +109,10 @@ class RecentMissingWidget extends TableWidget
                             ->placeholder('Nhập lý do từ chối (tối thiểu 10 ký tự)...'),
                     ])
                     ->action(function (MissingChild $record, array $data): void {
-                        $record->update([
+                        $record->forceFill([
                             'status' => MissingChild::STATUS_REJECTED,
                             'rejection_reason' => $data['rejection_reason'],
-                        ]);
+                        ])->save();
                         Cache::forget('dashboard_stats_overview');
                         Cache::forget('badge_missing_pending');
                         PostStatusChanged::dispatch($record->refresh());

@@ -78,32 +78,15 @@
                             class="bg-primary/10 text-primary text-[9px] font-black uppercase px-2 py-0.5 rounded-full">REALTIME</span>
                     </div>
 
-                    <!-- Quick search input in card -->
-                    <div class="relative">
-                        <x-heroicon-o-magnifying-glass
-                            class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                        <input type="text" placeholder="Tìm theo tỉnh thành, xã/phường..."
-                            class="w-full pl-8 pr-3 py-2 border border-slate-200/70 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent bg-white/70" />
-                    </div>
-
-                    <!-- C-04: Bộ lọc bản đồ nâng cao (thời gian / trạng thái / manh mối mới) -->
+                    <!-- C-04: Bộ lọc bản đồ nâng cao (tỉnh / thời gian / trạng thái / manh mối mới) -->
                     @livewire('map.map-filters')
 
                     <!-- Quick locating button -->
                     <button onclick="locateMe()"
                         class="w-full bg-slate-900 text-white font-extrabold text-xs py-2.5 rounded-xl hover:bg-slate-800 transition-colors shadow flex items-center justify-center gap-1">
                         <x-heroicon-o-cursor-arrow-rays class="w-4 h-4" /> Vị trí của tôi </button>
-                    <button id="clear-radius-filter" type="button"
-                        class="hidden w-full bg-blue-600 text-white font-extrabold text-xs py-2.5 rounded-xl mt-2 hover:bg-blue-700 transition-colors">
-                        Đang lọc theo bán kính · Xóa
-                    </button>
 
                 </div>
-            </div>
-
-            <!-- Widget C-02: Gần đây có bao nhiêu trẻ mất tích -->
-            <div class="flex sm:block justify-end">
-                <x-map.nearby-widget />
             </div>
 
         </div>
@@ -111,10 +94,7 @@
 @endsection
 
 @push('scripts')
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
     <script src="{{ asset('js/map/vn-sovereignty-layer.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -212,29 +192,6 @@
             // Gom toàn bộ marker vào 1 layerGroup để dễ clear/vẽ lại khi đổi filter (C-04)
             const markersLayer = L.layerGroup().addTo(map);
 
-            const radiusFilter = window.createMapRadiusFilter(
-                map,
-                markersLayer
-            );
-            const clearRadiusButton = document.getElementById(
-                'clear-radius-filter'
-            );
-
-            map.on(L.Draw.Event.CREATED, () => {
-                clearRadiusButton?.classList.remove('hidden');
-            });
-
-            map.on(L.Draw.Event.DELETED, () => {
-                clearRadiusButton?.classList.add('hidden');
-            });
-
-            clearRadiusButton?.addEventListener('click', () => {
-                radiusFilter.reset();
-                clearRadiusButton.classList.add('hidden');
-            });
-
-            let heatLayer = null;
-            let heatmapEnabled = false;
             // C-05: popup marker phải luôn nổi trên panel filter/widget.
             // #full-map là 1 stacking context riêng (Leaflet set position:relative),
             // nên phải nâng z-index của chính #full-map (qua class .has-open-popup,
@@ -259,16 +216,33 @@
             function loadMarkers(queryString = '') {
                 startLoading('markers');
 
+                // Xoá marker cũ trước khi vẽ lại (trước đây do radiusFilter.clearMarkers
+                // đảm nhiệm; nay không còn bộ lọc bán kính nên tự clear ở đây).
+                markersLayer.clearLayers();
+
                 fetch('/api/v1/map-data' + queryString)
                     .then(response => response.json())
                     .then(result => {
 
-                        radiusFilter.clearMarkers();
-
-
                         result.data.forEach((kid) => {
 
+                            const lat = Number(kid.lat);
+                            const lng = Number(kid.lng);
 
+                            // Bỏ qua record không có toạ độ hợp lệ. Nếu 1 record lỗi
+                            // (lat/lng null, text, hoặc ngoài khoảng) mà vẫn cố vẽ,
+                            // Leaflet sẽ sinh marker NaN và có thể làm hỏng cả vòng lặp
+                            // → các chấm khác cũng không hiện. Guard này đảm bảo mỗi
+                            // chấm được xử lý độc lập: sai 1 record không ảnh hưởng số còn lại.
+                            if (
+                                !Number.isFinite(lat) || !Number.isFinite(lng)
+                                || lat < -90 || lat > 90
+                                || lng < -180 || lng > 180
+                            ) {
+                                console.warn('Bỏ qua marker không hợp lệ:', kid);
+
+                                return;
+                            }
 
                             const popupHtml = `
                                                                                         <div class="flex gap-3 items-center min-w-[240px] max-w-[280px]">
@@ -319,7 +293,7 @@
                                                                                         `;
 
                             const marker = L.marker(
-                                [Number(kid.lat), Number(kid.lng)],
+                                [lat, lng],
                                 {
                                     icon: buildIcon(kid.type),
                                 }
@@ -327,7 +301,9 @@
                                 maxWidth: window.innerWidth - 32,
                             });
 
-                            radiusFilter.registerMarker(marker);
+                            // Thêm marker vào layer đã gắn trên bản đồ (trước đây do
+                            // radiusFilter.registerMarker đảm nhiệm — nay add trực tiếp).
+                            markersLayer.addLayer(marker);
 
                         });
 
@@ -340,78 +316,25 @@
                         finishLoading('markers');
                     });
             }
-            function loadHeatmap(queryString = '') {
-                fetch('/map/heatmap-data' + queryString)
-                    .then(response => response.json())
-                    .then(result => {
-                        const heatPoints = result.data ?? [];
-
-                        if (heatLayer) {
-                            map.removeLayer(heatLayer);
-                        }
-
-                        heatLayer = L.heatLayer(heatPoints, {
-                            radius: 28,
-                            blur: 22,
-                            maxZoom: 18,
-                            gradient: {
-                                0.2: '#22c55e',
-                                0.5: '#eab308',
-                                0.8: '#f97316',
-                                1.0: '#dc2626',
-                            },
-                        });
-
-                        if (heatmapEnabled) {
-                            heatLayer.addTo(map);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Lỗi tải heatmap:', error);
-                    });
-            }
             // Tải marker lần đầu (không filter)
             loadMarkers();
-            loadHeatmap();
             // C-04: Livewire MapFilters bắn event này mỗi khi người dùng đổi filter
             Livewire.on('map-filters-changed', ({ filters }) => {
                 const params = new URLSearchParams(filters).toString();
                 const queryString = params ? '?' + params : '';
 
                 loadMarkers(queryString);
-                loadHeatmap(queryString);
             });
-            // ĐÃ GỠ: trước đây có 1 listener lắng nghe sự kiện
-            // 'nearby-radius-changed' (bắn ra từ widget "Trẻ mất tích gần đây"
-            // ngay khi trình duyệt lấy xong GPS thật của người dùng — kể cả khi
-            // không ai bấm gì). Listener đó gọi loadMarkers() với bộ lọc bán
-            // kính GPS thật, khiến TOÀN BỘ marker trên bản đồ chính bị âm thầm
-            // xoá và thay bằng vài marker (thường là 0) quanh vị trí người
-            // dùng — nhìn như "chấm tự nhiên biến mất" vài giây sau khi mở
-            // trang. Widget "gần đây" vẫn tự lấy dữ liệu và hiển thị số đếm/
-            // danh sách riêng của nó (xem nearby-widget.blade.php), không cần
-            // listener này để hoạt động — nên gỡ hẳn, không thay thế.
+            // ĐÃ GỠ (theo yêu cầu): widget "Trẻ mất tích gần đây" (chọn bán kính
+            // GPS) và component nearby-widget.blade.php đã xoá hoàn toàn — người
+            // dùng không muốn dùng bộ lọc khoảng cách nữa. Trước đây widget này
+            // bắn sự kiện 'nearby-radius-changed' ngay khi lấy xong GPS thật của
+            // người dùng (kể cả khi không ai bấm gì), và 1 listener ở đây gọi
+            // loadMarkers() với bộ lọc bán kính GPS thật → TOÀN BỘ marker trên
+            // bản đồ chính bị âm thầm xoá, thay bằng vài marker (thường là 0)
+            // quanh vị trí người dùng → nhìn như "chấm tự nhiên biến mất" vài
+            // giây sau khi mở trang. Đã gỡ hẳn widget lẫn listener, không thay thế.
             // Locate the client device location
-            document
-                .getElementById('toggle-heatmap')
-                ?.addEventListener('click', function () {
-
-                    heatmapEnabled = !heatmapEnabled;
-
-                    this.textContent = heatmapEnabled
-                        ? 'Heatmap: Bật'
-                        : 'Heatmap: Tắt';
-
-                    if (!heatLayer) {
-                        return;
-                    }
-
-                    if (heatmapEnabled) {
-                        heatLayer.addTo(map);
-                    } else {
-                        map.removeLayer(heatLayer);
-                    }
-                });
             window.locateMe = function () {
                 window.allowGeolocationForNextCall?.();
 

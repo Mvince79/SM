@@ -95,6 +95,12 @@ class NotificationEvent extends Model
     public const TYPE_FACE_MATCH_SUGGESTED = 'FACE_MATCH_SUGGESTED';
 
     /**
+     * Một hồ sơ eKYC đã xử lý nhưng KHÔNG tự xác thực được (review_level =
+     * ENHANCED) → cần admin vào duyệt thủ công. Chỉ gửi cho ADMIN/MODERATOR.
+     */
+    public const TYPE_KYC_REVIEW_REQUIRED = 'KYC_REVIEW_REQUIRED';
+
+    /**
      * Nguồn phát sinh thông báo — nhãn để người nhận biết "tin này từ đâu ra",
      * thay vì chỉ thấy một dòng chữ không rõ ai/cái gì tạo ra nó.
      *

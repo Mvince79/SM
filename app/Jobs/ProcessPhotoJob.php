@@ -31,9 +31,10 @@ class ProcessPhotoJob implements ShouldQueue
 
     public function __construct(public int $photoId)
     {
-        // Chạy ĐỒNG BỘ (sync) thay vì qua queue worker: đảm bảo mọi ảnh upload
-        // đều được detect + encode ngay lập tức, không bao giờ kẹt chờ worker.
-        $this->onConnection('sync');
+        // Chạy BẤT ĐỒNG BỘ (queue 'default') — khớp với supervisor-general
+        // trong config/horizon.php. Ảnh được xử lý nền, request upload trả về ngay,
+        // không block người dùng chờ AI detect/encode. Cần worker đang chạy.
+        $this->onQueue('default');
     }
 
     public function handle(FaceMatchService $faceMatchService): void

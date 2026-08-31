@@ -92,6 +92,13 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::TOPBAR_END,
                 fn (): string => view('components.admin.notification-badge')->render(),
+            )
+            // [Item 10] Realtime badge admin: nạp module admin-realtime.js (lắng nghe
+            // sự kiện `notification.received` qua Reverb) để cập nhật badge NGAY LẬP TỨC
+            // khi có thông báo mới — không cần F5. Tự bỏ qua nếu Reverb chưa cấu hình.
+            ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): string => view('components.admin.realtime-script')->render(),
             );
     }
 }

@@ -10,7 +10,7 @@
 :root {
     --z-map-tile: 10; /* #full-map / #mini-map / #map-picker khi nghỉ */
     --z-map-overlay: 20; /* hook cho overlay chủ quyền (C-01) */
-    --z-map-ui: 40; /* filter card (C-04), nearby-widget (C-02) */
+    --z-map-ui: 40; /* filter card (C-04) */
     --z-map-popup: 50; /* map container khi có popup marker đang mở */
 }
 

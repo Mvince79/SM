@@ -43,11 +43,12 @@ namespace App\Filament\Admin\Resources\MissingChildren\Pages;
                     ->modalDescription('Hồ sơ sẽ hiển thị công khai. Người đăng nhận email thông báo.')
                     ->modalSubmitActionLabel('Duyệt ngay')
                     ->action(function () {
-                        $this->record->update([
+                        // status/approved_at/approved_by bị guard → forceFill thay update()
+                        $this->record->forceFill([
                             'status' => 'APPROVED',
                             'approved_at' => now(),
                             'approved_by' => Auth::id(),  // dùng facade tránh IDE warning
-                        ]);
+                        ])->save();
                         Cache::forget('badge_missing_pending');
                         Cache::forget('dashboard_stats_overview');
                         Notification::make()->title('Đã duyệt hồ sơ')->success()->send();
@@ -74,10 +75,10 @@ namespace App\Filament\Admin\Resources\MissingChildren\Pages;
                         // quả đối chiếu, tránh "Đã tìm thấy" giả. Không đụng thông báo Từ
                         // chối (do MissingChildObserver phát riêng).
                         DB::transaction(function () use ($data) {
-                            $this->record->update([
+                            $this->record->forceFill([
                                 'status' => 'REJECTED',
                                 'rejection_reason' => $data['rejection_reason'],
-                            ]);
+                            ])->save();
 
                             app(MissingChildCascadeService::class)->handleRemoval($this->record, includePending: false);
                         });
@@ -96,10 +97,10 @@ namespace App\Filament\Admin\Resources\MissingChildren\Pages;
                     ->modalHeading('Đánh dấu đã tìm thấy?')
                     ->modalDescription('Hồ sơ sẽ chuyển sang trạng thái "Đã tìm thấy". Gia đình sẽ nhận thông báo qua chuông và email.')
                     ->action(function () {
-                        $this->record->update([
+                        $this->record->forceFill([
                             'status' => 'FOUND',
                             'found_at' => now(),
-                        ]);
+                        ])->save();
                         Cache::forget('dashboard_stats_overview');
                         Notification::make()->title('Đã đánh dấu tìm thấy')->success()->send();
                         $this->refreshFormData(['status', 'found_at']);
@@ -154,7 +155,7 @@ namespace App\Filament\Admin\Resources\MissingChildren\Pages;
                     ->modalHeading('Đóng hồ sơ này?')
                     ->modalDescription('Hồ sơ sẽ không còn hiển thị công khai.')
                     ->action(function () {
-                        $this->record->update(['status' => 'CLOSED']);
+                        $this->record->forceFill(['status' => 'CLOSED'])->save();
                         Notification::make()->title('Đã đóng hồ sơ')->send();
                         $this->refreshFormData(['status']);
                     }),

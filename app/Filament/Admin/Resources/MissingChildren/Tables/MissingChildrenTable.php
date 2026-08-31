@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use App\Events\PostStatusChanged;
 use Illuminate\Support\Facades\Mail;
 
@@ -281,11 +282,13 @@ class MissingChildrenTable
                         // Chuông + email cho gia đình do MissingChildObserver phát
                         // (transition → APPROVED). Trước đây email gửi riêng ở đây
                         // nên nút Duyệt ở trang chi tiết lại không gửi gì.
-                        $record->update([
+                        // status/approved_at/approved_by bị guard → phải forceFill mới đổi được
+                        // (update() gọi fill() sẽ bỏ qua silently, nút báo thành công nhưng status đứng yên).
+                        $record->forceFill([
                             'status' => MissingChild::STATUS_APPROVED,
                             'approved_at' => now(),
                             'approved_by' => Auth::id(),
-                        ]);
+                        ])->save();
                         Cache::forget('badge_missing_pending');
                         Notification::make()->title('Đã duyệt hồ sơ')->success()->send();
                         PostStatusChanged::dispatch($record->refresh());
@@ -307,10 +310,10 @@ class MissingChildrenTable
                         // liên quan về trạng thái trước và bác bỏ kết quả đối chiếu CONFIRMED,
                         // tránh "Đã tìm thấy" giả. Không đụng thông báo Từ chối (riêng).
                         DB::transaction(function () use ($record, $data) {
-                            $record->update([
+                            $record->forceFill([
                                 'status' => MissingChild::STATUS_REJECTED,
                                 'rejection_reason' => $data['rejection_reason'],
-                            ]);
+                            ])->save();
 
                             app(MissingChildCascadeService::class)->handleRemoval($record, includePending: false);
                         });
@@ -398,11 +401,11 @@ class MissingChildrenTable
                             $records->each(function (MissingChild $record) use (&$count) {
                                 if ($record->status !== MissingChild::STATUS_PENDING)
                                     return;
-                                $record->update([
+                                $record->forceFill([
                                     'status' => MissingChild::STATUS_APPROVED,
                                     'approved_at' => now(),
                                     'approved_by' => Auth::id(),
-                                ]);
+                                ])->save();
                                 PostStatusChanged::dispatch($record->refresh());
                                 $count++;
                             });
@@ -432,10 +435,10 @@ class MissingChildrenTable
                                 // FoundChild liên quan về trạng thái trước và bác bỏ kết quả
                                 // đối chiếu CONFIRMED, tránh "Đã tìm thấy" giả.
                                 DB::transaction(function () use ($record, $data) {
-                                    $record->update([
+                                    $record->forceFill([
                                         'status' => MissingChild::STATUS_REJECTED,
                                         'rejection_reason' => $data['rejection_reason'],
-                                    ]);
+                                    ])->save();
 
                                     app(MissingChildCascadeService::class)->handleRemoval($record, includePending: false);
                                 });

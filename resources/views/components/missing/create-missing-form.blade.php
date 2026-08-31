@@ -64,6 +64,7 @@ new class extends Component {
     public bool $dataUseConsent = false;
 
     public string $idempotencyKey = '';
+    public bool $isSubmitting = false;
     public $provinces;
 
     // ── Mount ─────────────────────────────────────────────────────────────
@@ -86,8 +87,8 @@ new class extends Component {
             'province_id' => ['required', 'exists:provinces,id'],
             'dob' => ['nullable', 'date', 'before:today'],
             'age_estimate' => ['nullable', 'integer', 'min:0', 'max:' . (config('app.child_age_limit') - 1)],
-            'lat' => ['nullable', 'numeric', 'between:-90,90'],
-            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
             // `address_detail` chỉ là ghi chú tuỳ chọn (V-01) — không bắt buộc.
             'address_detail' => ['nullable', 'string', 'max:500'],
             // V-02 — chặn server-side khi điểm ghim nằm ngoài lãnh thổ Việt Nam.
@@ -105,6 +106,8 @@ new class extends Component {
             'missing_date.before_or_equal' => 'Ngày mất tích không thể ở tương lai.',
             'province_id.required' => 'Vui lòng chọn tỉnh/thành phố.',
             'age_estimate.max' => 'Hệ thống chỉ tiếp nhận báo tin cho trẻ dưới ' . config('app.child_age_limit') . ' tuổi theo quy định của Luật Trẻ em 2016.',
+            'lat.required' => 'Vui lòng ghim vị trí trên bản đồ để xác định nơi mất tích.',
+            'lng.required' => 'Vui lòng ghim vị trí trên bản đồ để xác định nơi mất tích.',
         ];
     }
 
@@ -305,6 +308,12 @@ new class extends Component {
 
     public function submit(): void
     {
+        if ($this->isSubmitting) {
+            return;
+        }
+        $this->isSubmitting = true;
+
+        try {
         // V-02 — Giải lại toạ độ ở biên tin cậy: không tin geoStatus/geoProvince/
         // geoWard do client gửi lên, tự tra cứu nội bộ rồi mới validate.
         $this->syncGeoResolution();
@@ -428,6 +437,9 @@ new class extends Component {
 
         session()->flash('success', 'Đăng tin thành công! Hồ sơ đang chờ xét duyệt.');
         $this->redirect(route('missing.detail', $result['resource_id']));
+        } finally {
+            $this->isSubmitting = false;
+        }
     }
 };
 ?>
@@ -1191,7 +1203,7 @@ new class extends Component {
                 </button>
             @else
                 <button type="button" wire:click="submit" wire:loading.attr="disabled" wire:target="submit"
-                    @disabled($geoStatus === 'NOT_FOUND')
+                    @disabled($isSubmitting || $geoStatus === 'NOT_FOUND')
                     class="px-6 py-3 rounded-2xl bg-primary text-white font-extrabold text-sm hover:bg-primary-dark shadow-md shadow-primary/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary">
                     <span wire:loading wire:target="submit"
                         class="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
