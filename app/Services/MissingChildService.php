@@ -82,10 +82,6 @@ class MissingChildService
 
     private function buildBannerConfig($case): array
     {
-        if ($case->status === 'MATCHED') {
-            return ['badge' => 'bg-green-500', 'badgeText' => 'Đã tìm thấy'];
-        }
-
         if (!$case->missing_date) {
             return ['badge' => 'bg-slate-500', 'badgeText' => null];
         }

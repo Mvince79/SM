@@ -69,11 +69,7 @@
                         <div class="flex items-center gap-2">
                             <span class="w-3 h-3 bg-primary rounded-full animate-ping"></span>
                             <span class="text-primary font-extrabold text-sm tracking-tight">
-                                @if ($case->status === 'MATCHED')
-                                    <x-heroicon-o-check-circle class="w-4 h-4 inline" /> BÉ ĐÃ ĐƯỢC TÌM THẤY
-                                @else
-                                    <x-heroicon-o-megaphone class="w-4 h-4 inline" /> ĐANG CẦN TÌM KHẨN CẤP TRÊN TOÀN QUỐC
-                                @endif
+                                <x-heroicon-o-megaphone class="w-4 h-4 inline" /> ĐANG CẦN TÌM KHẨN CẤP TRÊN TOÀN QUỐC
                             </span>
                         </div>
                         @if ($case->missing_date)
@@ -396,6 +392,7 @@
                         <x-family-handover-card :case="$case" />
                     {{-- HANDED_OVER: bé đã bàn giao, gia đình đến nhận & xác nhận đoàn tụ --}}
                     @elseif ($case->status === 'HANDED_OVER')
+                        <x-family-handover-card :case="$case" />
                         <x-next-steps-card :case="$case" />
                     @endif
                 @endif

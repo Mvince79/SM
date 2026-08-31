@@ -225,4 +225,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('missing.confirm-reunited');
     Route::post('/missing/{missingChild}/confirm-handover', [MissingController::class, 'confirmHandover'])
         ->name('missing.confirm-handover');
+    Route::post('/missing/{missingChild}/deny-handover', [MissingController::class, 'denyHandover'])
+        ->name('missing.deny-handover');
 });

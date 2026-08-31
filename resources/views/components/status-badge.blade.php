@@ -9,9 +9,9 @@
     [$variant, $label] = match ($status) {
         'PENDING'            => ['default', 'Chờ duyệt'],
         'APPROVED'           => ['brand', 'Đã duyệt'],
-        'FOUND'              => ['found', 'Đã tìm thấy'],
+        'FOUND'              => ['found', 'Nghi vấn khớp mạnh'],
         'MATCHED'            => ['found', 'Đã khớp'],
-        'HANDED_OVER'        => ['brand', 'Đã bàn giao'],
+        'HANDED_OVER'        => ['brand', 'Nghi vấn khớp mạnh — đang xác minh'],
         'REUNITED'           => ['found', 'Đã đoàn tụ'],
         'UNREACHABLE_FAMILY' => ['urgent', 'Không liên lạc được'],
         'REJECTED'           => ['urgent', 'Từ chối'],

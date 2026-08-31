@@ -198,9 +198,9 @@ class ChatbotTools
     {
         return match ($status) {
             MissingChild::STATUS_APPROVED => 'Đang tìm kiếm',
-            MissingChild::STATUS_FOUND => 'Đã tìm thấy',
+            MissingChild::STATUS_FOUND => 'Nghi vấn khớp mạnh',
             MissingChild::STATUS_REUNITED => 'Đã đoàn tụ',
-            MissingChild::STATUS_HANDED_OVER => 'Đã bàn giao',
+            MissingChild::STATUS_HANDED_OVER => 'Nghi vấn khớp mạnh — đang xác minh',
             MissingChild::STATUS_MATCHED => 'Đã ghép đôi gợi ý',
             MissingChild::STATUS_PENDING => 'Chờ duyệt',
             MissingChild::STATUS_CLOSED => 'Đã đóng',

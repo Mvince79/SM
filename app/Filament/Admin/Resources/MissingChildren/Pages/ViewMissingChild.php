@@ -106,12 +106,12 @@ namespace App\Filament\Admin\Resources\MissingChildren\Pages;
                         $this->refreshFormData(['status', 'found_at']);
                     }),
 
-                // H-01/H-04 — Đánh dấu "đã bàn giao" cho cơ quan chức năng.
+                // H-01/H-04 — Xác nhận "nghi vấn khớp mạnh — đang xác minh" cho cơ quan chức năng.
                 // Mở khóa toàn bộ Nhóm H: card "Việc cần làm" cho gia đình, job nhắc 3/7
                 // ngày, và trang "Xác nhận hộ". Hệ thống chỉ ghi nhận, không thay thế
                 // cơ quan chức năng (bàn giao thật diễn ra ngoài hệ thống).
                 Action::make('mark_handed_over')
-                    ->label('Đánh dấu đã bàn giao')
+                    ->label('Xác nhận nghi vấn khớp mạnh')
                     ->icon('heroicon-o-arrow-right-circle')
                     ->color('info')
                     ->visible(fn() => in_array($this->record->status, ['APPROVED', 'FOUND'], true))
@@ -129,9 +129,9 @@ namespace App\Filament\Admin\Resources\MissingChildren\Pages;
                             ->rows(3)
                             ->helperText('Ví dụ: "Đã gọi điện xác minh qua gia đình, công an phường X xác nhận đã bàn giao bé vào ngày...".'),
                     ])
-                    ->modalHeading('Đánh dấu đã bàn giao cho cơ quan chức năng?')
-                    ->modalDescription('Hồ sơ chuyển sang trạng thái "Đã bàn giao". Gia đình sẽ nhận hướng dẫn để đến nhận lại con. Hệ thống chỉ ghi nhận thông tin, không thay thế cơ quan chức năng.')
-                    ->modalSubmitActionLabel('Đánh dấu bàn giao')
+                    ->modalHeading('Xác nhận nghi vấn khớp mạnh — đang xác minh?')
+                    ->modalDescription('Hệ thống ghi nhận nghi vấn khớp mạnh và chuyển hồ sơ sang bước đang xác minh cùng cơ quan chức năng. Gia đình sẽ nhận hướng dẫn để phối hợp xác minh. Hệ thống chỉ ghi nhận thông tin, không thay thế cơ quan chức năng.')
+                    ->modalSubmitActionLabel('Xác nhận nghi vấn khớp mạnh')
                     ->action(function (array $data) {
                         // Dùng confirmHandoverByAdmin: validate lý do >= 20 ký tự TẠI ĐÂY
                         // (trước save) thay vì update() thô — StatusChangeAuditObserver chỉ
@@ -142,7 +142,7 @@ namespace App\Filament\Admin\Resources\MissingChildren\Pages;
                             $data['handover_point_id'] ?? null
                         );
                         Cache::forget('dashboard_stats_overview');
-                        Notification::make()->title('Đã đánh dấu bàn giao')->success()->send();
+                        Notification::make()->title('Đã xác nhận nghi vấn khớp mạnh')->success()->send();
                         $this->refreshFormData(['status', 'handover_point_id', 'handover_confirmed_at', 'handover_confirmed_by']);
                     }),
 

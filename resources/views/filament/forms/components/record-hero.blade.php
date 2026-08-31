@@ -17,7 +17,7 @@
         'PENDING'   => ['label' => 'Chờ duyệt',        'cls' => 'bg-amber-100 text-amber-700'],
         'APPROVED'  => ['label' => 'Đã duyệt',         'cls' => 'bg-emerald-100 text-emerald-700'],
         'MATCHED'   => ['label' => 'Đã khớp',          'cls' => 'bg-emerald-100 text-emerald-700'],
-        'FOUND'     => ['label' => 'Đã tìm thấy',       'cls' => 'bg-sky-100 text-sky-700'],
+        'FOUND'     => ['label' => 'Nghi vấn khớp mạnh', 'cls' => 'bg-sky-100 text-sky-700'],
         'REJECTED'  => ['label' => 'Bị từ chối',        'cls' => 'bg-rose-100 text-rose-700'],
         'ACTIVE'    => ['label' => 'Đang hoạt động',    'cls' => 'bg-sky-100 text-sky-700'],
         'RESOLVED'  => ['label' => 'Đã xử lý',          'cls' => 'bg-slate-200 text-slate-600'],

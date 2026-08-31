@@ -15,7 +15,7 @@ class FaceMatchConfirmedForAdminStrategy extends AbstractFaceMatchConfirmedStrat
 
         return [
             'title' => 'Kết quả AI đã được xác nhận',
-            'body' => "Hồ sơ {$caseLabel} đã được xác nhận trùng khớp với độ tương đồng {$score}%. Hãy theo dõi quá trình phối hợp và bàn giao.",
+            'body' => "Hồ sơ {$caseLabel} đã được xác nhận trùng khớp với độ tương đồng {$score}%. Hãy theo dõi và phối hợp xác minh cùng cơ quan chức năng.",
             'action_url' => $this->caseUrl($match),
         ];
     }

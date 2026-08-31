@@ -183,7 +183,7 @@ class FamilyHandoverConfirmationTest extends TestCase
 
         $view = $this->blade('<x-ui.case-card :case="$case" />', ['case' => $case]);
 
-        $view->assertSee('Đã tìm thấy');
+        $view->assertSee('Nghi vấn khớp mạnh');
         $view->assertDontSee('Bé đã về nhà');
     }
 

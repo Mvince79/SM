@@ -84,14 +84,14 @@ new class extends Component {
                                 'PENDING' => 'bg-amber-100 text-amber-600 border-amber-200',
                                 'APPROVED' => 'bg-success-light text-success border-success/35',
                                 'REJECTED' => 'bg-red-100 text-red-500 border-red-200',
-                                'FOUND' => 'bg-violet-100 text-violet-600 border-violet-200',
+                                'FOUND' => 'bg-brand/10 text-brand border-brand/20',
                                 default => 'bg-slate-100 text-slate-500 border-slate-200',
                             };
                             $chipLabel = match ($post->status) {
                                 'PENDING' => 'Chờ duyệt',
                                 'APPROVED' => 'Đã duyệt',
                                 'REJECTED' => 'Từ chối',
-                                'FOUND' => 'Đã tìm thấy',
+                                'FOUND' => 'Nghi vấn khớp mạnh',
                                 default => $post->status,
                             };
                         @endphp

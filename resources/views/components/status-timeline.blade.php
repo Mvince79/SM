@@ -8,7 +8,7 @@
     //   1. Đã đăng tin        -> status >= APPROVED (đã duyệt, công khai)
     //   2. Nghi vấn khớp      -> có FaceMatchResult đạt ngưỡng điểm (score >= threshold)
     //   3. Admin xác nhận     -> có FaceMatchResult có status = CONFIRMED
-    //   4. Đã bàn giao        -> status HANDED_OVER (hoặc REUNITED / UNREACHABLE_FAMILY)
+    //   4. Nghi vấn khớp mạnh — đang xác minh -> status HANDED_OVER (hoặc REUNITED / UNREACHABLE_FAMILY)
     //   5. Đã đoàn tụ         -> status REUNITED
     //
     // "AI so khớp" KHÔNG có ô riêng — đó chỉ là quá trình xử lý ngầm (khuôn ảnh đang
@@ -54,7 +54,7 @@
         ['label' => 'Đã đăng tin'],
         ['label' => 'Nghi vấn khớp'],
         ['label' => 'Admin xác nhận'],
-        ['label' => 'Đã bàn giao'],
+        ['label' => 'Nghi vấn khớp mạnh — đang xác minh'],
         ['label' => 'Đã đoàn tụ'],
     ];
 @endphp
@@ -115,13 +115,13 @@
             </p>
         @endif
 
-        {{-- H-05 — Ở bước FOUND: bước "Đã bàn giao" là bước TIẾP THEO (chưa hoàn tất).
-            Thêm dòng nhắc để gia đình hiểu rõ đây là trạng thái chờ xác nhận, không
-            phải đã bàn giao rồi. --}}
+        {{-- H-05 — Ở bước FOUND: bước "Nghi vấn khớp mạnh — đang xác minh" là bước TIẾP THEO (chưa hoàn tất).
+            Thêm dòng nhắc để gia đình hiểu rõ đây là trạng thái chờ xác minh, hệ thống
+            không tự khẳng định đã bàn giao. --}}
         @if($status === 'FOUND' && $currentStep === 4)
             <p class="mt-3 text-[11px] text-slate-500 font-medium flex items-center gap-1.5">
                 <span class="inline-block w-2 h-2 rounded-full bg-brand animate-pulse"></span>
-                Kết quả đã xác nhận khớp. Chờ gia đình xác nhận bé đã được bàn giao…
+                Kết quả đã xác nhận khớp mạnh. Hệ thống đang phối hợp xác minh cùng cơ quan chức năng, chưa kết luận bàn giao.
             </p>
         @endif
     </div>

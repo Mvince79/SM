@@ -103,7 +103,7 @@ class MissingChildrenTable
                         'FOUND' => 'Đã tìm thấy',
                         'CLOSED' => 'Đóng',
                         'REJECTED' => 'Từ chối',
-                        'HANDED_OVER' => 'Đã bàn giao',
+                        'HANDED_OVER' => 'Nghi vấn khớp mạnh — đang xác minh',
                         'REUNITED' => 'Đã đoàn tụ',
                         'UNREACHABLE_FAMILY' => 'Không liên lạc được',
                         default => $state,
@@ -322,10 +322,10 @@ class MissingChildrenTable
                         PostStatusChanged::dispatch($record->refresh());
                     }),
 
-                // H-01/H-04 — Đánh dấu "đã bàn giao" (mở khóa toàn bộ Nhóm H).
+                // H-01/H-04 — Xác nhận "nghi vấn khớp mạnh — đang xác minh" (mở khóa toàn bộ Nhóm H).
                 // Hệ thống chỉ ghi nhận, không thay thế cơ quan chức năng.
                 Action::make('mark_handed_over')
-                    ->label('Đánh dấu đã bàn giao')
+                    ->label('Xác nhận nghi vấn khớp mạnh')
                     ->icon('heroicon-o-arrow-right-circle')
                     ->color('info')
                     ->visible(fn(MissingChild $record) => in_array($record->status, ['APPROVED', 'FOUND'], true))
@@ -343,9 +343,9 @@ class MissingChildrenTable
                             ->rows(3)
                             ->helperText('Ví dụ: "Đã gọi điện xác minh qua gia đình, công an phường X xác nhận đã bàn giao bé vào ngày...".'),
                     ])
-                    ->modalHeading('Đánh dấu đã bàn giao?')
-                    ->modalDescription('Chuyển sang trạng thái "Đã bàn giao". Gia đình sẽ nhận hướng dẫn nhận lại con. Hệ thống chỉ ghi nhận thông tin, không thay thế cơ quan chức năng.')
-                    ->modalSubmitActionLabel('Đánh dấu bàn giao')
+                    ->modalHeading('Xác nhận nghi vấn khớp mạnh — đang xác minh?')
+                    ->modalDescription('Hệ thống ghi nhận nghi vấn khớp mạnh và chuyển hồ sơ sang bước đang xác minh cùng cơ quan chức năng. Gia đình sẽ nhận hướng dẫn để phối hợp xác minh. Hệ thống chỉ ghi nhận thông tin, không thay thế cơ quan chức năng.')
+                    ->modalSubmitActionLabel('Xác nhận nghi vấn khớp mạnh')
                     ->action(function (MissingChild $record, array $data) {
                         // Dùng confirmHandoverByAdmin: validate lý do >= 20 ký tự TẠI ĐÂY
                         // (trước save) thay vì update() thô — StatusChangeAuditObserver chỉ
@@ -356,7 +356,7 @@ class MissingChildrenTable
                             $data['handover_point_id'] ?? null
                         );
                         Cache::forget('dashboard_stats_overview');
-                        Notification::make()->title('Đã đánh dấu bàn giao')->success()->send();
+                        Notification::make()->title('Đã xác nhận nghi vấn khớp mạnh')->success()->send();
                     }),
 
                 // H-04 — Admin xác nhận đoàn tụ hộ (đã liên hệ gia đình).

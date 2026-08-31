@@ -14,7 +14,7 @@ class FaceMatchConfirmedForFamilyStrategy extends AbstractFaceMatchConfirmedStra
 
         return [
             'title' => 'Đã xác nhận một kết quả trùng khớp',
-            'body' => "Hệ thống đã xác nhận một trường hợp có khả năng liên quan đến hồ sơ {$childName}. Vui lòng xem chi tiết và phối hợp qua điểm bàn giao an toàn.",
+            'body' => "Hệ thống đã xác nhận một trường hợp có khả năng liên quan đến hồ sơ {$childName}. Vui lòng xem chi tiết và phối hợp xác minh cùng cơ quan chức năng.",
             'action_url' => $this->caseUrl($match),
         ];
     }

@@ -51,7 +51,14 @@ new class extends Component {
         if ($this->age)
             $pills[] = ['key' => 'age', 'type' => 'age', 'label' => "Tuổi: {$this->age}"];
         if ($this->status)
-            $pills[] = ['key' => 'status', 'type' => 'status', 'label' => $this->status === 'APPROVED' ? 'Đang tìm kiếm' : 'Đã tìm thấy'];
+            $pills[] = ['key' => 'status', 'type' => 'status', 'label' => match ($this->status) {
+                'PENDING'     => 'Chờ duyệt',
+                'REJECTED'    => 'Đã từ chối',
+                'FOUND'       => 'Nghi vấn khớp mạnh',
+                'HANDED_OVER' => 'Nghi vấn khớp mạnh — đang xác minh',
+                'REUNITED'    => 'Đã tìm thấy',
+                default       => 'Đang tìm kiếm',
+            }];
 
         return $pills;
     }
@@ -112,7 +119,7 @@ new class extends Component {
                     class="border border-slate-200 rounded-2xl px-4 py-3 text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary font-bold text-slate-600 transition-colors">
                     <option value="">Trạng thái</option>
                     <option value="APPROVED">Đang tìm kiếm</option>
-                    <option value="FOUND">Đã tìm thấy</option>
+                    <option value="FOUND">Nghi vấn khớp mạnh</option>
                 </select>
             </div>
         </div>

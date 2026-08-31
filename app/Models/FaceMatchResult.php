@@ -82,7 +82,7 @@ class FaceMatchResult extends Model
             'REJECTED' => 'Từ chối',
             'CLOSED' => 'Đã đóng',
             'FOUND' => 'Đã tìm thấy',
-            'HANDED_OVER' => 'Đã bàn giao',
+            'HANDED_OVER' => 'Nghi vấn khớp mạnh — đang xác minh',
             'REUNITED' => 'Đã đoàn tụ',
             default => (string) $status,
         };

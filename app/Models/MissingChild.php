@@ -126,6 +126,7 @@ class MissingChild extends Model
         'handover_point_id',
         'handover_confirmed_at',
         'handover_confirmed_by',
+        'missing_child_prev_status',
     ];
     protected $guarded = ['status', 'approved_at', 'approved_by'];
 
@@ -284,6 +285,11 @@ class MissingChild extends Model
         }
 
         $this->audit_reason = $reason;
+
+        // Snapshot trạng thái trước khi bước sang HANDED_OVER để luồng "phủ nhận
+        // kết quả khớp" (denyHandover) có thể revert về đúng trạng thái công khai
+        // trước đó (FOUND/APPROVED). KHÔNG thay đổi hành vi chuyển trạng thái.
+        $this->missing_child_prev_status = $this->status;
 
         $this->forceFill([
             'status' => self::STATUS_HANDED_OVER,

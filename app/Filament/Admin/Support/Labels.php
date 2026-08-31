@@ -20,7 +20,7 @@ class Labels
         'MATCHED' => 'Đã khớp',
         'CLOSED' => 'Đã đóng',
         'ARCHIVED' => 'Đã lưu trữ',
-        'HANDED_OVER' => 'Đã bàn giao',
+        'HANDED_OVER' => 'Nghi vấn khớp mạnh — đang xác minh',
         'REUNITED' => 'Đã đoàn tụ',
         'UNREACHABLE_FAMILY' => 'Không liên lạc được với gia đình',
         'DELETED' => 'Đã xoá',
