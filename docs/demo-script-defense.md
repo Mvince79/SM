@@ -60,7 +60,6 @@
     - Liệt kê công an, UBND, Tổng đài 111. Bấm một marker → thông tin liên hệ hiện ra.
 
 6. **Thống kê & UI — nhanh** (`/stats`)
-    - "Đã chạy **Lighthouse thực tế** (`docs/LIGHTHOUSE_REPORT.md`): Accessibility **92**, SEO **92**, Performance mobile **71** — đạt DoD."
     - Resize trình duyệt xuống 375px → responsive không vỡ. "Mọi giao diện — banner, form, modal — đều một design system, màu nhã, badge có ngữ nghĩa."
 
 ---
