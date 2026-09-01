@@ -19,7 +19,9 @@
 @endphp
 
 @if ($isOwner && $isActive)
-    <div class="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl shadow-premium overflow-hidden mt-6">
+    <div x-data="{ openConfirm: false }"
+        @keydown.escape.window="openConfirm = false"
+        class="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl shadow-premium overflow-hidden mt-6">
         <div class="px-4 sm:px-6 py-4 border-b border-slate-100 bg-success/5">
             <h3 class="text-xs font-black text-success uppercase tracking-wider flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
@@ -104,17 +106,53 @@
 
             {{-- Nút xác nhận đoàn tụ (luôn hiện với chủ hồ sơ khi đang active) --}}
             <div class="@if($isHandedOver) mt-2 @else border-t border-slate-100 pt-4 @endif">
-                <form method="POST" action="{{ route('missing.confirm-reunited', $case) }}" class="mt-3">
+                <form id="reunited-form-{{ $case->getKey() }}" method="POST" action="{{ route('missing.confirm-reunited', $case) }}" class="mt-3">
                     @csrf
-                    <button type="submit"
-                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-success text-white text-xs font-black hover:bg-success/90 transition-all shadow-lg shadow-success/20"
-                        onclick="return confirm('Xác nhận bạn đã nhận lại con an toàn? Hành động này không thể hoàn tác.')">
+                    <button type="button"
+                        @click="openConfirm = true"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-success text-white text-xs font-black hover:bg-success/90 transition-all shadow-lg shadow-success/20">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
                         Xác nhận đã nhận lại con
                     </button>
                 </form>
+            </div>
+        </div>
+
+        {{-- Modal xác nhận đoàn tụ (Alpine, đồng bộ style với my-posts.blade.php) --}}
+        <div x-show="openConfirm"
+            x-cloak
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+            role="dialog" aria-modal="true" aria-labelledby="reunited-confirm-title"
+            @click.self="openConfirm = false">
+            <div class="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl">
+                <div class="text-center space-y-2">
+                    <div class="text-4xl" aria-hidden="true">✅</div>
+                    <h3 id="reunited-confirm-title" class="font-black text-slate-900 text-base">Xác nhận đã nhận lại con?</h3>
+                    <p class="text-xs text-slate-500 font-semibold leading-relaxed">
+                        Hồ sơ sẽ được đóng và không còn hiển thị công khai trên bản đồ/trang chủ.
+                        Hành động này không thể hoàn tác.
+                    </p>
+                </div>
+
+                <div class="flex gap-3 justify-center pt-1">
+                    <button type="button"
+                        @click="openConfirm = false"
+                        class="text-xs font-bold text-slate-600 px-5 py-2.5 border border-slate-200
+                               rounded-xl hover:bg-slate-50 transition-colors">
+                        Hủy
+                    </button>
+                    <button type="button"
+                        @click="document.getElementById('reunited-form-{{ $case->getKey() }}').submit()"
+                        class="bg-success text-white text-xs font-extrabold px-5 py-2.5
+                               rounded-xl hover:bg-success/90 transition-colors">
+                        Xác nhận đã nhận lại con
+                    </button>
+                </div>
             </div>
         </div>
     </div>

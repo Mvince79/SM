@@ -111,12 +111,12 @@ class PhotoSearchController extends Controller
                 })
                 ->get();
 
-            $results = [];
+            $resultsByChild = [];
 
             foreach ($candidatePhotos as $photo) {
                 $missing = $photo->model;
 
-                if (! $missing instanceof MissingChild) {
+                if (!$missing instanceof MissingChild) {
                     continue;
                 }
 
@@ -134,7 +134,7 @@ class PhotoSearchController extends Controller
                 // face_encoding lưu dưới dạng Crypt::encryptString(json_encode([...])).
                 // Giải mã xong vẫn là chuỗi JSON → phải json_decode thành array trước
                 // khi truyền cho compare() (hàm yêu cầu array).
-                if (! is_array($candidateEncoding)) {
+                if (!is_array($candidateEncoding)) {
                     continue;
                 }
 
@@ -145,7 +145,8 @@ class PhotoSearchController extends Controller
                     continue;
                 }
 
-                $results[] = [
+                $childId = $missing->id;
+                $item = [
                     'case_code' => $missing->case_code,
                     'name' => $missing->full_name,
                     'age' => $missing->age,
@@ -153,10 +154,19 @@ class PhotoSearchController extends Controller
                     'missing_child_id' => $missing->id,
                     'score' => round($score * 100, 2),
                 ];
+
+                // Gộp theo trẻ: nếu trẻ này đã có kết quả trước đó (do nhiều ảnh
+                // cùng khớp), chỉ giữ lại bản có score cao nhất — tránh hiển thị
+                // trùng lặp cùng 1 trẻ nhiều lần trên trang kết quả.
+                if (!isset($resultsByChild[$childId]) || $item['score'] > $resultsByChild[$childId]['score']) {
+                    $resultsByChild[$childId] = $item;
+                }
             }
 
+            $results = array_values($resultsByChild);
+
             // Sắp theo score giảm dần.
-            usort($results, fn ($a, $b) => $b['score'] <=> $a['score']);
+            usort($results, fn($a, $b) => $b['score'] <=> $a['score']);
 
             // Phân trang (tối ưu UI/UX khi có nhiều hồ sơ): so khớp vẫn duyệt toàn
             // bộ ứng viên, nhưng chỉ trả về đúng 1 trang để giảm payload. Ngưỡng
